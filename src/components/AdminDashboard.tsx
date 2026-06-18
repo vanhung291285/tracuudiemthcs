@@ -128,6 +128,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [supabaseKey, setSupabaseKey] = useState("");
   const [supabaseStatus, setSupabaseStatus] = useState({ isConnected: false, mode: "Local Offline Mode" });
 
+  // SQL code copy interaction state
+  const [copiedSql, setCopiedSql] = useState(false);
+
   // Import State
   const [importTerm, setImportTerm] = useState<"hk1" | "hk2" | "canam">("hk1");
   const [importClass, setImportClass] = useState("9A1");
@@ -221,6 +224,32 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setAuthError("Tài khoản hoặc mật khẩu không chính xác.");
     }
     setAuthIsLoading(false);
+  };
+
+  // Copy SQL script tool handler
+  const handleCopySql = () => {
+    const snakeEl = document.getElementById("sql_snake_case");
+    const camelEl = document.getElementById("sql_camel_case");
+    let textToCopy = "";
+    
+    if (snakeEl && !snakeEl.classList.contains("hidden")) {
+      const pre = snakeEl.querySelector("pre");
+      if (pre) textToCopy = pre.innerText || pre.textContent || "";
+    } else if (camelEl && !camelEl.classList.contains("hidden")) {
+      const pre = camelEl.querySelector("pre");
+      if (pre) textToCopy = pre.innerText || pre.textContent || "";
+    }
+    
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          setCopiedSql(true);
+          setTimeout(() => setCopiedSql(false), 2000);
+        })
+        .catch(err => {
+          console.error("Failed to copy SQL text:", err);
+        });
+    }
   };
 
   // Save Config for Supabase
@@ -2530,7 +2559,26 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       </button>
                     </div>
 
-                    <div className="relative">
+                    <div className="relative group">
+                      <button
+                        type="button"
+                        onClick={handleCopySql}
+                        className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-lg border border-slate-750 transition duration-150 active:scale-95 cursor-pointer backdrop-blur-xs select-none"
+                        title="Sao chép toàn bộ mã SQL"
+                      >
+                        {copiedSql ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                            <span className="text-emerald-400">Đã sao chép!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Sao chép toàn bộ SQL</span>
+                          </>
+                        )}
+                      </button>
+
                       {/* SNAKE CASE SQL */}
                       <div id="sql_snake_case" className="block">
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
