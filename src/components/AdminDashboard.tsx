@@ -9,7 +9,7 @@ import dbService from "../lib/supabase";
 import * as XLSX from "xlsx";
 import { 
   Users, Edit, Trash2, Plus, Upload, BarChart3, Database, LogOut, Check, X,
-  RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet
+  RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet, UserX
 } from "lucide-react";
 
 interface AdminDashboardProps {
@@ -468,6 +468,31 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         }
       } catch (err: any) {
         alert("Lỗi khi đồng bộ xóa lớp lên Supabase: " + err.message);
+      } finally {
+        setAuthIsLoading(false);
+      }
+    }
+  };
+
+  const handleDeleteClassStudents = async (className: string) => {
+    const rosterCount = students.filter(s => s.className === className).length;
+    if (rosterCount === 0) {
+      alert(`Lớp ${className} hiện không có học sinh nào để xóa.`);
+      return;
+    }
+
+    if (confirm(`Bạn có chắc chắn muốn xóa HOÀN TOÀN danh sách gồm ${rosterCount} học sinh của lớp ${className}? \nHành động này sẽ XÓA VĨNH VIỄN toàn bộ hồ sơ điểm số của các học sinh này trên cả hệ thống và Supabase, và không thể khôi phục!`)) {
+      setAuthIsLoading(true);
+      try {
+        const success = await dbService.deleteStudentsByClass(className);
+        if (success) {
+          setStudents(students.filter(s => s.className !== className));
+          alert(`Đã xóa thành công toàn bộ danh sách gồm ${rosterCount} học sinh của lớp ${className}!`);
+        } else {
+          alert("Có lỗi xảy ra khi xóa danh sách học sinh trên Supabase.");
+        }
+      } catch (err: any) {
+        alert("Lỗi khi xử lý xóa danh sách học sinh: " + err.message);
       } finally {
         setAuthIsLoading(false);
       }
@@ -2553,6 +2578,18 @@ CREATE POLICY "Cho phép cán bộ học tịch chỉnh sửa" ON students FOR A
                                         className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition cursor-pointer"
                                       >
                                         <Edit className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteClassStudents(c.className)}
+                                        disabled={rosterCount === 0}
+                                        title={rosterCount > 0 ? "Xóa toàn bộ học sinh của lớp này" : "Lớp trống"}
+                                        className={`p-1 rounded transition ${
+                                          rosterCount > 0 
+                                            ? "text-amber-600 hover:text-amber-800 hover:bg-amber-50 cursor-pointer" 
+                                            : "text-slate-300 cursor-not-allowed"
+                                        }`}
+                                      >
+                                        <UserX className="w-3.5 h-3.5" />
                                       </button>
                                       <button
                                         onClick={() => handleDeleteClass(c.id)}
