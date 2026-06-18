@@ -14,6 +14,7 @@ const ENV_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJ
 class DatabaseService {
   private supabase: SupabaseClient | null = null;
   private localStudentsList: Student[] = [];
+  public lastError: string | null = null;
 
   constructor() {
     this.initialize();
@@ -217,14 +218,18 @@ class DatabaseService {
 
         if (error) {
           console.error("Supabase upsert error:", error.message);
+          this.lastError = error.message;
           return false;
         }
+        this.lastError = null;
         return true;
-      } catch (err) {
+      } catch (err: any) {
         console.error("Supabase upsert exception:", err);
+        this.lastError = err.message || String(err);
         return false;
       }
     }
+    this.lastError = null;
     return true;
   }
 
