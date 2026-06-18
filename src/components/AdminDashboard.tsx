@@ -283,15 +283,25 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const handleSavePortalSettings = async () => {
     setAuthIsLoading(true);
     try {
-      await dbService.savePortalSetting("portal_header_top", headerTop.trim());
-      await dbService.savePortalSetting("portal_header_main", headerMain.trim());
-      await dbService.savePortalSetting("portal_school_year", schoolYear.trim());
-      await dbService.savePortalSetting("portal_footer_title", footerTitle.trim());
-      await dbService.savePortalSetting("portal_footer_desc", footerDesc.trim());
-      await dbService.savePortalSetting("portal_footer_copy", footerCopy.trim());
-      alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công và đồng bộ lên Supabase!");
+      const r1 = await dbService.savePortalSetting("portal_header_top", headerTop.trim());
+      const r2 = await dbService.savePortalSetting("portal_header_main", headerMain.trim());
+      const r3 = await dbService.savePortalSetting("portal_school_year", schoolYear.trim());
+      const r4 = await dbService.savePortalSetting("portal_footer_title", footerTitle.trim());
+      const r5 = await dbService.savePortalSetting("portal_footer_desc", footerDesc.trim());
+      const r6 = await dbService.savePortalSetting("portal_footer_copy", footerCopy.trim());
+      
+      const config = dbService.getConfig();
+      if (config.isRealSupabase) {
+        if (r1 && r2 && r3 && r4 && r5 && r6) {
+          alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công và đồng bộ lên Supabase!");
+        } else {
+          alert("Cấu hình đã được lưu thành công ở trình duyệt của bạn (LocalStorage) nhưng không thể đồng bộ lên Supabase! Vui lòng đảm bảo bạn đã tạo bảng 'portal_settings' trong cơ sở dữ liệu Supabase bằng cách chạy đoạn mã SQL khởi tạo được hiển thị ở tab 'Supabase & Database' trong trang Quản trị này.");
+        }
+      } else {
+        alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công vào trình duyệt (LocalStorage)!");
+      }
     } catch (err: any) {
-      alert("Lỗi khi lưu cấu hình lên Supabase: " + err.message);
+      alert("Lỗi khi lưu cấu hình: " + err.message);
     } finally {
       setAuthIsLoading(false);
     }
