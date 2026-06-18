@@ -92,22 +92,98 @@ class DatabaseService {
     };
   }
 
-  public saveConfig(url: string, key: string) {
+  // Synchronize configuration credentials from centralized server
+  public async syncConfigFromServer(): Promise<boolean> {
+    try {
+      const resp = await fetch("/api/settings");
+      if (resp.ok) {
+        const result = await resp.json();
+        if (result.status === "success" && result.data) {
+          const serverUrl = result.data["thcs_supabase_url"];
+          const serverKey = result.data["thcs_supabase_key"];
+          
+          let hasChanges = false;
+          if (serverUrl && localStorage.getItem("thcs_supabase_url") !== serverUrl) {
+            localStorage.setItem("thcs_supabase_url", serverUrl);
+            hasChanges = true;
+          }
+          if (serverKey && localStorage.getItem("thcs_supabase_key") !== serverKey) {
+            localStorage.setItem("thcs_supabase_key", serverKey);
+            hasChanges = true;
+          }
+          
+          if (hasChanges) {
+            console.log("Supabase config synchronized from centralized server. Re-initializing...");
+            this.initialize();
+            return true;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to synchronize Supabase configuration from server:", err);
+    }
+    return false;
+  }
+
+  public async saveConfig(url: string, key: string) {
     if (url && key) {
       localStorage.setItem("thcs_supabase_url", url);
       localStorage.setItem("thcs_supabase_key", key);
+      
+      // Save configuration to backend database
+      try {
+        await fetch("/api/settings/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            "thcs_supabase_url": url,
+            "thcs_supabase_key": key
+          })
+        });
+      } catch (err) {
+        console.warn("Failed to update central configuration on server API:", err);
+      }
     } else {
       localStorage.removeItem("thcs_supabase_url");
       localStorage.removeItem("thcs_supabase_key");
+      
+      // Remove configuration on backend
+      try {
+        await fetch("/api/settings/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            "thcs_supabase_url": "",
+            "thcs_supabase_key": ""
+          })
+        });
+      } catch (err) {
+        console.warn("Failed to clear central configuration on server API:", err);
+      }
     }
     this.initialize();
   }
 
   // Clear connection details and revert to local fallback
-  public disconnect() {
+  public async disconnect() {
     localStorage.removeItem("thcs_supabase_url");
     localStorage.removeItem("thcs_supabase_key");
     this.supabase = null;
+    
+    // Disconnect backend config too
+    try {
+      await fetch("/api/settings/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "thcs_supabase_url": "",
+          "thcs_supabase_key": ""
+        })
+      });
+    } catch (err) {
+      console.warn("Failed to clear centralized credentials on server:", err);
+    }
+    
     console.log("Supabase credentials cleared, using local database mode.");
   }
 
@@ -593,8 +669,9 @@ class DatabaseService {
     return true;
   }
 
-  // Load a single portal setting
+  // Load a single portal setting with tiered fallback (Supabase > Server API > LocalStorage > Default)
   public async getPortalSetting(key: string, defaultValue: string): Promise<string> {
+    // 1. Try to fetch from remote Supabase if connected
     if (this.supabase) {
       try {
         const { data, error } = await this.supabase
@@ -603,20 +680,52 @@ class DatabaseService {
           .eq("key", key)
           .maybeSingle();
 
-        if (!error && data) {
+        if (!error && data && data.value !== undefined) {
+          localStorage.setItem(key, data.value);
+          // Async sync to server to maintain centralized backup
+          this.syncSettingToServer(key, data.value);
           return data.value;
         }
       } catch (err) {
-        console.warn("Supabase getPortalSetting exception or missing relation:", err);
+        console.warn(`Supabase getPortalSetting for key "${key}" failed, fallback to server API:`, err);
       }
     }
+
+    // 2. Try to fetch from central Server API
+    try {
+      const resp = await fetch("/api/settings");
+      if (resp.ok) {
+        const result = await resp.json();
+        if (result.status === "success" && result.data && result.data[key] !== undefined) {
+          const val = result.data[key];
+          localStorage.setItem(key, val);
+          return val;
+        }
+      }
+    } catch (err) {
+      console.warn("Server API getPortalSetting fallback failed:", err);
+    }
+
+    // 3. Fallback to LocalStorage or initial hardcoded defaults
     return localStorage.getItem(key) || defaultValue;
   }
 
-  // Save portal setting
+  // Save portal setting centrally across LocalStorage, Server API, and remote Supabase
   public async savePortalSetting(key: string, value: string): Promise<boolean> {
     localStorage.setItem(key, value);
 
+    // A. Always save to backend Server API so all browsers/devices synchronize immediately
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value })
+      });
+    } catch (err) {
+      console.warn("Failed to save portal setting to server API:", err);
+    }
+
+    // B. Save to remote Supabase if connected
     if (this.supabase) {
       try {
         const { error } = await this.supabase
@@ -634,6 +743,19 @@ class DatabaseService {
       }
     }
     return true;
+  }
+
+  // Backup sync helper
+  private async syncSettingToServer(key: string, value: string) {
+    try {
+      await fetch("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value })
+      });
+    } catch (e) {
+      // quiet fail
+    }
   }
 }
 
