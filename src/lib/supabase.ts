@@ -305,6 +305,31 @@ class DatabaseService {
     return true;
   }
 
+  // Delete all students of a specific class
+  public async deleteStudentsByClass(className: string): Promise<boolean> {
+    this.localStudentsList = this.localStudentsList.filter(s => s.className !== className);
+    this.saveLocally();
+
+    if (this.supabase) {
+      try {
+        const { error } = await this.supabase
+          .from("students")
+          .delete()
+          .eq("className", className);
+
+        if (error) {
+          console.error("Supabase delete by class failed:", error.message);
+          return false;
+        }
+        return true;
+      } catch (err) {
+        console.error("Supabase delete by class exception:", err);
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Load classes from Supabase if possible, otherwise fallback locally
   public async getClasses(): Promise<SchoolClass[]> {
     if (this.supabase) {
