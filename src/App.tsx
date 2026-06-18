@@ -3,21 +3,56 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import StudentQuery from "./components/StudentQuery";
 import StudentResult from "./components/StudentResult";
 import AdminDashboard from "./components/AdminDashboard";
 import { Student } from "./types";
 
 export default function App() {
-  const [view, setView] = useState<"query" | "result" | "admin">("query");
+  // Initialize view from URL path
+  const [view, setView] = useState<"query" | "result" | "admin">(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, "");
+      if (path === "/admin") {
+        return "admin";
+      }
+    }
+    return "query";
+  });
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedTerm, setSelectedTerm] = useState<"hk1" | "hk2" | "canam">("canam");
+
+  // Keep state and URL in sync
+  const setViewWithUrl = (newView: "query" | "result" | "admin") => {
+    setView(newView);
+    if (typeof window !== "undefined") {
+      const targetPath = newView === "admin" ? "/admin" : "/";
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState(null, "", targetPath);
+      }
+    }
+  };
+
+  // Listen to browser Back / Forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, "");
+      if (path === "/admin") {
+        setView("admin");
+      } else {
+        setView("query");
+        setSelectedStudent(null);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // Return to public search page
   const handleBackToQuery = () => {
     setSelectedStudent(null);
-    setView("query");
+    setViewWithUrl("query");
   };
 
   // Switch dynamically between pages
@@ -30,9 +65,9 @@ export default function App() {
           onQueryResult={(student, term) => {
             setSelectedStudent(student);
             setSelectedTerm(term);
-            setView("result");
+            setViewWithUrl("result");
           }}
-          onNavigateToAdmin={() => setView("admin")}
+          onNavigateToAdmin={() => setViewWithUrl("admin")}
         />
       )}
 
