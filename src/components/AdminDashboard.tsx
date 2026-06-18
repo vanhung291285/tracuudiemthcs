@@ -490,7 +490,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           setStudents(students.filter(s => s.className !== className));
           alert(`Đã xóa thành công toàn bộ danh sách gồm ${rosterCount} học sinh của lớp ${className}!`);
         } else {
-          alert("Có lỗi xảy ra khi xóa danh sách học sinh trên Supabase.");
+          const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
+          alert(`Có lỗi xảy ra khi xóa danh sách học sinh trên Supabase.${dbErr}`);
         }
       } catch (err: any) {
         alert("Lỗi khi xử lý xóa danh sách học sinh: " + err.message);
@@ -507,7 +508,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       if (res) {
         setStudents(students.filter(s => s.studentCode !== studentCode));
       } else {
-        alert("Có lỗi xảy ra khi xóa học sinh.");
+        const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
+        alert(`Có lỗi xảy ra khi xóa học sinh.${dbErr}`);
       }
     }
   };
