@@ -16,6 +16,12 @@ class DatabaseService {
   private localStudentsList: Student[] = [];
   public lastError: string | null = null;
 
+  // Schema state indicators for maximum compatibility
+  private mapFormatChecked = false;
+  private isSnakeCaseSchema = false;
+  private classesFormatChecked = false;
+  private isSnakeCaseClasses = false;
+
   constructor() {
     this.initialize();
   }
@@ -24,6 +30,10 @@ class DatabaseService {
   public initialize() {
     const savedUrl = localStorage.getItem("thcs_supabase_url") || ENV_URL;
     const savedKey = localStorage.getItem("thcs_supabase_key") || ENV_KEY;
+    
+    // Clear check state on re-init
+    this.mapFormatChecked = false;
+    this.classesFormatChecked = false;
     
     if (savedUrl && savedKey) {
       try {
@@ -101,6 +111,108 @@ class DatabaseService {
     console.log("Supabase credentials cleared, using local database mode.");
   }
 
+  // Check the table's key casing style dynamically
+  private async checkSchemaCase() {
+    if (this.mapFormatChecked || !this.supabase) return;
+    try {
+      const { error } = await this.supabase
+        .from("students")
+        .select("student_code")
+        .limit(1);
+      
+      this.isSnakeCaseSchema = !error;
+      console.log(`Database schema detected: ${this.isSnakeCaseSchema ? "snake_case" : "camelCase"} columns`);
+      this.mapFormatChecked = true;
+    } catch {
+      this.isSnakeCaseSchema = false;
+    }
+  }
+
+  // Check classes table casing
+  private async checkClassesSchema() {
+    if (this.classesFormatChecked || !this.supabase) return;
+    try {
+      const { error } = await this.supabase
+        .from("portal_classes")
+        .select("class_name")
+        .limit(1);
+      
+      this.isSnakeCaseClasses = !error;
+      console.log(`Classes schema detected: ${this.isSnakeCaseClasses ? "snake_case" : "camelCase"} columns`);
+      this.classesFormatChecked = true;
+    } catch {
+      this.isSnakeCaseClasses = false;
+    }
+  }
+
+  // Bidirectional mapping from Postgres Row to standard react Student
+  private mapDbToStudent(row: any): Student {
+    const studentCode = row.studentCode || row.student_code || "";
+    const fullName = row.fullName || row.full_name || "";
+    const dob = row.dob || row.date_of_birth || row.birth_date || row.ngay_sinh || "";
+    const gender = row.gender || "";
+    const className = row.className || row.class_name || "";
+    const gradeLevel = row.gradeLevel || row.grade_level || "";
+    const school = row.school || "Trường PTDTBT Tiểu Học và THCS Suối Lư";
+
+    let subjectsList = Array.isArray(row.subjects) ? row.subjects : [];
+    let extra: any = {};
+    if (row.subjects && !Array.isArray(row.subjects)) {
+      subjectsList = row.subjects.subjectsList || [];
+      extra = row.subjects;
+    }
+
+    return {
+      id: row.id || `student_${studentCode}`,
+      studentCode,
+      fullName,
+      dob,
+      gender,
+      school,
+      className,
+      gradeLevel,
+      academicYear: row.academicYear || extra.academicYear || "2025-2026",
+      academicGrade: row.academicGrade || extra.academicGrade || "Tốt",
+      behaviorGrade: row.behaviorGrade || extra.behaviorGrade || "Tốt",
+      behaviorGradeSummer: row.behaviorGradeSummer || extra.behaviorGradeSummer || "Không",
+      daysAbsent: typeof row.daysAbsent === "number" ? row.daysAbsent : (typeof extra.daysAbsent === "number" ? extra.daysAbsent : 0),
+      daysAbsentUnexcused: typeof row.daysAbsentUnexcused === "number" ? row.daysAbsentUnexcused : (typeof extra.daysAbsentUnexcused === "number" ? extra.daysAbsentUnexcused : 0),
+      distinction: row.distinction || extra.distinction || "Không",
+      notes: row.notes || extra.notes || "",
+      verificationToken: row.verificationToken || extra.verificationToken || `VERIFY-NEW-${studentCode}`,
+      subjects: subjectsList
+    };
+  }
+
+  // Bidirectional mapping from React Student to target DB columns
+  private mapStudentToDb(student: Student): any {
+    if (this.isSnakeCaseSchema) {
+      return {
+        student_code: student.studentCode,
+        full_name: student.fullName,
+        date_of_birth: student.dob,
+        gender: student.gender,
+        class_name: student.className,
+        grade_level: student.gradeLevel,
+        subjects: {
+          subjectsList: student.subjects,
+          school: student.school,
+          academicYear: student.academicYear,
+          academicGrade: student.academicGrade,
+          behaviorGrade: student.behaviorGrade,
+          behaviorGradeSummer: student.behaviorGradeSummer,
+          daysAbsent: student.daysAbsent,
+          daysAbsentUnexcused: student.daysAbsentUnexcused,
+          distinction: student.distinction,
+          notes: student.notes,
+          verificationToken: student.verificationToken
+        }
+      };
+    } else {
+      return student;
+    }
+  }
+
   // Query student records
   public async queryStudent(studentCode: string, dob: string): Promise<Student | null> {
     const formattedCode = studentCode.trim().toUpperCase();
@@ -108,20 +220,24 @@ class DatabaseService {
 
     if (this.supabase) {
       try {
+        await this.checkSchemaCase();
         // Query official Supabase DB ('students' table)
-        const { data, error } = await this.supabase
-          .from("students")
-          .select("*")
-          .eq("studentCode", formattedCode)
-          .single();
+        let query = this.supabase.from("students").select("*");
+        if (this.isSnakeCaseSchema) {
+          query = query.eq("student_code", formattedCode);
+        } else {
+          query = query.eq("studentCode", formattedCode);
+        }
+        const { data, error } = await query.single();
 
         if (error) {
           console.warn("Supabase query failed, falling back to local database search:", error.message);
         } else if (data) {
+          const mapped = this.mapDbToStudent(data);
           // Dates in Vietnamese educational portals are stored as YYYY-MM-DD or simple strings.
           // Let's standardise comparison
-          if (this.compareDates(data.dob, cleanDob)) {
-            return data as Student;
+          if (this.compareDates(mapped.dob, cleanDob)) {
+            return mapped;
           } else {
             console.warn("Student found, but date of birth does not match.");
             return null;
@@ -164,7 +280,7 @@ class DatabaseService {
         } else {
           inD = inputParts[0]; inM = inputParts[1]; inY = inputParts[2];
         }
-        
+         
         if (parseInt(dbY) === parseInt(inY) && 
             parseInt(dbM) === parseInt(inM) && 
             parseInt(dbD) === parseInt(inD)) {
@@ -181,14 +297,19 @@ class DatabaseService {
   public async getAllStudents(): Promise<Student[]> {
     if (this.supabase) {
       try {
+        await this.checkSchemaCase();
         const { data, error } = await this.supabase
           .from("students")
-          .select("*")
-          .order("className", { ascending: true })
-          .order("fullName", { ascending: true });
+          .select("*");
 
         if (!error && data) {
-          return data as Student[];
+          const mappedList = data.map(row => this.mapDbToStudent(row));
+          // Sort inside Javascript uniformly to avoid database ORDER BY case sensitivity bugs
+          return mappedList.sort((a, b) => {
+            const classCompare = a.className.localeCompare(b.className);
+            if (classCompare !== 0) return classCompare;
+            return a.fullName.localeCompare(b.fullName);
+          });
         }
         console.warn("Supabase select fails:", error?.message);
       } catch (err) {
@@ -212,9 +333,12 @@ class DatabaseService {
     // 2. Query Supabase
     if (this.supabase) {
       try {
+        await this.checkSchemaCase();
+        
+        const mapped = this.mapStudentToDb(student);
         const { error } = await this.supabase
           .from("students")
-          .upsert(student, { onConflict: "studentCode" });
+          .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" });
 
         if (error) {
           console.error("Supabase upsert error:", error.message);
@@ -240,10 +364,15 @@ class DatabaseService {
 
     if (this.supabase) {
       try {
-        const { error } = await this.supabase
-          .from("students")
-          .delete()
-          .eq("studentCode", studentCode);
+        await this.checkSchemaCase();
+        
+        let query = this.supabase.from("students").delete();
+        if (this.isSnakeCaseSchema) {
+          query = query.eq("student_code", studentCode);
+        } else {
+          query = query.eq("studentCode", studentCode);
+        }
+        const { error } = await query;
 
         if (error) {
           console.error("Supabase delete failed:", error.message);
@@ -269,11 +398,13 @@ class DatabaseService {
     }
 
     try {
+      await this.checkSchemaCase();
       let uploadedCount = 0;
       for (const student of this.localStudentsList) {
+        const mapped = this.mapStudentToDb(student);
         const { error } = await this.supabase
           .from("students")
-          .upsert(student, { onConflict: "studentCode" });
+          .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" });
         if (!error) uploadedCount++;
       }
       return { success: true, count: uploadedCount };
@@ -296,10 +427,15 @@ class DatabaseService {
 
     if (this.supabase) {
       try {
-        const { error } = await this.supabase
-          .from("students")
-          .delete()
-          .neq("studentCode", "");
+        await this.checkSchemaCase();
+        
+        let query = this.supabase.from("students").delete();
+        if (this.isSnakeCaseSchema) {
+          query = query.neq("student_code", "");
+        } else {
+          query = query.neq("studentCode", "");
+        }
+        const { error } = await query;
 
         if (error) {
           console.error("Supabase clear all failed:", error.message);
@@ -325,10 +461,15 @@ class DatabaseService {
 
     if (this.supabase) {
       try {
-        const { error } = await this.supabase
-          .from("students")
-          .delete()
-          .eq("className", className);
+        await this.checkSchemaCase();
+        
+        let query = this.supabase.from("students").delete();
+        if (this.isSnakeCaseSchema) {
+          query = query.eq("class_name", className);
+        } else {
+          query = query.eq("className", className);
+        }
+        const { error } = await query;
 
         if (error) {
           console.error("Supabase delete by class failed:", error.message);
@@ -351,13 +492,20 @@ class DatabaseService {
   public async getClasses(): Promise<SchoolClass[]> {
     if (this.supabase) {
       try {
+        await this.checkClassesSchema();
         const { data, error } = await this.supabase
           .from("portal_classes")
-          .select("*")
-          .order("className", { ascending: true });
+          .select("*");
 
         if (!error && data) {
-          return data as SchoolClass[];
+          const mapped = data.map((row: any) => ({
+            id: row.id,
+            className: row.className || row.class_name || "",
+            gradeLevel: row.gradeLevel || row.grade_level || "",
+            advisorName: row.advisorName || row.advisor_name || "",
+            roomNumber: row.roomNumber || row.room_number || ""
+          }));
+          return mapped.sort((a, b) => a.className.localeCompare(b.className));
         }
         console.warn("Supabase portal_classes query failed. (Does the table exist yet?):", error?.message);
       } catch (err) {
@@ -391,9 +539,24 @@ class DatabaseService {
 
     if (this.supabase) {
       try {
+        await this.checkClassesSchema();
+        const mapped = classes.map(c => {
+          if (this.isSnakeCaseClasses) {
+            return {
+              id: c.id,
+              class_name: c.className,
+              grade_level: c.gradeLevel,
+              advisor_name: c.advisorName,
+              room_number: c.roomNumber
+            };
+          } else {
+            return c;
+          }
+        });
+
         const { error } = await this.supabase
           .from("portal_classes")
-          .upsert(classes);
+          .upsert(mapped);
 
         if (error) {
           console.error("Supabase portal_classes upsert failed:", error.message);
