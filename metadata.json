@@ -1,0 +1,6 @@
+{
+  "name": "Tra Cứu Kết Quả Học Tập Học Sinh THCS",
+  "description": "Hệ thống tra cứu trực tuyến kết quả học tập, rèn luyện học bạ điện tử dành cho học sinh trung học cơ sở THCS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

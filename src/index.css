@@ -1,0 +1,95 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;750;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Times New Roman", "Times", "Georgia", serif;
+  --font-serif: "Times New Roman", "Times", "Georgia", serif;
+}
+
+/* Base style resets */
+body {
+  font-family: "Times New Roman", "Times", "Georgia", serif;
+  background-color: #EEF2F5;
+  color: #1E293B;
+}
+
+/* Custom animation effects */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Extreme Print layout adaptations for browser print-to-PDF */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt;
+  }
+  
+  /* Hide interactive panels, filters, headers, and actions */
+  .no-print, 
+  #btn-shortcut-admin,
+  #btn-back-query,
+  #btn-export-excel,
+  #btn-print-pdf,
+  header,
+  footer,
+  aside,
+  nav,
+  input,
+  select,
+  button {
+    display: none !important;
+  }
+
+  /* Make transcript fit and occupy full width on standard printer page */
+  #app-root, #student-result-container {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  #print-card-area {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Expose specific components to print page */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Table styling enhancements on printed media */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  
+  th, td {
+    border: 1px solid #94A3B8 !important;
+    padding: 4px 8px !important;
+    font-size: 10pt !important;
+  }
+
+  th {
+    background-color: #0055A5 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
