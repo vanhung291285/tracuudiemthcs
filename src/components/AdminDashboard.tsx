@@ -218,7 +218,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     if (authEmail.trim() === "admin@edu.vn" && authPassword === "admin123") {
       setIsAuthenticated(true);
     } else {
-      setAuthError("Tài khoản hoặc mật khẩu không chính xác. (Gợi ý dùng tài khoản thử nghiệm: admin@edu.vn / mật khẩu: admin123)");
+      setAuthError("Tài khoản hoặc mật khẩu không chính xác.");
     }
     setAuthIsLoading(false);
   };
@@ -1391,16 +1391,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                   {authIsLoading ? "Đang xác thực..." : "ĐĂNG NHẬP HỆ THỐNG"}
                 </button>
               </form>
-
-              {/* Master Account Help Banner */}
-              <div className="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-900 flex gap-2">
-                <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block font-bold mb-0.5">Tài khoản quản trị nhanh (Cấp sẵn):</strong>
-                  <div className="font-semibold text-blue-900">Email: <span className="font-mono bg-white px-1 border select-all">admin@edu.vn</span></div>
-                  <div className="font-semibold text-blue-900 mt-0.5">Mật khẩu: <span className="font-mono bg-white px-1 border select-all">admin123</span></div>
-                </div>
-              </div>
 
             </div>
           </div>
