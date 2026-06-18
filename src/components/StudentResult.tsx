@@ -111,13 +111,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     
     // Grade Sheet Header
     csvContent += "BẢNG KẾT QUẢ HỌC TẬP\n";
-    csvContent += "Môn học,Cuối kì I,ĐTB học kỳ I,Cuối kì II,ĐTB học kỳ II,Cả năm\n";
+    csvContent += "Môn học,Cuối kì I,Cuối kì II,Cả năm\n";
     
     student.subjects.forEach(sub => {
       if (sub.isEvaluatedByScore) {
-        csvContent += `"${sub.subjectName}",${sub.end1 || ""},${sub.semester1 || ""},${sub.end2 || ""},${sub.semester2 || ""},${sub.yearAvg || ""}\n`;
+        csvContent += `"${sub.subjectName}",${sub.end1 || ""},${sub.end2 || ""},${sub.yearAvg || ""}\n`;
       } else {
-        csvContent += `"${sub.subjectName}","","${sub.semester1 || ""}","","${sub.semester2 || ""}","${sub.yearAvg || ""}"\n`;
+        csvContent += `"${sub.subjectName}","${sub.semester1 || ""}","${sub.semester2 || ""}","${sub.yearAvg || ""}"\n`;
       }
     });
 
@@ -277,16 +277,10 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
           <table className="w-full text-left text-sm border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-[#0055A5] text-white text-xs uppercase divide-x divide-blue-400">
-                <th rowSpan={2} className="px-4 py-3 font-black text-center w-48">Môn học</th>
-                <th colSpan={2} className={`px-4 py-2 font-black text-center border-b border-blue-400 transition-colors ${term === "hk1" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>Học kỳ I</th>
-                <th colSpan={2} className={`px-4 py-2 font-black text-center border-b border-blue-400 transition-colors ${term === "hk2" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>Học kỳ II</th>
-                <th rowSpan={2} className={`px-4 py-3 font-black text-center w-24 transition-colors ${term === "canam" ? "bg-[#E53935]" : "bg-[#004282]"}`}>Cả năm</th>
-              </tr>
-              <tr className="bg-[#0055A5]/90 text-white text-[10px] uppercase divide-x divide-blue-400">
-                <th className={`px-2 py-1.5 font-bold text-center w-16 ${term === "hk1" ? "bg-amber-500/20 text-yellow-300" : ""}`}>Cuối kì</th>
-                <th className={`px-2 py-1.5 font-bold text-center w-20 bg-[#004282] ${term === "hk1" ? "bg-yellow-300 text-[#0055A5] !font-black" : ""}`}>Học kỳ 1</th>
-                <th className={`px-2 py-1.5 font-bold text-center w-16 ${term === "hk2" ? "bg-amber-500/20 text-yellow-300" : ""}`}>Cuối kì</th>
-                <th className={`px-2 py-1.5 font-bold text-center w-20 bg-[#004282] ${term === "hk2" ? "bg-yellow-300 text-[#0055A5] !font-black" : ""}`}>Học kỳ 2</th>
+                <th className="px-4 py-3 font-black text-center w-48">Môn học</th>
+                <th className={`px-4 py-3 font-black text-center w-32 transition-colors ${term === "hk1" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>Cuối kì I</th>
+                <th className={`px-4 py-3 font-black text-center w-32 transition-colors ${term === "hk2" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>Cuối kì II</th>
+                <th className={`px-4 py-3 font-black text-center w-28 transition-colors ${term === "canam" ? "bg-[#E53935]" : "bg-[#004282]"}`}>Cả năm</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-300">
@@ -303,38 +297,28 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                     
                     {/* Semester 1 Details */}
                     {sub.isEvaluatedByScore ? (
-                      <>
-                        <td className={`px-2 py-2 text-slate-655 border-r border-slate-300 font-semibold transition-colors ${term === "hk1" ? "bg-amber-100/40 text-slate-900 !font-black" : ""}`}>
-                          {sub.end1 !== undefined ? sub.end1.toFixed(1) : "-"}
-                        </td>
-                        <td className={`px-2 py-2 font-bold border-r border-slate-300 transition-colors ${term === "hk1" ? "bg-amber-100/60 text-slate-950 font-black text-base" : "text-slate-900 bg-slate-50/80"}`}>
-                          {typeof sub.semester1 === "number" ? sub.semester1.toFixed(1) : sub.semester1 || "-"}
-                        </td>
-                      </>
+                      <td className={`px-2 py-2.5 text-slate-700 border-r border-slate-300 font-semibold transition-colors ${term === "hk1" ? "bg-amber-100/40 text-slate-900 !font-black" : ""}`}>
+                        {sub.end1 !== undefined ? sub.end1.toFixed(1) : "-"}
+                      </td>
                     ) : (
-                      <td colSpan={2} className={`px-2 py-2 font-black border-r border-slate-300 uppercase text-center text-xs transition-colors ${term === "hk1" ? "bg-amber-50/30 text-emerald-800 font-bold" : "text-emerald-600"}`}>
+                      <td className={`px-2 py-2.5 font-black border-r border-slate-300 uppercase text-center text-xs transition-colors ${term === "hk1" ? "bg-amber-50/30 text-emerald-800 font-bold" : "text-emerald-600"}`}>
                         {sub.semester1 || "Chưa đánh giá"}
                       </td>
                     )}
 
                     {/* Semester 2 Details */}
                     {sub.isEvaluatedByScore ? (
-                      <>
-                        <td className={`px-2 py-2 text-slate-655 border-r border-slate-300 font-semibold transition-colors ${term === "hk2" ? "bg-amber-100/40 text-slate-900 !font-black" : ""}`}>
-                          {sub.end2 !== undefined ? sub.end2.toFixed(1) : "-"}
-                        </td>
-                        <td className={`px-2 py-2 font-bold border-r border-slate-300 transition-colors ${term === "hk2" ? "bg-amber-100/60 text-slate-950 font-black text-base" : "text-slate-900 bg-slate-50/80"}`}>
-                          {typeof sub.semester2 === "number" ? sub.semester2.toFixed(1) : sub.semester2 || "-"}
-                        </td>
-                      </>
+                      <td className={`px-2 py-2.5 text-slate-700 border-r border-slate-300 font-semibold transition-colors ${term === "hk2" ? "bg-amber-100/40 text-slate-900 !font-black" : ""}`}>
+                        {sub.end2 !== undefined ? sub.end2.toFixed(1) : "-"}
+                      </td>
                     ) : (
-                      <td colSpan={2} className={`px-2 py-2 font-black border-r border-slate-300 uppercase text-center text-xs transition-colors ${term === "hk2" ? "bg-amber-50/30 text-emerald-800 font-bold" : "text-emerald-600"}`}>
+                      <td className={`px-2 py-2.5 font-black border-r border-slate-300 uppercase text-center text-xs transition-colors ${term === "hk2" ? "bg-amber-50/30 text-emerald-800 font-bold" : "text-emerald-600"}`}>
                         {sub.semester2 || "Chưa đánh giá"}
                       </td>
                     )}
 
                     {/* Year Average (Cả năm) */}
-                    <td className={`px-2 py-2 font-black text-white text-center w-24 border-none text-[13px] transition-all ${
+                    <td className={`px-2 py-2.5 font-black text-white text-[#ffffff] text-center w-28 border-none text-[13px] transition-all ${
                       term === "canam" ? "bg-[#E53935] font-extrabold text-[14px] ring-2 ring-red-300 ring-inset" : 
                       sub.yearAvg === "Chưa đạt" ? "bg-rose-600" : 
                       sub.yearAvg === "Đạt" ? "bg-emerald-600" :
