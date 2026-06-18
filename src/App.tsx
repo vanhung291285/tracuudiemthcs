@@ -11,6 +11,8 @@ import { Student } from "./types";
 import { dbService } from "./lib/supabase";
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false);
+
   // Synchronize configuration from server on mount to handle session/browser switching automatically
   useEffect(() => {
     const sync = async () => {
@@ -18,6 +20,8 @@ export default function App() {
         await dbService.syncConfigFromServer();
       } catch (e) {
         console.warn("Could not sync config from server on mount:", e);
+      } finally {
+        setIsReady(true);
       }
     };
     sync();
@@ -69,6 +73,17 @@ export default function App() {
   };
 
   // Switch dynamically between pages
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-[#EEF2F5] flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-[#0055A5] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">Đang nạp cấu hình hệ thống...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#EEF2F5] text-slate-800 flex flex-col font-sans select-none relative selection:bg-[#0055A5]/20 selection:text-[#0055A5]" id="app-root">
       
