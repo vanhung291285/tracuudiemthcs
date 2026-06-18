@@ -177,16 +177,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           </div>
         </div>
 
-        {/* Quick Admin Navigation */}
-        <button
-          onClick={onNavigateToAdmin}
-          id="btn-shortcut-admin"
-          className="absolute right-4 top-4 bg-white/10 hover:bg-white/20 transition rounded-md p-1.5 text-white flex items-center gap-1 text-[10px] uppercase font-black px-2.5 py-1 cursor-pointer"
-          title="Trang quản trị học tịch"
-        >
-          <Key className="w-3 h-3" />
-          <span>Quản Trị</span>
-        </button>
+
       </header>
 
       {/* Main Content Area: Side-By-Side Redesigned Portal */}
@@ -601,10 +592,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           </p>
           <div className="flex justify-center gap-4 text-[10px] text-slate-400 pt-2 border-t border-slate-200 max-w-sm mx-auto">
             <span>{footerCopy}</span>
-            <span>•</span>
-            <button onClick={onNavigateToAdmin} className="text-[#0055A5] hover:underline cursor-pointer font-black uppercase">
-              Cổng quản trị viên
-            </button>
           </div>
         </div>
       </footer>
