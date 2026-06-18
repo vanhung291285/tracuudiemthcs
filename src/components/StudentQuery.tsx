@@ -202,7 +202,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               
               <div className="p-6 md:p-8">
                 <h2 className="text-base font-black text-[#0055A5] uppercase text-center mb-1.5 tracking-tight">
-                  BIỂU MẪU TRA CỨU HỌC TỊCH
+                  TRA CỨU KẾT QUẢ HỌC TẬP
                 </h2>
                 <p className="text-xs text-slate-500 text-center mb-6 font-semibold">
                   Vui lòng điền thông tin định danh học sinh bên dưới để truy xuất học bạ điện tử gốc.
