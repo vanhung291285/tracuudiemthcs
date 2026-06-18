@@ -2572,21 +2572,21 @@ ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai students" ON students;
 DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác students" ON students;
 CREATE POLICY "Cho phép đọc công khai students" ON students FOR SELECT USING (true);
-CREATE POLICY "Cho phép thực hiện mọi thao tác students" ON students FOR ALL USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác students" ON students FOR ALL USING (true) WITH CHECK (true);
 
 -- B. Áp dụng cho bảng lớp học (portal_classes)
 ALTER TABLE portal_classes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai portal_classes" ON portal_classes;
 DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes;
 CREATE POLICY "Cho phép đọc công khai portal_classes" ON portal_classes FOR SELECT USING (true);
-CREATE POLICY "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes FOR ALL USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes FOR ALL USING (true) WITH CHECK (true);
 
 -- C. Áp dụng cho bảng cấu hình (portal_settings)
 ALTER TABLE portal_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai portal_settings" ON portal_settings;
 DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings;
 CREATE POLICY "Cho phép đọc công khai portal_settings" ON portal_settings FOR SELECT USING (true);
-CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true);`}
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true) WITH CHECK (true);`}
                         </pre>
                       </div>
 
@@ -2641,21 +2641,21 @@ ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai students" ON students;
 DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác students" ON students;
 CREATE POLICY "Cho phép đọc công khai students" ON students FOR SELECT USING (true);
-CREATE POLICY "Cho phép thực hiện mọi thao tác students" ON students FOR ALL USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác students" ON students FOR ALL USING (true) WITH CHECK (true);
 
 -- B. Áp dụng cho bảng lớp học (portal_classes)
 ALTER TABLE portal_classes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai portal_classes" ON portal_classes;
 DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes;
 CREATE POLICY "Cho phép đọc công khai portal_classes" ON portal_classes FOR SELECT USING (true);
-CREATE POLICY "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes FOR ALL USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes FOR ALL USING (true) WITH CHECK (true);
 
 -- C. Áp dụng cho bảng cấu hình (portal_settings)
 ALTER TABLE portal_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai portal_settings" ON portal_settings;
 DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings;
 CREATE POLICY "Cho phép đọc công khai portal_settings" ON portal_settings FOR SELECT USING (true);
-CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true);`}
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true) WITH CHECK (true);`}
                         </pre>
                       </div>
                     </div>
