@@ -134,6 +134,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [importMethod, setImportMethod] = useState<"paste" | "upload">("paste");
   const [importPreview, setImportPreview] = useState<Student[]>([]);
   const [importStatus, setImportStatus] = useState("");
+  const [importErrors, setImportErrors] = useState<string[]>([]);
 
   // Load initial students list
   useEffect(() => {
@@ -600,7 +601,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       loadStudents();
       setIsFormOpen(false);
     } else {
-      setFormError("Không thể lưu học sinh. Kiểm tra trùng mã học sinh/CCCD hoặc kết nối Supabase.");
+      const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
+      setFormError(`Không thể lưu học sinh. Kiểm tra trùng mã học sinh/CCCD hoặc kết nối Supabase.${dbErr}`);
     }
   };
 
@@ -672,6 +674,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const parseDataAndPreview = (textToParse: string) => {
     if (!textToParse.trim()) {
       setImportStatus("Mời nhập/dán dữ liệu hoặc chọn tệp Excel trước.");
+      setImportErrors([]);
       return;
     }
 
@@ -680,6 +683,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const parsedResults: Student[] = [];
       const targetClassObj = classes.find(c => c.className === importClass);
       const gradeLvl = targetClassObj?.gradeLevel || "9";
+      const collectedErrors: string[] = [];
 
       // Subject translation map matching columns 4-15
       const subjIdsOrdered = [
@@ -697,12 +701,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         "trai_nghiem"    // Hoạt động trải nghiệm, hướng nghiệp (15)
       ];
 
-      lines.forEach((line) => {
+      lines.forEach((line, idx) => {
+        if (!line.trim()) return;
         const parts = line.split("\t");
-        // Minimum length elements should contain CCCD, Name, DOB (usually parts.length >= 4)
-        if (parts.length >= 4 && parts[1]?.trim()) {
-          const rawCode = parts[1].trim();
-          // Skip header row if matches STT, CCCD, Mã học sinh
+        const rowNum = idx + 1;
+
+        // Skip header row if matches STT, CCCD, Mã học sinh
+        if (parts.length >= 2) {
+          const rawCode = parts[1]?.trim() || "";
           if (rawCode === "Mã học sinh" || 
               rawCode === "Số CCCD" || 
               rawCode === "CCCD" ||
@@ -713,12 +719,72 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               rawCode === "12 số") {
             return;
           }
+        }
+
+        // We process rows with some integrity
+        if (parts.length >= 4) {
+          const rawCode = parts[1]?.trim() || "";
+          const fullName = parts[2]?.trim() || "";
+          const dob = parts[3]?.trim() || "";
+
+          // Validation of key attributes
+          if (!rawCode) {
+            collectedErrors.push(`Dòng ${rowNum}: Thiếu Số CCCD (CCCD đóng vai trò là mã định danh quản lý, bắt buộc phải điền).`);
+            return;
+          }
 
           const studentCode = rawCode.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
-          if (!studentCode) return;
+          if (!studentCode) {
+            collectedErrors.push(`Dòng ${rowNum}: Số CCCD "${rawCode}" không chứa ký tự hợp lệ.`);
+            return;
+          }
 
-          const fullName = parts[2]?.trim() || "Chưa nhập họ tên";
-          const dob = parts[3]?.trim() || "2011-01-01";
+          if (!/^[0-9]{12}$/.test(studentCode)) {
+            collectedErrors.push(`Dòng ${rowNum} (${fullName || "Chưa nhập họ tên"}): Số CCCD "${rawCode}" không chuẩn 12 chữ số theo quy định.`);
+          }
+
+          if (!fullName) {
+            collectedErrors.push(`Dòng ${rowNum}: Chưa nhập họ tên của học sinh.`);
+          }
+
+          if (!dob) {
+            collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Chưa nhập ngày sinh.`);
+          } else {
+            const dobRegex = /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/[0-9]{4}$/;
+            const alternativeDbRegex = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/; // YYYY-MM-DD
+            if (!dobRegex.test(dob) && !alternativeDbRegex.test(dob)) {
+              collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Ngày sinh "${dob}" không đúng định dạng. Yêu cầu nhập DD/MM/YYYY (ví dụ: 15/05/2011) hoặc YYYY-MM-DD.`);
+            }
+          }
+
+          // Subject score and grade validations
+          const subjNames = [
+            "Toán học", "Lịch sử và Địa lí", "Khoa học tự nhiên", "Tin học", "Ngữ văn", "Ngoại ngữ", "GDCD", "Công nghệ",
+            "Giáo dục thể chất", "Nghệ thuật", "Nội dung giáo dục của địa phương", "Hoạt động trải nghiệm, hướng nghiệp"
+          ];
+
+          subjNames.forEach((sName, subIdx) => {
+            const colIndex = 4 + subIdx;
+            const rawVal = parts[colIndex]?.trim() || "";
+            if (subIdx < 8) {
+              // Evaluated by float score
+              if (rawVal) {
+                const clean = rawVal.replace(",", ".");
+                const parsed = parseFloat(clean);
+                if (isNaN(parsed) || parsed < 0 || parsed > 10) {
+                  collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Điểm số môn ${sName} "${rawVal}" không hợp lệ (Phải từ 0 đến 10).`);
+                }
+              }
+            } else {
+              // Evaluated by check comment "Đạt" or "Chưa đạt"
+              if (rawVal) {
+                const cleanLower = rawVal.toLowerCase();
+                if (cleanLower !== "đạt" && cleanLower !== "chưa đạt" && cleanLower !== "đ" && cleanLower !== "cd") {
+                  collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Nhận xét môn ${sName} "${rawVal}" không đúng chuẩn quy định (Nhập "Đạt", "Chưa đạt", "Đ", hoặc "CD").`);
+                }
+              }
+            }
+          });
 
           // Helper definitions
           const parseScore = (val: string): number => {
@@ -823,6 +889,23 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           let distinction: any = existing?.distinction || "Không";
           let notes = existing?.notes || "";
 
+          const academicVal = parts[16];
+          const behaviorVal = parts[17];
+
+          if (academicVal) {
+            const cleanAc = academicVal.trim().toLowerCase();
+            if (cleanAc !== "tốt" && cleanAc !== "khá" && cleanAc !== "đạt" && cleanAc !== "chưa đạt" && cleanAc !== "t" && cleanAc !== "k" && cleanAc !== "đ" && cleanAc !== "cd") {
+              collectedErrors.push(`Dòng ${rowNum} (${fullName}): Học lực "${academicVal}" không hợp lệ (Phải là Tốt, Khá, Đạt hoặc Chưa đạt).`);
+            }
+          }
+
+          if (behaviorVal) {
+            const cleanBe = behaviorVal.trim().toLowerCase();
+            if (cleanBe !== "tốt" && cleanBe !== "khá" && cleanBe !== "đạt" && cleanBe !== "chưa đạt" && cleanBe !== "t" && cleanBe !== "k" && cleanBe !== "đ" && cleanBe !== "cd") {
+              collectedErrors.push(`Dòng ${rowNum} (${fullName}): Hạnh kiểm "${behaviorVal}" không hợp lệ (Phải là Tốt, Khá, Đạt hoặc Chưa đạt).`);
+            }
+          }
+
           if (importTerm === "hk1") {
             academicGrade = parseAcademic(parts[16]);
             behaviorGrade = parseBehavior(parts[17]);
@@ -868,9 +951,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         }
       });
 
+      setImportErrors(collectedErrors);
+
       if (parsedResults.length > 0) {
         setImportPreview(parsedResults);
-        setImportStatus(`Phân tích thành công ${parsedResults.length} dòng dữ liệu học sinh lớp ${importClass} (${importTerm === "hk1" ? "Học kỳ I" : importTerm === "hk2" ? "Học kỳ II" : "Cả năm"}).`);
+        let statusMsg = `Phân tích thành công ${parsedResults.length} dòng dữ liệu học sinh lớp ${importClass} (${importTerm === "hk1" ? "Học kỳ I" : importTerm === "hk2" ? "Học kỳ II" : "Cả năm"}).`;
+        if (collectedErrors.length > 0) {
+          statusMsg += ` Chú ý: Phát hiện ${collectedErrors.length} lỗi/cảnh báo định dạng. Xem chi tiết bên dưới.`;
+        }
+        setImportStatus(statusMsg);
       } else {
         setImportStatus("Không tìm thấy dòng dữ liệu hợp lệ. Vui lòng kiểm tra lại cấu trúc hàng cột.");
       }
@@ -1102,13 +1191,30 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     if (importPreview.length === 0) return;
     setAuthIsLoading(true);
     let successfullySaved = 0;
+    const errors: string[] = [];
+
     for (const student of importPreview) {
       const res = await dbService.upsertStudent(student);
-      if (res) successfullySaved++;
+      if (res) {
+        successfullySaved++;
+      } else {
+        if (dbService.lastError) {
+          errors.push(dbService.lastError);
+        }
+      }
     }
     setAuthIsLoading(false);
-    alert(`Hoàn thành! Đã nhập thành công ${successfullySaved} học sinh mới vào cơ sở dữ liệu học tịch.`);
+
+    if (successfullySaved === importPreview.length) {
+      alert(`Hoàn thành! Đã nhập thành công ${successfullySaved} học sinh mới vào cơ sở dữ liệu học tịch.`);
+    } else {
+      const uniqueErrors = Array.from(new Set(errors));
+      const errorMsg = uniqueErrors.length > 0 ? `\nChi tiết lỗi từ Supabase: ${uniqueErrors.join(", ")}` : "";
+      alert(`Đăng ký không thành công trọn vẹn!\n- Đã nhập thành công: ${successfullySaved}/${importPreview.length} học sinh.${errorMsg}\n\nGợi ý khắc phục: Đảm bảo bạn đã cấu hình đúng kết nối trong tab Cấu hình hệ thống, và đã thực thi câu lệnh SQL khởi tạo bảng "students" trên Supabase Dashboard.`);
+    }
+
     setImportPreview([]);
+    setImportErrors([]);
     setImportText("");
     loadStudents();
     setActiveTab("students");
@@ -1640,6 +1746,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       onClick={() => {
                         setImportTerm("hk1");
                         setImportPreview([]);
+                        setImportErrors([]);
                         setImportStatus("");
                       }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -1652,6 +1759,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       onClick={() => {
                         setImportTerm("hk2");
                         setImportPreview([]);
+                        setImportErrors([]);
                         setImportStatus("");
                       }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -1664,6 +1772,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       onClick={() => {
                         setImportTerm("canam");
                         setImportPreview([]);
+                        setImportErrors([]);
                         setImportStatus("");
                       }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -1696,6 +1805,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         onChange={(e) => {
                           setImportClass(e.target.value);
                           setImportPreview([]);
+                          setImportErrors([]);
                           setImportStatus("");
                         }}
                         className="bg-white cursor-pointer border hover:border-blue-400 font-bold text-xs px-2.5 py-1 rounded-lg outline-none transition text-slate-800"
@@ -1954,6 +2064,25 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       <FileCheck className="w-5 h-5 text-emerald-600" />
                       Xem Trước Dữ Liệu Đồng Bộ ({importPreview.length} dòng)
                     </h3>
+
+                    {importErrors.length > 0 && (
+                      <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-xl space-y-2">
+                        <span className="font-extrabold text-xs text-red-800 flex items-center gap-1.5 uppercase">
+                          <X className="w-4 h-4 text-red-500 shrink-0" />
+                          Phát hiện {importErrors.length} lỗi/cảnh báo dữ liệu:
+                        </span>
+                        <div className="max-h-[160px] overflow-y-auto divide-y divide-red-100 text-[10px] text-red-700 font-medium space-y-1 pr-1 font-mono">
+                          {importErrors.map((err, errIdx) => (
+                            <div key={errIdx} className="pt-1.5 first:pt-0">
+                              ⚠️ {err}
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-red-500 leading-relaxed font-semibold">
+                          * Lưu ý: Mặc dù chương trình vẫn tự động làm sạch & nạp dữ liệu đi kèm giá trị mặc định, bạn nên rà soát lại định dạng để đảm bảo độ chính xác tuyệt đối.
+                        </p>
+                      </div>
+                    )}
                     
                     {importPreview.length > 0 ? (
                       <div className="space-y-4">
