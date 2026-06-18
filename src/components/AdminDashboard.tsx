@@ -121,6 +121,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [editingStudentCode, setEditingStudentCode] = useState<string | null>(null);
   const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
   const [tempGradeValue, setTempGradeValue] = useState("");
+  const [gradesTerm, setGradesTerm] = useState<"hk1" | "hk2" | "canam">("hk1");
 
   // Supabase dynamic config
   const [supabaseUrl, setSupabaseUrl] = useState("");
@@ -625,37 +626,77 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               alert("Điểm số phải chạy từ 0 đến 10.");
               return sub;
             }
-            return {
-              ...sub,
-              yearAvg: numVal,
-              semester1: numVal, // write simplifications
-              semester2: numVal
-            };
+            
+            const updatedSub = { ...sub };
+            if (gradesTerm === "hk1") {
+              updatedSub.semester1 = numVal;
+            } else if (gradesTerm === "hk2") {
+              updatedSub.semester2 = numVal;
+            } else {
+              updatedSub.yearAvg = numVal;
+            }
+
+            // Recalculate yearAvg if both semester1 and semester2 are available
+            const s1 = typeof updatedSub.semester1 === "number" ? updatedSub.semester1 : null;
+            const s2 = typeof updatedSub.semester2 === "number" ? updatedSub.semester2 : null;
+            if (s1 !== null && s2 !== null) {
+              updatedSub.yearAvg = parseFloat(((s1 + s2) / 2).toFixed(1));
+            } else if (s1 !== null) {
+              updatedSub.yearAvg = s1;
+            } else if (s2 !== null) {
+              updatedSub.yearAvg = s2;
+            }
+
+            return updatedSub;
           } else {
-            const cleanVal = tempGradeValue.trim() === "Đạt" || tempGradeValue.trim() === "dat" ? "Đạt" : "Chưa đạt";
-            return {
-              ...sub,
-              yearAvg: cleanVal,
-              semester1: cleanVal,
-              semester2: cleanVal
-            };
+            const cleanVal = tempGradeValue.trim() === "Đạt" || tempGradeValue.trim() === "dat" || tempGradeValue.trim() === "Đ" || tempGradeValue.trim() === "đ" ? "Đạt" : "Chưa đạt";
+            
+            const updatedSub = { ...sub };
+            if (gradesTerm === "hk1") {
+              updatedSub.semester1 = cleanVal;
+            } else if (gradesTerm === "hk2") {
+              updatedSub.semester2 = cleanVal;
+            } else {
+              updatedSub.yearAvg = cleanVal;
+            }
+
+            // Recalculate yearAvg for comment
+            const s1 = updatedSub.semester1;
+            const s2 = updatedSub.semester2;
+            if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
+              updatedSub.yearAvg = "Chưa đạt";
+            } else if (s1 === "Đạt" || s2 === "Đạt") {
+              updatedSub.yearAvg = "Đạt";
+            }
+
+            return updatedSub;
           }
         }
         return sub;
       });
 
-      // Compute overall average
+      // Compute overall average based on Year averages to maintain correct persistent annual state
       const scoreSubjects = updatedSubjects.filter(s => s.isEvaluatedByScore);
       const totalScore = scoreSubjects.reduce((sum, s) => sum + (typeof s.yearAvg === "number" ? s.yearAvg : 0), 0);
-      const newGpa = totalScore / scoreSubjects.length;
+      const newGpa = scoreSubjects.length > 0 ? (totalScore / scoreSubjects.length) : 0.0;
 
       let academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" = "Chưa đạt";
-      if (newGpa >= 8.0 && updatedSubjects.every(sub => !sub.isEvaluatedByScore ? sub.yearAvg === "Đạt" : (typeof sub.yearAvg === "number" && sub.yearAvg >= 6.5))) {
-        academicGrade = "Tốt";
-      } else if (newGpa >= 6.5 && updatedSubjects.every(sub => !sub.isEvaluatedByScore ? sub.yearAvg === "Đạt" : (typeof sub.yearAvg === "number" && sub.yearAvg >= 5.0))) {
-        academicGrade = "Khá";
-      } else if (newGpa >= 5.0 && updatedSubjects.every(sub => !sub.isEvaluatedByScore ? sub.yearAvg === "Đạt" : (typeof sub.yearAvg === "number" && sub.yearAvg >= 3.5))) {
-        academicGrade = "Đạt";
+      if (scoreSubjects.length > 0) {
+        const nonScorePassed = updatedSubjects
+          .filter(s => !s.isEvaluatedByScore)
+          .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
+
+        const allAbove65 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 6.5);
+        const allAbove50 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 5.0);
+        const allAbove35 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 3.5);
+
+        if (newGpa >= 8.0 && nonScorePassed && allAbove65) {
+          academicGrade = "Tốt";
+        } else if (newGpa >= 6.5 && nonScorePassed && allAbove50) {
+          academicGrade = "Khá";
+        } else if (newGpa >= 5.0 && nonScorePassed && allAbove35) {
+          academicGrade = "Đạt";
+        }
       }
 
       const updatedStudent: Student = {
@@ -1584,19 +1625,70 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                 <div>
                   <h1 className="text-xl font-bold text-slate-800">Sổ Điểm Điện Tử Trực Quan</h1>
                   <p className="text-xs text-slate-500">
-                    Nhấp trực tiếp vào ô điểm để sửa đổi cập nhật kết quả năm học của môn học. Hệ thống sẽ tự động tính toán lại Học lực & Danh hiệu.
+                    Nhấp trực tiếp vào ô điểm để sửa đổi cập nhật kết quả học tập của môn học theo học kỳ tương ứng. Hệ thống sẽ tự động tính toán lại Học lực & Danh hiệu.
                   </p>
                 </div>
 
-                <div className="bg-white border rounded-lg p-4 flex gap-3 max-w-sm">
-                  <select
-                    value={selectedClass}
-                    onChange={(e) => setSelectedClass(e.target.value)}
-                    className="border text-xs px-3 py-2 rounded-lg text-slate-700 bg-white flex-1"
-                  >
-                    <option value="all">Hiển thị toàn trường</option>
-                    {uniqueClasses.map(c => <option key={c} value={c}>Lớp {c}</option>)}
-                  </select>
+                <div className="bg-white border rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
+                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Chọn Lớp Quản Lý</span>
+                    <select
+                      value={selectedClass}
+                      onChange={(e) => setSelectedClass(e.target.value)}
+                      className="border text-xs px-3 py-2.5 rounded-lg text-slate-700 bg-white hover:border-slate-300 font-bold outline-none cursor-pointer w-full sm:w-48"
+                    >
+                      <option value="all">Hiển thị toàn trường</option>
+                      {uniqueClasses.map(c => <option key={c} value={c}>Lớp {c}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Học Kỳ Khảo Sát</span>
+                    <div className="flex bg-slate-100 p-1 rounded-lg border">
+                      <button
+                        onClick={() => {
+                          setGradesTerm("hk1");
+                          setEditingStudentCode(null);
+                          setEditingSubjectId(null);
+                        }}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                          gradesTerm === "hk1"
+                            ? "bg-[#0055A5] text-white shadow-sm"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        }`}
+                      >
+                        Học kỳ I
+                      </button>
+                      <button
+                        onClick={() => {
+                          setGradesTerm("hk2");
+                          setEditingStudentCode(null);
+                          setEditingSubjectId(null);
+                        }}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                          gradesTerm === "hk2"
+                            ? "bg-[#0055A5] text-white shadow-sm"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        }`}
+                      >
+                        Học kỳ II
+                      </button>
+                      <button
+                        onClick={() => {
+                          setGradesTerm("canam");
+                          setEditingStudentCode(null);
+                          setEditingSubjectId(null);
+                        }}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                          gradesTerm === "canam"
+                            ? "bg-[#0055A5] text-white shadow-sm"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        }`}
+                      >
+                        Cả Năm
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Simple Multi-cell sheet */}
@@ -1608,32 +1700,80 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                           <th className="px-4 py-3 w-40 sticky left-0 bg-white shadow-md z-10">Mã & Tên Học Sinh</th>
                           
                           {/* Score-based subjects */}
-                          <th className="px-1 py-3 text-center w-16">Toán<div className="text-[7px] text-slate-400 font-normal normales">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Sử & Địa<div className="text-[7px] text-slate-400 font-normal normales">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">KHTN<div className="text-[7px] text-slate-400 font-normal normales">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Tin Học<div className="text-[7px] text-slate-400 font-normal normales">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Ngữ Văn<div className="text-[7px] text-slate-400 font-normal normales">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Ngoại Ngữ<div className="text-[7px] text-slate-400 font-normal normales">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">GDCD<div className="text-[7px] text-slate-400 font-normal normales">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Công Nghệ<div className="text-[7px] text-slate-400 font-normal normales">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-16">Toán<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-16">Sử & Địa<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-16">KHTN<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-16">Tin Học<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-16">Ngữ Văn<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-16">Ngoại Ngữ<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-16">GDCD<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-16">Công Nghệ<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
 
                           {/* Comment-based subjects */}
-                          <th className="px-1 py-3 text-center w-20">Giáo dục TC<div className="text-[7px] text-slate-400 font-normal normales">(N.xét)</div></th>
-                          <th className="px-1 py-3 text-center w-20">Nghệ Thuật<div className="text-[7px] text-slate-400 font-normal normales">(N.xét)</div></th>
-                          <th className="px-1 py-3 text-center w-20">GD Địa Phương<div className="text-[7px] text-slate-400 font-normal normales">(N.xét)</div></th>
-                          <th className="px-1 py-3 text-center w-20">Trải Nghiệm HN<div className="text-[7px] text-slate-400 font-normal normales">(N.xét)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Giáo dục TC<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Nghệ Thuật<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
+                          <th className="px-1 py-3 text-center w-20">GD Địa Phương<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Trải Nghiệm HN<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
 
+                          <th className="px-2 py-3 text-center bg-amber-50 text-amber-800 w-20 font-black">
+                            {gradesTerm === "hk1" ? "ĐTB HK I" : gradesTerm === "hk2" ? "ĐTB HK II" : "ĐTB Cả Năm"}
+                          </th>
                           <th className="px-3 py-3 text-center bg-slate-50 w-24">Kết Quả Chung</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {filteredStudents.map(student => {
                           const getSubjectVal = (id: string) => student.subjects.find(s => s.subjectId === id);
+                          
+                          // Calculate live Term GPA and Classification
+                          const scoreSubjects = student.subjects.filter(s => s.isEvaluatedByScore);
+                          let scoreCount = 0;
+                          let scoreSum = 0;
+                          scoreSubjects.forEach(s => {
+                            const val = gradesTerm === "hk1" ? s.semester1 : gradesTerm === "hk2" ? s.semester2 : s.yearAvg;
+                            if (typeof val === "number") {
+                              scoreSum += val;
+                              scoreCount++;
+                            }
+                          });
+                          const termGpa = scoreCount > 0 ? (scoreSum / scoreCount) : 0.0;
+
+                          let termAcademicGrade = "Chưa đạt";
+                          if (scoreCount > 0) {
+                            const nonScorePassed = student.subjects
+                              .filter(s => !s.isEvaluatedByScore)
+                              .every(s => {
+                                const val = gradesTerm === "hk1" ? s.semester1 : gradesTerm === "hk2" ? s.semester2 : s.yearAvg;
+                                return val === "Đạt" || !val;
+                              });
+
+                            const allAbove65 = scoreSubjects.every(s => {
+                              const val = gradesTerm === "hk1" ? s.semester1 : gradesTerm === "hk2" ? s.semester2 : s.yearAvg;
+                              return typeof val === "number" && val >= 6.5;
+                            });
+                            const allAbove50 = scoreSubjects.every(s => {
+                              const val = gradesTerm === "hk1" ? s.semester1 : gradesTerm === "hk2" ? s.semester2 : s.yearAvg;
+                              return typeof val === "number" && val >= 5.0;
+                            });
+                            const allAbove35 = scoreSubjects.every(s => {
+                              const val = gradesTerm === "hk1" ? s.semester1 : gradesTerm === "hk2" ? s.semester2 : s.yearAvg;
+                              return typeof val === "number" && val >= 3.5;
+                            });
+
+                            if (termGpa >= 8.0 && nonScorePassed && allAbove65) {
+                              termAcademicGrade = "Tốt";
+                            } else if (termGpa >= 6.5 && nonScorePassed && allAbove50) {
+                              termAcademicGrade = "Khá";
+                            } else if (termGpa >= 5.0 && nonScorePassed && allAbove35) {
+                              termAcademicGrade = "Đạt";
+                            }
+                          }
+
                           return (
                             <tr key={student.studentCode} className="hover:bg-slate-50/50 divide-x divide-slate-200">
                               
                               {/* Sticky identifier cell */}
-                              <td className="px-4 py-2.5 sticky left-0 bg-white shadow-md font-bold z-10">
+                              <td className="px-4 py-2.5 sticky left-0 bg-white shadow-md font-bold z-10 animate-fadeIn">
                                 <div className="text-blue-800 font-mono text-[10px]">{student.studentCode}</div>
                                 <div className="text-slate-800 text-[11px] truncate w-32">{student.fullName}</div>
                               </td>
@@ -1641,7 +1781,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                               {/* Score based subjects column rendering */}
                               {["toan", "ly_dia", "khtn", "tin", "van", "anh", "gdcd", "cong_nghe"].map(subjId => {
                                 const sub = getSubjectVal(subjId);
-                                const v = sub ? (sub.yearAvg || "-") : "-";
+                                const v = sub ? (gradesTerm === "hk1" ? sub.semester1 : gradesTerm === "hk2" ? sub.semester2 : sub.yearAvg) : "-";
+                                const valToDisplay = v !== undefined && v !== null ? v : "-";
                                 const isEditing = editingStudentCode === student.studentCode && editingSubjectId === subjId;
                                 
                                 return (
@@ -1664,10 +1805,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                       </div>
                                     ) : (
                                       <button
-                                        onClick={() => startEditingGrade(student.studentCode, subjId, v)}
+                                        onClick={() => startEditingGrade(student.studentCode, subjId, valToDisplay)}
                                         className="w-full text-slate-800 hover:text-blue-700 hover:scale-115 font-extrabold text-[11px] transition"
                                       >
-                                        {typeof v === "number" ? v.toFixed(1) : v}
+                                        {typeof valToDisplay === "number" ? valToDisplay.toFixed(1) : valToDisplay}
                                       </button>
                                     )}
                                   </td>
@@ -1677,7 +1818,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                               {/* Comment Subjects based column rendering */}
                               {["the_duc", "nghe_thuat", "gd_dia_phuong", "trai_nghiem"].map(subjId => {
                                 const sub = getSubjectVal(subjId);
-                                const v = sub ? (sub.yearAvg || "Đạt") : "Đạt";
+                                const v = sub ? (gradesTerm === "hk1" ? sub.semester1 : gradesTerm === "hk2" ? sub.semester2 : sub.yearAvg) : "Đạt";
+                                const valToDisplay = v !== undefined && v !== null && v !== "" ? v : "Đạt";
                                 const isEditing = editingStudentCode === student.studentCode && editingSubjectId === subjId;
 
                                 return (
@@ -1701,22 +1843,33 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                       </div>
                                     ) : (
                                       <button
-                                        onClick={() => startEditingGrade(student.studentCode, subjId, v.toString())}
+                                        onClick={() => startEditingGrade(student.studentCode, subjId, valToDisplay.toString())}
                                         className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold cursor-pointer transition hover:scale-105 ${
-                                          v === "Đạt" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"
+                                          valToDisplay === "Đạt" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"
                                         }`}
                                       >
-                                        {v}
+                                        {valToDisplay}
                                       </button>
                                     )}
                                   </td>
                                 );
                               })}
 
-                              {/* Readonly Summary classification */}
+                              {/* Dynamic term GPA */}
+                              <td className="px-2 py-2.5 bg-amber-50/20 text-center font-black text-amber-900 text-xs border-x border-slate-200">
+                                {scoreCount > 0 ? termGpa.toFixed(1) : "-"}
+                              </td>
+
+                              {/* Dynamic term Academic Grade */}
                               <td className="px-3 py-2.5 bg-slate-50 text-center">
-                                <div className="font-extrabold text-slate-800 text-[11px]">{student.academicGrade}</div>
-                                <div className="text-[9px] text-slate-400">{student.className}</div>
+                                <div className={`font-extrabold text-[11px] uppercase ${
+                                  termAcademicGrade === "Tốt" ? "text-emerald-700 font-extrabold" :
+                                  termAcademicGrade === "Khá" ? "text-blue-700 font-extrabold" :
+                                  termAcademicGrade === "Đạt" ? "text-slate-600 font-bold" : "text-rose-600 font-bold"
+                                }`}>
+                                  {termAcademicGrade}
+                                </div>
+                                <div className="text-[9px] text-slate-400 font-black tracking-tighter">{student.className}</div>
                               </td>
 
                             </tr>
