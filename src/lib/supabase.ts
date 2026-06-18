@@ -556,7 +556,7 @@ class DatabaseService {
 
         const { error } = await this.supabase
           .from("portal_classes")
-          .upsert(mapped);
+          .upsert(mapped, { onConflict: "id" });
 
         if (error) {
           console.error("Supabase portal_classes upsert failed:", error.message);
@@ -621,7 +621,7 @@ class DatabaseService {
       try {
         const { error } = await this.supabase
           .from("portal_settings")
-          .upsert({ key, value });
+          .upsert({ key, value }, { onConflict: "key" });
 
         if (error) {
           console.warn("Supabase portal_settings upsert failed:", error.message);
