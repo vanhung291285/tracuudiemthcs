@@ -247,14 +247,18 @@ class DatabaseService {
 
         if (error) {
           console.error("Supabase delete failed:", error.message);
+          this.lastError = error.message;
           return false;
         }
+        this.lastError = null;
         return true;
-      } catch (err) {
+      } catch (err: any) {
         console.error("Supabase delete exception:", err);
+        this.lastError = err.message || String(err);
         return false;
       }
     }
+    this.lastError = null;
     return true;
   }
 
@@ -299,14 +303,18 @@ class DatabaseService {
 
         if (error) {
           console.error("Supabase clear all failed:", error.message);
+          this.lastError = error.message;
           return false;
         }
+        this.lastError = null;
         return true;
-      } catch (err) {
+      } catch (err: any) {
         console.error("Supabase clear all exception:", err);
+        this.lastError = err.message || String(err);
         return false;
       }
     }
+    this.lastError = null;
     return true;
   }
 
@@ -324,14 +332,18 @@ class DatabaseService {
 
         if (error) {
           console.error("Supabase delete by class failed:", error.message);
+          this.lastError = error.message;
           return false;
         }
+        this.lastError = null;
         return true;
-      } catch (err) {
+      } catch (err: any) {
         console.error("Supabase delete by class exception:", err);
+        this.lastError = err.message || String(err);
         return false;
       }
     }
+    this.lastError = null;
     return true;
   }
 
