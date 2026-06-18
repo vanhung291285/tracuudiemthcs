@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import * as cheerio from "cheerio";
 
@@ -330,6 +331,64 @@ async function fetchSuoiluNews(): Promise<any[]> {
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Support JSON request processing
+  app.use(express.json());
+
+  // Filesystem persistence path for central configuration and portal settings
+  const SETTINGS_FILE = path.join(process.cwd(), "portal_settings.json");
+
+  // Read settings from JSON file database
+  function readSettings(): Record<string, string> {
+    try {
+      if (fs.existsSync(SETTINGS_FILE)) {
+        const content = fs.readFileSync(SETTINGS_FILE, "utf-8");
+        return JSON.parse(content);
+      }
+    } catch (e) {
+      console.error("Failed to read settings file:", e);
+    }
+    return {};
+  }
+
+  // Write settings to JSON file database
+  function writeSettings(settings: Record<string, string>) {
+    try {
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf-8");
+    } catch (e) {
+      console.error("Failed to write settings file:", e);
+    }
+  }
+
+  // GET /api/settings - Retrieve all central portal configurations
+  app.get("/api/settings", (req, res) => {
+    const settings = readSettings();
+    res.json({ status: "success", data: settings });
+  });
+
+  // POST /api/settings - Update or create a single config setting
+  app.post("/api/settings", (req, res) => {
+    const { key, value } = req.body;
+    if (!key) {
+      return res.status(400).json({ status: "error", message: "Key parameter is required" });
+    }
+    const settings = readSettings();
+    settings[key] = value || "";
+    writeSettings(settings);
+    res.json({ status: "success", data: { key, value } });
+  });
+
+  // POST /api/settings/bulk - Bulk update multiple config settings (sync credentials or themes)
+  app.post("/api/settings/bulk", (req, res) => {
+    const bulkData = req.body;
+    if (!bulkData || typeof bulkData !== "object") {
+      return res.status(400).json({ status: "error", message: "Invalid settings object payload" });
+    }
+    const settings = readSettings();
+    Object.assign(settings, bulkData);
+    writeSettings(settings);
+    res.json({ status: "success", data: settings });
+  });
 
   // Endpoint to serve scrapped live news automatically
   app.get("/api/news", async (req, res) => {
