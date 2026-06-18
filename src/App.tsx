@@ -8,8 +8,21 @@ import StudentQuery from "./components/StudentQuery";
 import StudentResult from "./components/StudentResult";
 import AdminDashboard from "./components/AdminDashboard";
 import { Student } from "./types";
+import { dbService } from "./lib/supabase";
 
 export default function App() {
+  // Synchronize configuration from server on mount to handle session/browser switching automatically
+  useEffect(() => {
+    const sync = async () => {
+      try {
+        await dbService.syncConfigFromServer();
+      } catch (e) {
+        console.warn("Could not sync config from server on mount:", e);
+      }
+    };
+    sync();
+  }, []);
+
   // Initialize view from URL path
   const [view, setView] = useState<"query" | "result" | "admin">(() => {
     if (typeof window !== "undefined") {
