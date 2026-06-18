@@ -111,6 +111,22 @@ class DatabaseService {
             localStorage.setItem("thcs_supabase_key", serverKey);
             hasChanges = true;
           }
+
+          // Populate student portal header and footer configurations from centralized settings
+          const portalKeys = [
+            "portal_header_top",
+            "portal_header_main",
+            "portal_school_year",
+            "portal_footer_title",
+            "portal_footer_desc",
+            "portal_footer_copy"
+          ];
+          for (const key of portalKeys) {
+            const serverVal = result.data[key];
+            if (serverVal !== undefined && serverVal !== null && localStorage.getItem(key) !== serverVal) {
+              localStorage.setItem(key, serverVal);
+            }
+          }
           
           if (hasChanges) {
             console.log("Supabase config synchronized from centralized server. Re-initializing...");
@@ -669,7 +685,7 @@ class DatabaseService {
     return true;
   }
 
-  // Load a single portal setting with tiered fallback (Supabase > Server API > LocalStorage > Default)
+  // Load a single portal setting with tiered fallback (Supabase > LocalStorage > Server API > Default)
   public async getPortalSetting(key: string, defaultValue: string): Promise<string> {
     // 1. Try to fetch from remote Supabase if connected
     if (this.supabase) {
@@ -687,11 +703,17 @@ class DatabaseService {
           return data.value;
         }
       } catch (err) {
-        console.warn(`Supabase getPortalSetting for key "${key}" failed, fallback to server API:`, err);
+        console.warn(`Supabase getPortalSetting for key "${key}" failed, fallback to local storage:`, err);
       }
     }
 
-    // 2. Try to fetch from central Server API
+    // 2. Fallback to LocalStorage first (as it was pre-synchronized on startup)
+    const localVal = localStorage.getItem(key);
+    if (localVal !== null && localVal !== undefined) {
+      return localVal;
+    }
+
+    // 3. Try to fetch from central Server API only if not in localStorage
     try {
       const resp = await fetch("/api/settings");
       if (resp.ok) {
@@ -706,8 +728,7 @@ class DatabaseService {
       console.warn("Server API getPortalSetting fallback failed:", err);
     }
 
-    // 3. Fallback to LocalStorage or initial hardcoded defaults
-    return localStorage.getItem(key) || defaultValue;
+    return defaultValue;
   }
 
   // Save portal setting centrally across LocalStorage, Server API, and remote Supabase
