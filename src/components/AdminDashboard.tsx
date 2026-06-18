@@ -2477,13 +2477,126 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     </div>
                     
                     <p className="text-xs text-slate-600 leading-relaxed">
-                      Để kết nối được ứng dụng này lên Supabase của bạn, bạn chỉ cần mở <strong>SQL Editor</strong> trên Supabase Dashboard và thực thi đoạn truy vấn khởi tạo bảng dữ liệu sau:
+                      Để kết nối được ứng dụng này lên Supabase của bạn, bạn chỉ cần mở <strong>SQL Editor</strong> trên Supabase Dashboard và thực thi đoạn truy vấn khởi tạo bảng dữ liệu sau. 
+                      <br />
+                      <span className="text-[10px] text-amber-700 font-semibold bg-amber-50 px-1 py-0.5 rounded mt-1 inline-block">
+                        💡 Ứng dụng THCS Suối Lư đã thông minh tự động hỗ trợ cả 2 định dạng Snake Case và Camel Case. Hãy lựa chọn mẫu truy vấn phù hợp rồi nhấn Run!
+                      </span>
                     </p>
 
+                    {/* SQL View Switcher */}
+                    <div className="flex bg-slate-100 p-1 rounded-lg gap-1 border">
+                      <button
+                        type="button"
+                        id="sql_tab_snake"
+                        onClick={() => {
+                          const snakeEl = document.getElementById("sql_snake_case");
+                          const camelEl = document.getElementById("sql_camel_case");
+                          const tSnake = document.getElementById("sql_tab_snake");
+                          const tCamel = document.getElementById("sql_tab_camel");
+                          if (snakeEl && camelEl && tSnake && tCamel) {
+                            snakeEl.classList.remove("hidden");
+                            camelEl.classList.add("hidden");
+                            tSnake.classList.add("bg-white", "text-slate-800", "shadow-sm");
+                            tSnake.classList.remove("text-slate-500");
+                            tCamel.classList.remove("bg-white", "text-slate-800", "shadow-sm");
+                            tCamel.classList.add("text-slate-500");
+                          }
+                        }}
+                        className="flex-1 text-[11px] font-bold py-1.5 px-3 rounded-md transition cursor-pointer bg-white text-slate-800 shadow-sm"
+                      >
+                        Mẫu 1: Snake Case (Khuyên dùng)
+                      </button>
+                      <button
+                        type="button"
+                        id="sql_tab_camel"
+                        onClick={() => {
+                          const snakeEl = document.getElementById("sql_snake_case");
+                          const camelEl = document.getElementById("sql_camel_case");
+                          const tSnake = document.getElementById("sql_tab_snake");
+                          const tCamel = document.getElementById("sql_tab_camel");
+                          if (snakeEl && camelEl && tSnake && tCamel) {
+                            snakeEl.classList.add("hidden");
+                            camelEl.classList.remove("hidden");
+                            tCamel.classList.add("bg-white", "text-slate-800", "shadow-sm");
+                            tCamel.classList.remove("text-slate-500");
+                            tSnake.classList.remove("bg-white", "text-slate-800", "shadow-sm");
+                            tSnake.classList.add("text-slate-500");
+                          }
+                        }}
+                        className="flex-1 text-[11px] font-bold py-1.5 px-3 rounded-md transition cursor-pointer text-slate-500 hover:text-slate-800"
+                      >
+                        Mẫu 2: Camel Case
+                      </button>
+                    </div>
+
                     <div className="relative">
-                      <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800">
-{`-- Tạo bảng học sinh THCS hoàn thiện
-CREATE TABLE students (
+                      {/* SNAKE CASE SQL */}
+                      <div id="sql_snake_case" className="block">
+                        <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
+{`-- [MẪU 1] TẠO 3 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
+
+-- 1. Tạo bảng học sinh (students)
+CREATE TABLE IF NOT EXISTS students (
+  id TEXT PRIMARY KEY,
+  student_code TEXT UNIQUE NOT NULL,
+  full_name TEXT NOT NULL,
+  date_of_birth TEXT NOT NULL,
+  gender TEXT NOT NULL,
+  class_name TEXT NOT NULL,
+  grade_level TEXT NOT NULL,
+  subjects JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Tạo bảng danh sách lớp học (portal_classes)
+CREATE TABLE IF NOT EXISTS portal_classes (
+  id TEXT PRIMARY KEY,
+  class_name TEXT UNIQUE NOT NULL,
+  grade_level TEXT NOT NULL,
+  advisor_name TEXT,
+  room_number TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Tạo bảng lưu trữ cấu hình cổng tra cứu (portal_settings)
+CREATE TABLE IF NOT EXISTS portal_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- BẬT CHÍNH SÁCH BẢO MẬT ROW LEVEL SECURITY (RLS) & CHO PHÉP ĐỌC GHI CÔNG KHAI
+-- A. Áp dụng cho bảng học sinh (students)
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai students" ON students;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác students" ON students;
+CREATE POLICY "Cho phép đọc công khai students" ON students FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác students" ON students FOR ALL USING (true);
+
+-- B. Áp dụng cho bảng lớp học (portal_classes)
+ALTER TABLE portal_classes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai portal_classes" ON portal_classes;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes;
+CREATE POLICY "Cho phép đọc công khai portal_classes" ON portal_classes FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes FOR ALL USING (true);
+
+-- C. Áp dụng cho bảng cấu hình (portal_settings)
+ALTER TABLE portal_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai portal_settings" ON portal_settings;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings;
+CREATE POLICY "Cho phép đọc công khai portal_settings" ON portal_settings FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true);`}
+                        </pre>
+                      </div>
+
+                      {/* CAMEL CASE SQL */}
+                      <div id="sql_camel_case" className="hidden">
+                        <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
+{`-- [MẪU 2] TẠO 3 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
+
+-- 1. Tạo bảng học sinh (students)
+CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,
   "studentCode" TEXT UNIQUE NOT NULL,
   "fullName" TEXT NOT NULL,
@@ -2501,14 +2614,50 @@ CREATE TABLE students (
   distinction TEXT NOT NULL,
   notes TEXT,
   "verificationToken" TEXT NOT NULL,
-  subjects JSONB NOT NULL
+  subjects JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Khởi động chính sách phân quyền công khai RLS
+-- 2. Tạo bảng danh sách lớp học (portal_classes)
+CREATE TABLE IF NOT EXISTS portal_classes (
+  id TEXT PRIMARY KEY,
+  "className" TEXT UNIQUE NOT NULL,
+  "gradeLevel" TEXT NOT NULL,
+  "advisorName" TEXT,
+  "roomNumber" TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Tạo bảng lưu trữ cấu hình cổng tra cứu (portal_settings)
+CREATE TABLE IF NOT EXISTS portal_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- BẬT CHÍNH SÁCH BẢO MẬT ROW LEVEL SECURITY (RLS) & CHO PHÉP ĐỌC GHI CÔNG KHAI
+-- A. Áp dụng cho bảng học sinh (students)
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Cho phép đọc công khai" ON students FOR SELECT USING (true);
-CREATE POLICY "Cho phép cán bộ học tịch chỉnh sửa" ON students FOR ALL USING (true);`}
-                      </pre>
+DROP POLICY IF EXISTS "Cho phép đọc công khai students" ON students;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác students" ON students;
+CREATE POLICY "Cho phép đọc công khai students" ON students FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác students" ON students FOR ALL USING (true);
+
+-- B. Áp dụng cho bảng lớp học (portal_classes)
+ALTER TABLE portal_classes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai portal_classes" ON portal_classes;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes;
+CREATE POLICY "Cho phép đọc công khai portal_classes" ON portal_classes FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_classes" ON portal_classes FOR ALL USING (true);
+
+-- C. Áp dụng cho bảng cấu hình (portal_settings)
+ALTER TABLE portal_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai portal_settings" ON portal_settings;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings;
+CREATE POLICY "Cho phép đọc công khai portal_settings" ON portal_settings FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true);`}
+                        </pre>
+                      </div>
                     </div>
 
                     <div className="pt-2">
