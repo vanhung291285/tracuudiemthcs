@@ -617,10 +617,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           { subjectId: "anh", subjectName: "Ngoại ngữ", isEvaluatedByScore: true, mid1: 8, end1: 8, semester1: 8, mid2: 8, end2: 8, semester2: 8, yearAvg: 8 },
           { subjectId: "gdcd", subjectName: "GDCD", isEvaluatedByScore: true, mid1: 8, end1: 8, semester1: 8, mid2: 8, end2: 8, semester2: 8, yearAvg: 8 },
           { subjectId: "cong_nghe", subjectName: "Công nghệ", isEvaluatedByScore: true, mid1: 8, end1: 8, semester1: 8, mid2: 8, end2: 8, semester2: 8, yearAvg: 8 },
-          { subjectId: "the_duc", subjectName: "Giáo dục thể chất", isEvaluatedByScore: false, semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
-          { subjectId: "nghe_thuat", subjectName: "Nghệ thuật", isEvaluatedByScore: false, semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
-          { subjectId: "gd_dia_phuong", subjectName: "Nội dung giáo dục của địa phương", isEvaluatedByScore: false, semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
-          { subjectId: "trai_nghiem", subjectName: "Hoạt động trải nghiệm, hướng nghiệp", isEvaluatedByScore: false, semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
+          { subjectId: "the_duc", subjectName: "Giáo dục thể chất", isEvaluatedByScore: false, semester1: "Đạt", semester2: "", yearAvg: "" },
+          { subjectId: "nghe_thuat", subjectName: "Nghệ thuật", isEvaluatedByScore: false, semester1: "Đạt", semester2: "", yearAvg: "" },
+          { subjectId: "gd_dia_phuong", subjectName: "Nội dung giáo dục của địa phương", isEvaluatedByScore: false, semester1: "Đạt", semester2: "", yearAvg: "" },
+          { subjectId: "trai_nghiem", subjectName: "Hoạt động trải nghiệm, hướng nghiệp", isEvaluatedByScore: false, semester1: "Đạt", semester2: "", yearAvg: "" },
         ]
       });
     }
@@ -730,7 +730,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
             return updatedSub;
           } else {
-            const cleanVal = tempGradeValue.trim() === "Đạt" || tempGradeValue.trim() === "dat" || tempGradeValue.trim() === "Đ" || tempGradeValue.trim() === "đ" ? "Đạt" : "Chưa đạt";
+            let cleanVal = "";
+            const t = tempGradeValue.trim().toLowerCase();
+            if (t === "đạt" || t === "dat" || t === "đ" || t === "d") {
+              cleanVal = "Đạt";
+            } else if (t === "chưa đạt" || t === "cd" || t.includes("chưa")) {
+              cleanVal = "Chưa đạt";
+            }
             
             const updatedSub = { ...sub };
             if (gradesTerm === "hk1") {
@@ -911,19 +917,23 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           });
 
           // Helper definitions
-          const parseScore = (val: string): number => {
-            if (!val) return 8.0;
+          const parseScore = (val: string): number | "" => {
+            if (!val || val.trim() === "") return "";
             const clean = val.trim().replace(",", ".");
             const parsed = parseFloat(clean);
-            return isNaN(parsed) ? 8.0 : parsed;
+            return isNaN(parsed) ? "" : parsed;
           };
 
-          const parseComment = (val: string): "Đạt" | "Chưa đạt" => {
+          const parseComment = (val: string): "Đạt" | "Chưa đạt" | "" => {
+            if (!val || val.trim() === "") return "";
             const clean = val?.trim()?.toLowerCase() || "";
             if (clean.includes("chưa") || clean === "cd" || clean === "chưa đạt") {
               return "Chưa đạt";
             }
-            return "Đạt";
+            if (clean.includes("đạt") || clean === "đ" || clean === "d" || clean === "dat") {
+              return "Đạt";
+            }
+            return "";
           };
 
           const parseAcademic = (val: string): "Tốt" | "Khá" | "Đạt" | "Chưa đạt" => {
@@ -1889,8 +1899,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                               {/* Comment Subjects based column rendering */}
                               {["the_duc", "nghe_thuat", "gd_dia_phuong", "trai_nghiem"].map(subjId => {
                                 const sub = getSubjectVal(subjId);
-                                const v = sub ? (gradesTerm === "hk1" ? sub.semester1 : gradesTerm === "hk2" ? sub.semester2 : sub.yearAvg) : "Đạt";
-                                const valToDisplay = v !== undefined && v !== null && v !== "" ? v : "Đạt";
+                                const v = sub ? (gradesTerm === "hk1" ? sub.semester1 : gradesTerm === "hk2" ? sub.semester2 : sub.yearAvg) : "";
+                                const valToDisplay = v !== undefined && v !== null && v !== "" ? v : "-";
                                 const isEditing = editingStudentCode === student.studentCode && editingSubjectId === subjId;
 
                                 return (
@@ -1902,6 +1912,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                           onChange={(e) => setTempGradeValue(e.target.value)}
                                           className="border rounded text-[10px] font-bold"
                                         >
+                                          <option value="">-</option>
                                           <option value="Đạt">Đạt</option>
                                           <option value="Chưa đạt">Chưa đạt</option>
                                         </select>
@@ -1916,7 +1927,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                       <button
                                         onClick={() => startEditingGrade(student.studentCode, subjId, valToDisplay.toString())}
                                         className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold cursor-pointer transition hover:scale-105 ${
-                                          valToDisplay === "Đạt" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"
+                                          valToDisplay === "Đạt" ? "bg-emerald-50 text-emerald-800" : valToDisplay === "Chưa đạt" ? "bg-rose-50 text-rose-800" : "text-slate-400 font-normal"
                                         }`}
                                       >
                                         {valToDisplay}
