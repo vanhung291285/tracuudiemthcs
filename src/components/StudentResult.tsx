@@ -194,13 +194,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366]">
           <table className="w-full border-collapse border border-slate-300 text-[11px] sm:text-[13px] md:text-sm w-full mb-1">
             <colgroup>
-              <col className="w-8 sm:w-12" /> {/* TT */}
-              <col className="w-auto" /> {/* Môn học */}
-              <col className="w-10 sm:w-16" /> {/* Kỳ 1 */}
-              <col className="w-10 sm:w-16" /> {/* Kỳ 2 */}
-              <col className="w-12 sm:w-20" /> {/* Thi lại */}
-              <col className="w-12 sm:w-20" /> {/* Cả năm */}
-              <col className="w-14 sm:w-24" /> {/* Ghi chú */}
+              <col className="w-8 sm:w-12" />
+              <col className="w-auto" />
+              <col className="w-10 sm:w-16" />
+              <col className="w-10 sm:w-16" />
+              <col className="w-12 sm:w-20" />
+              <col className="w-12 sm:w-20" />
+              <col className="w-14 sm:w-24" />
             </colgroup>
             <tbody>
               {/* Info row 1 */}
@@ -242,13 +242,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               {student.subjects.map((sub, index) => {
                 const valHk1 = sub.isEvaluatedByScore 
                   ? (sub.semester1 !== undefined && typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : (sub.end1 !== undefined ? sub.end1.toFixed(1).replace(".", ",") : "")) 
-                  : sub.semester1 || "Đ";
+                  : sub.semester1 || "";
                 const valHk2 = sub.isEvaluatedByScore 
                   ? (sub.semester2 !== undefined && typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : (sub.end2 !== undefined ? sub.end2.toFixed(1).replace(".", ",") : "")) 
-                  : sub.semester2 || "Đ";
+                  : sub.semester2 || "";
                 const valCaNam = sub.isEvaluatedByScore
                   ? (sub.yearAvg !== undefined && typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "")
-                  : sub.yearAvg || "Đ";
+                  : sub.yearAvg || "";
 
                 return (
                  <tr key={index} className="text-center even:bg-slate-50 hover:bg-slate-100 transition-colors">
