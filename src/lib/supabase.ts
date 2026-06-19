@@ -305,6 +305,41 @@ class DatabaseService {
     }
   }
 
+  public async queryStudentByName(fullName: string, dob: string): Promise<Student | null> {
+    const cleanName = fullName.trim().toLowerCase();
+    const cleanDob = dob.trim();
+
+    if (this.supabase) {
+      try {
+        await this.checkSchemaCase();
+        let query = this.supabase.from("students").select("*");
+        if (this.isSnakeCaseSchema) {
+          query = query.ilike("full_name", `%${cleanName}%`);
+        } else {
+          query = query.ilike("fullName", `%${cleanName}%`);
+        }
+        const { data, error } = await query;
+
+        if (error) {
+          console.warn("Supabase query failed, falling back to local database search:", error.message);
+        } else if (data && data.length > 0) {
+          const mappedList = data.map((d: any) => this.mapDbToStudent(d));
+          const found = mappedList.find((m: Student) => this.compareDates(m.dob, cleanDob) && m.fullName.toLowerCase() === cleanName);
+          if (found) return found;
+        }
+      } catch (err) {
+        console.error("Err querying Supabase:", err);
+      }
+    }
+
+    // Fallback: search local database
+    const found = this.localStudentsList.find(s => 
+      s.fullName.toLowerCase() === cleanName && 
+      this.compareDates(s.dob, cleanDob)
+    );
+    return found || null;
+  }
+
   // Query student records
   public async queryStudent(studentCode: string, dob: string): Promise<Student | null> {
     const formattedCode = studentCode.trim().toUpperCase();
