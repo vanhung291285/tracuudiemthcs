@@ -13,6 +13,33 @@ import { dbService } from "./lib/supabase";
 export default function App() {
   const [isReady, setIsReady] = useState(false);
 
+  // Anti-inspect and anti-view-source code
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F12" || e.keyCode === 123) {
+        e.preventDefault();
+      }
+      if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === "i" || e.key.toLowerCase() === "j" || e.key.toLowerCase() === "c")) {
+        e.preventDefault();
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === "u") {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // Synchronize configuration from server on mount to handle session/browser switching automatically
   useEffect(() => {
     const sync = async () => {
