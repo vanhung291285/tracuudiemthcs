@@ -181,18 +181,28 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       setError("Vui lòng nhập Ngày sinh.");
       return;
     }
+
+    // Format D/M/YYYY or DD/M/YYYY or D/MM/YYYY into DD/MM/YYYY
+    let queryDob = cleanDob;
+    if (queryDob.includes("/")) {
+      const parts = queryDob.split("/");
+      if (parts.length === 3) {
+        queryDob = `${parts[0].padStart(2, "0")}/${parts[1].padStart(2, "0")}/${parts[2]}`;
+      }
+    }
+
     // Strict RegEx checking DD/MM/YYYY
     const dobRegex = /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/[0-9]{4}$/;
-    if (!dobRegex.test(cleanDob)) {
-      setError("Ngày sinh học sinh phải nhập đúng định dạng DD/MM/YYYY (Ví dụ: 15/05/2011).");
+    if (!dobRegex.test(queryDob)) {
+      setError("Ngày sinh học sinh không hợp lệ. Vui lòng nhập đúng (Ví dụ: 15/05/2011 hoặc 1/5/2011).");
       return;
     }
 
     setIsLoading(true);
     try {
       const student = searchMode === "cccd"
-        ? await dbService.queryStudent(cleanCode, cleanDob)
-        : await dbService.queryStudentByName(cleanName, cleanDob);
+        ? await dbService.queryStudent(cleanCode, queryDob)
+        : await dbService.queryStudentByName(cleanName, queryDob);
 
       if (student) {
         onQueryResult(student, selectedTerm);
