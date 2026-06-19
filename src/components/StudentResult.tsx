@@ -209,137 +209,134 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       <div
         ref={printAreaRef}
         id="print-card-area"
-        className="bg-white border border-slate-300 rounded-xl shadow-sm p-3 xs:p-4 sm:p-6 md:p-8 text-slate-800"
+        className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-6 md:p-8 text-slate-800"
       >
         {/* Verification Header */}
-        <div className="text-center border-b border-slate-200 pb-5 mb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="text-center md:text-left flex-1 min-w-0">
-            <h4 className="text-[8px] xs:text-[10px] uppercase font-black tracking-wider text-[#0055A5] mb-1 leading-normal">
+        <div className="border-b border-slate-200 pb-5 mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="flex-1">
+            <h4 className="text-[9px] sm:text-[11px] uppercase font-black tracking-widest text-[#0055A5] mb-1.5 opacity-90">
               {headerTop}
             </h4>
-            <h1 className="text-base sm:text-xl md:text-2xl font-black text-[#0055A5] uppercase tracking-tight leading-snug break-words">
+            <h1 className="text-xl sm:text-2xl md:text-[28px] font-black text-[#0055A5] uppercase tracking-tight leading-none mb-2.5">
               BẢNG GHI ĐIỂM VÀ KẾT QUẢ RÈN LUYỆN
             </h1>
-            <p className="text-[9px] xs:text-xs text-slate-500 font-bold uppercase tracking-tight mt-1 leading-relaxed">
+            <p className="text-[9px] sm:text-[10px] text-[#0055A5] font-extrabold uppercase tracking-widest opacity-80">
               HỌC BẠ ĐIỆN TỬ ĐĂNG KÝ HỌC TẬP - THEO THÔNG TƯ 22/2021/TT-BGDĐT
             </p>
           </div>
           
           {/* Top Verification badge */}
-          <div className="flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-black self-center md:self-auto uppercase tracking-wide shrink-0">
+          <div className="flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-black self-start md:self-auto uppercase tracking-wide shrink-0">
             <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
             <span>Đã xác thực điện tử</span>
           </div>
         </div>
 
-        {/* Student General Information Grid */}
-        <div className="mb-5">
-          <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200">
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-y-2 sm:gap-y-3 gap-x-3 sm:gap-x-6 w-full">
-              <div className="flex flex-col col-span-2 md:col-span-1 xl:col-span-2 border-r pr-2 border-slate-100">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Họ và tên</span>
-                <span className="font-black text-[#0055A5] text-sm sm:text-lg uppercase break-words leading-tight mt-0.5">{student.fullName}</span>
+        {/* Student General Information Box */}
+        <div className="mb-6">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            {/* Row 1 */}
+            <div className="grid grid-cols-2 md:grid-cols-6 border-b border-slate-100">
+              <div className="flex flex-col col-span-2 px-3 py-2 sm:px-4 sm:py-2.5 border-r border-slate-100">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Họ và tên</span>
+                <span className="font-black text-[#0055A5] text-sm sm:text-lg uppercase break-words leading-tight">{student.fullName}</span>
               </div>
-              <div className="flex flex-col col-span-2 md:col-span-2 xl:col-span-2 border-r pr-2 border-slate-100">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Trường THCS</span>
-                <span className="font-bold text-slate-800 text-xs sm:text-sm break-words leading-tight mt-0.5">{student.school}</span>
+              <div className="flex flex-col col-span-2 px-3 py-2 sm:px-4 sm:py-2.5 border-r border-slate-100 bg-slate-50/50">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Trường THCS</span>
+                <span className="font-bold text-[#003366] text-xs sm:text-sm break-words leading-tight">{student.school}</span>
               </div>
+              <div className="flex flex-col col-span-1 px-3 py-2 sm:px-4 sm:py-2.5 border-r border-slate-100">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Lớp học</span>
+                <span className="font-bold text-[#003366] text-xs sm:text-base">{student.className}</span>
+              </div>
+              <div className="flex flex-col col-span-1 px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-50/50">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Giới tính</span>
+                <span className="font-bold text-[#003366] text-xs sm:text-base">{student.gender}</span>
+              </div>
+            </div>
+            {/* Row 2 */}
+            <div className="grid grid-cols-2 md:grid-cols-6 border-b border-slate-100">
+              <div className="flex flex-col col-span-2 px-3 py-2 sm:px-4 sm:py-2.5 border-r border-slate-100 bg-slate-50/50">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Năm học</span>
+                <span className="font-bold text-[#003366] text-xs sm:text-base">{schoolYear}</span>
+              </div>
+              <div className="flex flex-col col-span-4 px-3 py-2 sm:px-4 sm:py-2.5">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Ngày sinh</span>
+                <span className="font-bold text-[#003366] text-xs sm:text-base">{formatDob(student.dob)}</span>
+              </div>
+            </div>
+            {/* Row 3 */}
+            <div className="grid grid-cols-1 px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-50/50">
               <div className="flex flex-col">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Lớp học</span>
-                <span className="font-bold text-slate-800 text-xs sm:text-base">{student.className}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Giới tính</span>
-                <span className="font-bold text-slate-700 text-xs sm:text-base">{student.gender}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Năm học</span>
-                <span className="font-bold text-slate-700 text-xs sm:text-base">{schoolYear}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Ngày sinh</span>
-                <span className="font-bold text-slate-700 text-xs sm:text-base">{formatDob(student.dob)}</span>
-              </div>
-              <div className="flex flex-col col-span-2 md:col-span-3 xl:col-span-6 border-t pt-1 border-slate-100">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Mã số học sinh (12 số CCCD)</span>
-                <span className="font-mono font-bold text-[11px] sm:text-xs text-[#0055A5]">{student.studentCode}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Mã số học sinh (12 số CCCD)</span>
+                <span className="font-mono font-bold text-xs sm:text-sm text-[#0055A5]">{student.studentCode}</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Mobile Swipe Indicator */}
-        <div className="no-print text-[10px] text-slate-500 mb-1 flex items-center gap-1 sm:hidden italic justify-end">
-          <span>Khung nhìn tổng quan. Có thể xoay ngang màn hình để xem chi tiết hơn.</span>
+        <div className="no-print text-[10px] text-slate-500 mb-2 flex items-center gap-1 sm:hidden italic justify-end">
+          <span>Khung nhìn tổng quan. Khuyến nghị xoay ngang màn hình.</span>
         </div>
 
         {/* Academic Grading Sheet Table */}
-        <div className="overflow-x-auto mb-6 border border-slate-300 rounded-lg shadow-sm scrollbar-thin">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-hidden mb-6 border border-slate-200 rounded-xl shadow-sm">
+          <table className="w-full text-left border-collapse bg-white">
             <thead>
-              <tr className="bg-[#0055A5] text-white text-[9px] sm:text-xs uppercase divide-x divide-blue-400">
-                <th className="px-2 sm:px-4 py-2 sm:py-3 font-black text-left w-auto sm:w-48 pl-2 sm:pl-4">Môn học</th>
-                <th className={`px-1 sm:px-4 py-2 sm:py-3 font-black text-center w-10 sm:w-32 transition-colors ${term === "hk1" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>
+              <tr className="text-white text-[9px] sm:text-[11px] uppercase">
+                <th className="bg-[#0055A5] px-3 sm:px-4 py-3 sm:py-4 font-black text-left border-r border-[#004282]">Môn học</th>
+                <th className="bg-[#0055A5] px-2 sm:px-4 py-3 sm:py-4 font-black text-center border-r border-[#004282] w-16 sm:w-32">
                   <span className="hidden sm:inline">Cuối kì I</span>
                   <span className="sm:hidden">HK I</span>
                 </th>
-                <th className={`px-1 sm:px-4 py-2 sm:py-3 font-black text-center w-10 sm:w-32 transition-colors ${term === "hk2" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>
+                <th className="bg-[#0055A5] px-2 sm:px-4 py-3 sm:py-4 font-black text-center border-r border-[#004282] w-16 sm:w-32">
                   <span className="hidden sm:inline">Cuối kì II</span>
                   <span className="sm:hidden">HK II</span>
                 </th>
-                <th className={`px-1 sm:px-4 py-2 sm:py-3 font-black text-center w-12 sm:w-28 transition-colors ${term === "canam" ? "bg-[#E53935]" : "bg-[#004282]"}`}>
+                <th className="bg-[#E53935] px-2 sm:px-4 py-3 sm:py-4 font-black text-center w-20 sm:w-36">
                   <span className="hidden sm:inline">Cả năm</span>
                   <span className="sm:hidden">CN</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-300 text-[10px] sm:text-sm">
+            <tbody className="text-[10px] sm:text-[13px]">
               {student.subjects.map((sub, index) => {
-                const isEven = index % 2 === 0;
                 return (
                   <tr
                     key={sub.subjectId}
-                    className={`hover:bg-blue-50/40 transition text-center ${isEven ? "bg-white" : "bg-slate-50/60"}`}
+                    className="border-b border-slate-100 last:border-none hover:bg-slate-50/50"
                   >
-                    <td className="px-2 sm:px-4 py-2 sm:py-2.5 font-bold text-slate-800 text-left border-r border-slate-300 leading-tight">
+                    <td className="px-3 sm:px-4 py-2 sm:py-3 font-bold text-slate-800 text-left border-r border-slate-100">
                       {sub.subjectName}
                     </td>
                     
                     {/* Semester 1 Details */}
                     {sub.isEvaluatedByScore ? (
-                      <td className={`px-1 sm:px-2 py-2 sm:py-2.5 text-center text-slate-700 border-r border-slate-300 font-bold transition-colors ${term === "hk1" ? "bg-amber-150/40 text-slate-900 !font-black text-xs sm:text-base" : ""}`}>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-slate-700 font-bold border-r border-slate-100">
                         {sub.end1 !== undefined ? sub.end1.toFixed(1) : "-"}
                       </td>
                     ) : (
-                      <td className={`px-1 sm:px-2 py-2 sm:py-2.5 font-bold border-r border-slate-300 uppercase text-center text-[9px] sm:text-xs transition-colors ${term === "hk1" ? "bg-amber-50/30 text-emerald-800" : "text-emerald-600"}`}>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-bold border-r border-slate-100 uppercase text-center text-[9px] sm:text-xs text-emerald-600">
                         {sub.semester1 || "-"}
                       </td>
                     )}
 
                     {/* Semester 2 Details */}
                     {sub.isEvaluatedByScore ? (
-                      <td className={`px-1 sm:px-2 py-2 sm:py-2.5 text-center text-slate-700 border-r border-slate-300 font-bold transition-colors ${term === "hk2" ? "bg-amber-150/40 text-slate-900 !font-black text-xs sm:text-base" : ""}`}>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 text-center text-slate-700 font-bold border-r border-slate-100">
                         {sub.end2 !== undefined ? sub.end2.toFixed(1) : "-"}
                       </td>
                     ) : (
-                      <td className={`px-1 sm:px-2 py-2 sm:py-2.5 font-bold border-r border-slate-300 uppercase text-center text-[9px] sm:text-xs transition-colors ${term === "hk2" ? "bg-amber-50/30 text-emerald-800" : "text-emerald-600"}`}>
+                      <td className="px-2 sm:px-4 py-2 sm:py-3 font-bold border-r border-slate-100 uppercase text-center text-[9px] sm:text-xs text-emerald-600">
                         {sub.semester2 || "-"}
                       </td>
                     )}
 
                     {/* Year Average (Cả năm) */}
-                    <td className={`px-1 sm:px-2 py-2 sm:py-2.5 font-black text-white text-center w-12 sm:w-28 border-none text-[10px] sm:text-[13px] transition-all ${
-                      term === "canam" ? "bg-[#E53935] font-extrabold text-[12px] sm:text-[14px] ring-2 ring-red-300 ring-inset" : 
-                      sub.yearAvg === "Chưa đạt" ? "bg-rose-600" : 
-                      sub.yearAvg === "Đạt" ? "bg-emerald-600" :
-                      typeof sub.yearAvg === "number" && sub.yearAvg >= 8.0 ? "bg-[#0055A5]" :
-                      typeof sub.yearAvg === "number" && sub.yearAvg >= 6.5 ? "bg-[#0055A5]/80" :
-                      typeof sub.yearAvg === "number" && sub.yearAvg >= 5.0 ? "bg-slate-700" :
-                      sub.yearAvg ? "bg-rose-500" : "bg-slate-400"
-                    }`}>
+                    <td className="px-2 sm:px-4 py-2 sm:py-3 font-black text-white text-center bg-[#E53935] border-b border-white/20">
                       {typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1) : sub.yearAvg || "-"}
                     </td>
-
                   </tr>
                 );
               })}
@@ -347,44 +344,44 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
           </table>
         </div>
 
-        {/* Overall Summary Box & QR Verification */}
+        {/* Overall Summary Box */}
         <div className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-sm hover:border-blue-400 transition-all duration-200">
-              <span className="text-[9px] uppercase text-slate-400 font-extrabold tracking-wider text-center">
+            <div className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border border-slate-200 bg-white">
+              <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider text-center mb-1.5">
                 {term === "hk1" ? "HỌC LỰC HK I" : term === "hk2" ? "HỌC LỰC HK II" : "HỌC LỰC CẢ NĂM"}
               </span>
-              <span className="font-black text-base xs:text-lg text-[#0055A5] mt-1 uppercase transition-all">{activeAcademicGrade}</span>
-              {scoreCount > 0 && <span className="text-[9.5px] text-slate-500 font-extrabold mt-1">ĐTB: {activeGpa.toFixed(2)}</span>}
+              <span className="font-black text-base xs:text-lg sm:text-xl text-[#0055A5] uppercase">{activeAcademicGrade}</span>
+              {scoreCount > 0 && <span className="text-[9px] sm:text-[10px] text-slate-500 font-extrabold mt-1">ĐTB: {activeGpa.toFixed(2)}</span>}
             </div>
             
-            <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-sm hover:border-blue-400 transition-all duration-200">
-              <span className="text-[9px] uppercase text-slate-400 font-extrabold tracking-wider text-center">
+            <div className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border border-slate-200 bg-white">
+              <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider text-center mb-1.5">
                 {term === "canam" ? "RL CẢ NĂM" : "RL HỌC KỲ"}
               </span>
-              <span className="font-black text-base xs:text-lg text-[#0055A5] mt-1 uppercase transition-all">{activeBehaviorGrade}</span>
+              <span className="font-black text-base xs:text-lg sm:text-xl text-[#0055A5] uppercase">{activeBehaviorGrade}</span>
             </div>
 
-            <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-sm hover:border-blue-400 transition-all duration-200">
-              <span className="text-[9px] uppercase text-slate-400 font-extrabold tracking-wider text-center">DANH HIỆU THI ĐUA</span>
-              <span className="font-black text-[11px] xs:text-xs text-[#E53935] mt-1 min-h-[2.5rem] flex items-center justify-center uppercase leading-tight text-center transition-all">
+            <div className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border border-slate-200 bg-white">
+              <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider text-center mb-1.5">DANH HIỆU THI ĐUA</span>
+              <span className="font-black text-xs xs:text-sm sm:text-[15px] text-[#E53935] uppercase text-center leading-tight">
                 {activeDistinction}
               </span>
             </div>
 
-            <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-sm hover:border-blue-400 transition-all duration-200">
-              <span className="text-[9px] uppercase text-slate-400 font-extrabold tracking-wider text-center">SỐ BUỔI NGHỈ HỌC</span>
-              <span className="font-black text-base xs:text-lg text-slate-700 mt-1 transition-all">
-                {activeDaysAbsent} <span className="text-[10px] xs:text-xs text-slate-400 font-black">BUỔI</span>
+            <div className="flex flex-col items-center justify-center p-3 sm:p-4 rounded-xl border border-slate-200 bg-white">
+              <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider text-center mb-1.5">SỐ BUỔI NGHỈ HỌC</span>
+              <span className="font-black text-base xs:text-lg sm:text-xl text-slate-700">
+                {activeDaysAbsent} <span className="text-[10px] sm:text-xs text-slate-400 font-black">BUỔI</span>
               </span>
-              {term !== "canam" && <span className="text-[8px] text-slate-400 mt-0.5 uppercase italic text-center leading-none">(phân bổ ước tính)</span>}
+              {term !== "canam" && <span className="text-[8px] sm:text-[9px] text-slate-400 mt-1 uppercase italic text-center leading-none">(phân bổ ước tính)</span>}
             </div>
           </div>
 
-          <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-200 text-sm">
-            <h4 className="font-black text-[#0055A5] text-[11px] uppercase tracking-wider mb-1">Ý kiến và nhận xét của Giáo viên môn học và chủ nhiệm</h4>
-            <p className="text-xs text-slate-700 italic leading-relaxed font-semibold">
-              &ldquo;{student.notes || "Học sinh hoàn thành xuất sắc các nội dung rèn luyện của trường học."}&rdquo;
+          <div className="mt-4 sm:mt-6 border border-blue-100 bg-[#f4f9fd] p-4 sm:p-5 rounded-xl">
+            <h4 className="font-black text-[#0055A5] text-[10px] sm:text-xs uppercase tracking-wider mb-2">Ý kiến và nhận xét của Giáo viên môn học và chủ nhiệm</h4>
+            <p className="text-xs sm:text-sm text-slate-800 italic font-medium leading-relaxed">
+              &ldquo;{student.notes || "Học sinh tích cực tham gia các phong trào trường lớp, đạt giải Nhì kì thi HSG Toán cấp Quận."}&rdquo;
             </p>
           </div>
         </div>
