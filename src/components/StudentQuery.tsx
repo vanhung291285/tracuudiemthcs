@@ -41,7 +41,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   // Search config features
   const [searchByCccd, setSearchByCccd] = useState(true);
   const [searchByName, setSearchByName] = useState(true);
-  const [searchMode, setSearchMode] = useState<"cccd" | "name">("cccd");
+  const [searchMode, setSearchMode] = useState<"cccd" | "name">("name");
 
   // States for automatically updated News Board harvested from suoilu.db.edu.vn
   const [newsItems, setNewsItems] = useState<any[]>([]);
@@ -140,10 +140,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         const nameEnabled = isNameEnabled === "true";
         setSearchByName(nameEnabled);
         
-        if (!cccdEnabled && nameEnabled) {
-          setSearchMode("name");
-        } else if (cccdEnabled) {
+        if (!nameEnabled && cccdEnabled) {
           setSearchMode("cccd");
+        } else if (nameEnabled) {
+          setSearchMode("name");
         }
       } catch (err) {
         console.warn("Could not load setting config from Supabase:", err);
@@ -279,17 +279,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 mb-5 relative">
                       <button
                         type="button"
-                        onClick={() => setSearchMode("cccd")}
-                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
-                          searchMode === "cccd"
-                            ? "bg-white text-[#0055A5] shadow-sm ring-1 ring-slate-200/50"
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        TRA CỨU QUA CCCD
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => setSearchMode("name")}
                         className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
                           searchMode === "name"
@@ -298,6 +287,17 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         }`}
                       >
                         TRA CỨU HỌ VÀ TÊN
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSearchMode("cccd")}
+                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
+                          searchMode === "cccd"
+                            ? "bg-white text-[#0055A5] shadow-sm ring-1 ring-slate-200/50"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        TRA CỨU QUA CCCD
                       </button>
                     </div>
                   )}
