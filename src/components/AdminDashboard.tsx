@@ -142,12 +142,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   // Import State
   const [importTerm, setImportTerm] = useState<"hk1" | "hk2" | "canam">("hk1");
-  const [importClass, setImportClass] = useState("9A1");
+  const [importClass, setImportClass] = useState(() => classes.length > 0 ? classes[0].className : "9A1");
   const [importText, setImportText] = useState("");
   const [importMethod, setImportMethod] = useState<"paste" | "upload">("paste");
   const [importPreview, setImportPreview] = useState<Student[]>([]);
   const [importStatus, setImportStatus] = useState("");
   const [importErrors, setImportErrors] = useState<string[]>([]);
+
+  // Keep importClass valid based on available classes
+  useEffect(() => {
+    if (classes.length > 0 && !classes.find(c => c.className === importClass)) {
+      setImportClass(classes[0].className);
+    }
+  }, [classes, importClass]);
 
   // Load initial students list
   useEffect(() => {
@@ -2213,7 +2220,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         <div className="bg-slate-50 border rounded-xl p-4 space-y-2">
                           <h4 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
                             <span className="p-1 bg-emerald-500 text-white rounded-full"><Download className="w-3.5 h-3.5" /></span>
-                            Buớc 1: Xuất tệp Excel .xlsx của lớp {importClass}
+                            BƯỚC 1: XUẤT TỆP EXCEL .XLSX CỦA LỚP {importClass}
                           </h4>
                           <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
                             Kết xuất tệp bảng mẫu có sẵn mã CCCD và Tên của <strong>{students.filter(s => s.className === importClass).length} học sinh</strong> đang thuộc lớp {importClass} hiện tại. Giáo viên chỉ cần mở điền điểm trực tuyến và tải lên lại!
@@ -2224,7 +2231,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition duration-200 cursor-pointer shadow-sm hover:scale-[1.01]"
                           >
                             <FileSpreadsheet className="w-4 h-4 shrink-0" />
-                            XUẤT FILE MẪU LỚP {importClass} ({importTerm === "canam" ? "Cả năm" : importTerm === "hk1" ? "Học kỳ I" : "Học kỳ II"})
+                            XUẤT FILE MẪU LỚP {importClass} ({importTerm === "canam" ? "Học kỳ I & II (Cả năm)" : importTerm === "hk1" ? "Học kỳ I" : "Học kỳ II"})
                           </button>
                         </div>
 
@@ -2232,7 +2239,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         <div className="space-y-2">
                           <h4 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5 uppercase tracking-wide">
                             <span className="p-1 bg-blue-600 text-white rounded-full"><Upload className="w-3.5 h-3.5" /></span>
-                            Bước 2: Tải lên tệp Sổ Điểm đã hoàn thiện
+                            BƯỚC 2: TẢI LÊN TỆP SỔ ĐIỂM ĐÃ HOÀN THIỆN
                           </h4>
                           <p className="text-[11px] text-slate-500 font-medium">
                             Chọn tệp dữ liệu dạng <strong>.xlsx</strong> bạn vừa điền để hệ thống cập nhật tự động toàn bộ lớp.
