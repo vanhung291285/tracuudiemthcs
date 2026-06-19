@@ -459,17 +459,16 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   }
                   
                   return (
-                    <button
+                    <div
                       key={student.id || idx}
-                      onClick={() => handleFillDemo(student.studentCode, student.fullName, student.dob.split('-').reverse().join('/'))}
-                      className={`w-full p-3 bg-white ${bgHover} active:bg-slate-100 transition border border-slate-200 rounded text-left cursor-pointer shadow-sm group flex justify-between items-center animate-fadeIn`}
+                      className={`w-full p-3 bg-white ${bgHover} transition border border-slate-200 rounded text-left shadow-sm flex justify-between items-center animate-fadeIn`}
                     >
                       <div>
-                        <div className="font-black text-[#0055A5] text-[12px] group-hover:underline uppercase">{student.fullName}</div>
+                        <div className="font-black text-[#0055A5] text-[12px] uppercase">{student.fullName}</div>
                         <div className="text-[10px] text-slate-500 font-mono font-bold mt-0.5">Lớp: {student.className} • NS: {student.dob.split('-').reverse().join('/')}</div>
                       </div>
                       <span className={`text-[9px] ${badgeColors} border px-2 py-1 rounded font-black uppercase`}>{label}</span>
-                    </button>
+                    </div>
                   );
                 }) : (
                   <div className="text-center py-4 text-xs text-slate-400 font-medium">Đang tải danh sách...</div>
