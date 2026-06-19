@@ -324,7 +324,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         if (r1 && r2 && r3 && r4 && r5 && r6) {
           alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công và đồng bộ lên Supabase!");
         } else {
-          alert("Cấu hình đã được lưu thành công ở trình duyệt của bạn (LocalStorage) nhưng không thể đồng bộ lên Supabase! Vui lòng đảm bảo bạn đã tạo bảng 'portal_settings' trong cơ sở dữ liệu Supabase bằng cách chạy đoạn mã SQL khởi tạo được hiển thị ở tab 'Supabase & Database' trong trang Quản trị này.");
+          const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
+          alert(`Cấu hình đã được lưu thành công ở trình duyệt của bạn (LocalStorage) nhưng không thể đồng bộ lên Supabase! Vui lòng đảm bảo bạn đã tạo bảng 'portal_settings' trong cơ sở dữ liệu Supabase bằng cách chạy đoạn mã SQL khởi tạo được hiển thị ở tab 'Supabase & Database' trong trang Quản trị này.${dbErr}`);
         }
       } else {
         alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công vào trình duyệt (LocalStorage)!");
