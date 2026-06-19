@@ -576,7 +576,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   <div className="flex items-center gap-1.5">
                     <Bell className="w-5 h-5 text-[#E53935] shrink-0" />
                     <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wide leading-none">
-                      BẢN TIN CƠ SỞ DỮ LIỆU &amp; CẬP NHẬT ĐIỂM SỐ
+                      BẢN TIN MỚI NHẤT CỦA NHÀ TRƯỜNG
                     </h3>
                   </div>
                   <p className="text-[10px] text-slate-500 font-semibold">
