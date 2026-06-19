@@ -2609,9 +2609,10 @@ CREATE TABLE IF NOT EXISTS portal_classes (
 );
 
 -- 3. Tạo bảng lưu trữ cấu hình cổng tra cứu (portal_settings)
+DROP TABLE IF EXISTS portal_settings;
 CREATE TABLE IF NOT EXISTS portal_settings (
-  key TEXT PRIMARY KEY,
-  value TEXT NOT NULL,
+  id TEXT PRIMARY KEY,
+  setting_value TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -2681,9 +2682,10 @@ CREATE TABLE IF NOT EXISTS portal_classes (
 );
 
 -- 3. Tạo bảng lưu trữ cấu hình cổng tra cứu (portal_settings)
+DROP TABLE IF EXISTS portal_settings;
 CREATE TABLE IF NOT EXISTS portal_settings (
-  key TEXT PRIMARY KEY,
-  value TEXT NOT NULL,
+  id TEXT PRIMARY KEY,
+  setting_value TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
