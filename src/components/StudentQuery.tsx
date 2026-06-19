@@ -48,6 +48,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsSource, setNewsSource] = useState("Hệ thống");
 
+  const [topStudents, setTopStudents] = useState<Student[]>([]);
+
   useEffect(() => {
     let active = true;
     const fetchNews = async () => {
@@ -66,7 +68,30 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       }
     };
 
+    const fetchTopStudents = async () => {
+      try {
+        const all = await dbService.getAllStudents();
+        const targetStudents = all.filter(s => 
+          s.distinction === "Học sinh Xuất sắc" || 
+          s.distinction === "Học sinh Giỏi"
+        );
+        
+        targetStudents.sort((a, b) => {
+          const rankA = a.distinction === "Học sinh Xuất sắc" ? 1 : 2;
+          const rankB = b.distinction === "Học sinh Xuất sắc" ? 1 : 2;
+          return rankA - rankB;
+        });
+
+        if (active) {
+          setTopStudents(targetStudents);
+        }
+      } catch (err) {
+        console.warn("Could not load top students:", err);
+      }
+    };
+
     fetchNews();
+    fetchTopStudents();
     return () => {
       active = false;
     };
@@ -409,39 +434,36 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 Danh sách học sinh giỏi và xuất sắc:
               </p>
               
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleFillDemo("037206123456", "Nguyễn Minh Anh", "15/05/2011")}
-                  className="w-full p-3 bg-white hover:bg-slate-50 active:bg-slate-100 transition border border-slate-200 rounded text-left cursor-pointer shadow-sm group flex justify-between items-center animate-fadeIn"
-                >
-                  <div>
-                    <div className="font-black text-[#0055A5] text-[12px] group-hover:underline">NGUYỄN MINH ANH</div>
-                    <div className="text-[10px] text-slate-500 font-mono font-bold mt-0.5">CCCD: 037206123456 • NS: 15/05/2011</div>
-                  </div>
-                  <span className="text-[9px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-1 rounded font-black uppercase">Xuất sắc</span>
-                </button>
-                
-                <button
-                  onClick={() => handleFillDemo("037206123457", "Trần Thị Mai Phương", "22/10/2011")}
-                  className="w-full p-3 bg-white hover:bg-slate-50 active:bg-slate-100 transition border border-slate-200 rounded text-left cursor-pointer shadow-sm group flex justify-between items-center"
-                >
-                  <div>
-                    <div className="font-black text-[#0055A5] text-[12px] group-hover:underline">TRẦN THỊ MAI PHƯƠNG</div>
-                    <div className="text-[10px] text-slate-500 font-mono font-bold mt-0.5">CCCD: 037206123457 • NS: 22/10/2011</div>
-                  </div>
-                  <span className="text-[9px] bg-blue-50 text-blue-800 border border-blue-200 px-2 py-1 rounded font-black uppercase">Giỏi</span>
-                </button>
-
-                <button
-                  onClick={() => handleFillDemo("037206123458", "Phạm Quốc Bảo", "03/02/2012")}
-                  className="w-full p-3 bg-white hover:bg-slate-50 active:bg-slate-100 transition border border-slate-200 rounded text-left cursor-pointer shadow-sm group flex justify-between items-center"
-                >
-                  <div>
-                    <div className="font-black text-[#0055A5] text-[12px] group-hover:underline">PHẠM QUỐC BẢO</div>
-                    <div className="text-[10px] text-slate-500 font-mono font-bold mt-0.5">CCCD: 037206123458 • NS: 03/02/2012</div>
-                  </div>
-                  <span className="text-[9px] bg-slate-100 text-slate-800 border border-slate-200 px-2 py-1 rounded font-black uppercase">Tiêu biểu</span>
-                </button>
+              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                {topStudents.length > 0 ? topStudents.map((student, idx) => {
+                  // Determine distinction color styling
+                  let badgeColors = "bg-slate-100 text-slate-800 border-slate-200";
+                  let bgHover = "hover:bg-slate-50";
+                  let label = "Tiêu biểu";
+                  if (student.distinction === "Học sinh Xuất sắc") {
+                    badgeColors = "bg-emerald-50 text-emerald-800 border-emerald-200";
+                    label = "Xuất sắc";
+                  } else if (student.distinction === "Học sinh Giỏi") {
+                    badgeColors = "bg-blue-50 text-blue-800 border-blue-200";
+                    label = "Giỏi";
+                  }
+                  
+                  return (
+                    <button
+                      key={student.id || idx}
+                      onClick={() => handleFillDemo(student.studentCode, student.fullName, student.dob.split('-').reverse().join('/'))}
+                      className={`w-full p-3 bg-white ${bgHover} active:bg-slate-100 transition border border-slate-200 rounded text-left cursor-pointer shadow-sm group flex justify-between items-center animate-fadeIn`}
+                    >
+                      <div>
+                        <div className="font-black text-[#0055A5] text-[12px] group-hover:underline uppercase">{student.fullName}</div>
+                        <div className="text-[10px] text-slate-500 font-mono font-bold mt-0.5">Lớp: {student.className} • NS: {student.dob.split('-').reverse().join('/')}</div>
+                      </div>
+                      <span className={`text-[9px] ${badgeColors} border px-2 py-1 rounded font-black uppercase`}>{label}</span>
+                    </button>
+                  );
+                }) : (
+                  <div className="text-center py-4 text-xs text-slate-400 font-medium">Đang tải danh sách...</div>
+                )}
               </div>
             </div>
 
