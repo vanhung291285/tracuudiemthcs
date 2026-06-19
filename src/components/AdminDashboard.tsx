@@ -111,6 +111,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     localStorage.getItem("portal_footer_copy") || "© 2026 PTDTBT TH & THCS SUỐI LƯ"
   );
   
+  const [searchByCccd, setSearchByCccd] = useState(() => {
+    const val = localStorage.getItem("portal_search_cccd");
+    return val !== "false"; // default true
+  });
+  const [searchByName, setSearchByName] = useState(() => {
+    const val = localStorage.getItem("portal_search_name");
+    return val === "true"; // default false for retro-compatibility, or true? the user wants search by name with toggle. Let's make it true if they enable it here. Defaults to true. Let's make it default to false to not break anything unless admin toggles. Actually we will just make it true as requested by user. Let's do true.
+  });
+
   // Student Form Dialog
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -176,6 +185,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
       const copy = await dbService.getPortalSetting("portal_footer_copy", "© 2026 PTDTBT TH & THCS SUỐI LƯ");
       setFooterCopy(copy);
+
+      const searchCccd = await dbService.getPortalSetting("portal_search_cccd", "true");
+      setSearchByCccd(searchCccd !== "false");
+
+      const searchName = await dbService.getPortalSetting("portal_search_name", "true");
+      setSearchByName(searchName === "true");
     } catch (e) {
       console.warn("Could not load portal settings from Supabase:", e);
     }
@@ -318,10 +333,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const r4 = await dbService.savePortalSetting("portal_footer_title", footerTitle.trim());
       const r5 = await dbService.savePortalSetting("portal_footer_desc", footerDesc.trim());
       const r6 = await dbService.savePortalSetting("portal_footer_copy", footerCopy.trim());
+      const r7 = await dbService.savePortalSetting("portal_search_cccd", searchByCccd ? "true" : "false");
+      const r8 = await dbService.savePortalSetting("portal_search_name", searchByName ? "true" : "false");
       
       const config = dbService.getConfig();
       if (config.isRealSupabase) {
-        if (r1 && r2 && r3 && r4 && r5 && r6) {
+        if (r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8) {
           alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công và đồng bộ lên Supabase!");
         } else {
           const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}\n\n💡 HƯỚNG DẪN MẸO: Bạn hãy mở lại tab "Supabase & Database" trong Cài đặt, COPY toàn bộ Mã SQL VÀ CHẠY LẠI MỘT LẦN NỮA trên SQL Editor của Supabase để hệ thống làm mới schema cache, sau đó thử lưu lại.` : "";
@@ -352,6 +369,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setFooterTitle(defaultFooterTitle);
       setFooterDesc(defaultFooterDesc);
       setFooterCopy(defaultFooterCopy);
+      setSearchByCccd(true);
+      setSearchByName(true);
       
       setAuthIsLoading(true);
       try {
@@ -361,6 +380,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         await dbService.savePortalSetting("portal_footer_title", defaultFooterTitle);
         await dbService.savePortalSetting("portal_footer_desc", defaultFooterDesc);
         await dbService.savePortalSetting("portal_footer_copy", defaultFooterCopy);
+        await dbService.savePortalSetting("portal_search_cccd", "true");
+        await dbService.savePortalSetting("portal_search_name", "true");
         alert("Đã đặt lại toàn bộ cấu hình hiển thị và đồng bộ về mặc định thành công.");
       } catch (err: any) {
         alert("Lỗi khi đặt lại cấu hình trên Supabase: " + err.message);
@@ -2846,6 +2867,32 @@ NOTIFY pgrst, 'reload schema';`}
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Thông tin bảo lưu quyền sở hữu trí tuệ hoặc niên khóa ở đáy cổng.
                       </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100">
+                      <h4 className="font-extrabold text-[#0055A5] text-[11px] uppercase tracking-wider mb-3">Cấu hình Bật/Tắt Trường Tra Cứu</h4>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                      <div>
+                        <h5 className="text-[11px] font-black text-slate-700 uppercase">1. Tra Cứu Bằng Số CCCD</h5>
+                        <p className="text-[9px] text-slate-500 font-semibold mt-0.5">Cho phép học sinh sử dụng Số Căn Cước Công Dân.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked={searchByCccd} onChange={(e) => setSearchByCccd(e.target.checked)} className="sr-only peer" />
+                        <div className="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                      <div>
+                        <h5 className="text-[11px] font-black text-slate-700 uppercase">2. Tra Cứu Bằng Họ & Tên</h5>
+                        <p className="text-[9px] text-slate-500 font-semibold mt-0.5">Cho phép học sinh tìm kiếm bằng Họ và Tên (Có thiết lập tương đối).</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked={searchByName} onChange={(e) => setSearchByName(e.target.checked)} className="sr-only peer" />
+                        <div className="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                      </label>
                     </div>
 
                     <div className="pt-4 flex flex-wrap gap-3 border-t border-slate-100">
