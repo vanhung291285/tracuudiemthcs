@@ -218,22 +218,16 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         </div>
 
         {/* Student General Information Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="md:col-span-3 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-5 items-center sm:items-start">
-            <div className="w-24 h-32 bg-slate-50 rounded-lg border-2 border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-               <div className="text-slate-300 flex flex-col items-center italic text-[10px]">
-                 <svg className="w-8 h-8 mb-1 text-slate-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                 Ảnh 3x4
-               </div>
-            </div>
-            <div className="flex-1 grid grid-cols-2 xl:grid-cols-4 gap-y-2 sm:gap-y-3 gap-x-2 sm:gap-x-6 w-full">
-              <div className="flex flex-col col-span-2 xl:col-span-1">
+        <div className="mb-5">
+          <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-y-2 sm:gap-y-3 gap-x-3 sm:gap-x-6 w-full">
+              <div className="flex flex-col col-span-2 md:col-span-1 xl:col-span-2 border-r pr-2 border-slate-100">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Họ và tên</span>
-                <span className="font-black text-[#0055A5] text-sm xs:text-base sm:text-lg uppercase truncate">{student.fullName}</span>
+                <span className="font-black text-[#0055A5] text-sm sm:text-lg uppercase break-words leading-tight mt-0.5">{student.fullName}</span>
               </div>
-              <div className="flex flex-col col-span-2 xl:col-span-1">
+              <div className="flex flex-col col-span-2 md:col-span-2 xl:col-span-2 border-r pr-2 border-slate-100">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Trường THCS</span>
-                <span className="font-bold text-slate-800 text-[11px] sm:text-sm xs:text-base break-words leading-tight mt-0.5">{student.school}</span>
+                <span className="font-bold text-slate-800 text-xs sm:text-sm break-words leading-tight mt-0.5">{student.school}</span>
               </div>
               <div className="flex flex-col">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Lớp học</span>
@@ -251,19 +245,11 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Ngày sinh</span>
                 <span className="font-bold text-slate-700 text-xs sm:text-base">{student.dob}</span>
               </div>
-              <div className="flex flex-col col-span-2 xl:col-span-4 border-t pt-1 border-slate-100">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Mã số học sinh</span>
+              <div className="flex flex-col col-span-2 md:col-span-3 xl:col-span-6 border-t pt-1 border-slate-100">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Mã số học sinh (12 số CCCD)</span>
                 <span className="font-mono font-bold text-[11px] sm:text-xs text-[#0055A5]">{student.studentCode}</span>
               </div>
             </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-sm w-full md:w-auto">
-            <div className="bg-slate-50 p-2 rounded border border-slate-200/80 mb-2 shrink-0 self-center">
-              <QRGenerator value={student.verificationToken} size={92} />
-            </div>
-            <span className="text-[9px] text-slate-500 font-mono font-bold">Xác thực: {student.studentCode}</span>
-            <span className="text-[8px] text-slate-400 font-mono mt-0.5">{student.id.substring(0, 18).toUpperCase()}</span>
           </div>
         </div>
 

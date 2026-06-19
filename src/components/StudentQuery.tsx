@@ -241,28 +241,28 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   
                   {/* Search Mode Toggles (only show if both are enabled) */}
                   {searchByCccd && searchByName && (
-                    <div className="flex gap-2 mb-4">
+                    <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 mb-5 relative">
                       <button
                         type="button"
                         onClick={() => setSearchMode("cccd")}
-                        className={`flex-1 py-2 text-[11px] uppercase font-black tracking-wider rounded-md transition duration-200 cursor-pointer text-center border ${
+                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
                           searchMode === "cccd"
-                            ? "bg-[#0055A5] text-white border-[#0055A5] shadow-sm"
-                            : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
+                            ? "bg-white text-[#0055A5] shadow-sm ring-1 ring-slate-200/50"
+                            : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
-                        TRA CỨU CCCD
+                        TRA CỨU QUA CCCD
                       </button>
                       <button
                         type="button"
                         onClick={() => setSearchMode("name")}
-                        className={`flex-1 py-2 text-[11px] uppercase font-black tracking-wider rounded-md transition duration-200 cursor-pointer text-center border ${
+                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
                           searchMode === "name"
-                            ? "bg-[#0055A5] text-white border-[#0055A5] shadow-sm"
-                            : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700"
+                            ? "bg-white text-[#0055A5] shadow-sm ring-1 ring-slate-200/50"
+                            : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
-                        TRA CỨU HỌ TÊN
+                        TRA CỨU HỌ VÀ TÊN
                       </button>
                     </div>
                   )}
