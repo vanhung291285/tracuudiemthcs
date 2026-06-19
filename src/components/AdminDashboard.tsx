@@ -1528,7 +1528,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                 onClick={handleResetLocalDb}
                 className="w-full text-xs font-semibold text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-lg text-left transition cursor-pointer"
               >
-                Reset Database Mẫu
+                Khôi Phục Dữ Liệu Mẫu
               </button>
               <button
                 onClick={handleClearAllData}
