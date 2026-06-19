@@ -627,7 +627,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     setIsFormOpen(true);
   };
 
-  const handleSaveStudent = async () => {
+  const handleSaveStudent = async (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     if (!formStudent.studentCode || !formStudent.fullName) {
       setFormError("Vui lòng điền đầy đủ Mã học sinh (Số CCCD) và Họ và tên.");
       return;
@@ -665,7 +666,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
     setAuthIsLoading(true);
     try {
-      const success = await dbService.upsertStudent(preparedStudent as Student);
+      const timeoutPromise = new Promise<boolean>((_, reject) => {
+        setTimeout(() => reject(new Error("Kết nối máy chủ bị lỗi hoặc quá thời gian chờ (Timeout). Kiểm tra lại đường truyền mạng hoặc cấu hình Supabase.")), 8000);
+      });
+      
+      const success = await Promise.race([
+        dbService.upsertStudent(preparedStudent as Student),
+        timeoutPromise
+      ]);
       
       if (success) {
         loadStudents();
