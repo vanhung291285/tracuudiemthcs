@@ -192,15 +192,15 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
         {/* Outer wrapping to handle responsive scrolling if needed on very small devices, but print avoids scroll */}
         <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366]">
-          <table className="w-full border-collapse border border-slate-300 text-[12px] sm:text-[13px] md:text-sm min-w-[600px] mb-1">
+          <table className="w-full border-collapse border border-slate-300 text-[11px] sm:text-[13px] md:text-sm w-full mb-1">
             <colgroup>
-              <col className="w-10 sm:w-12" />
-              <col className="w-auto" />
-              <col className="w-14 sm:w-16" />
-              <col className="w-14 sm:w-16" />
-              <col className="w-16 sm:w-20" />
-              <col className="w-16 sm:w-20" />
-              <col className="w-20 sm:w-24" />
+              <col className="w-8 sm:w-12" /> {/* TT */}
+              <col className="w-auto" /> {/* Môn học */}
+              <col className="w-10 sm:w-16" /> {/* Kỳ 1 */}
+              <col className="w-10 sm:w-16" /> {/* Kỳ 2 */}
+              <col className="w-12 sm:w-20" /> {/* Thi lại */}
+              <col className="w-12 sm:w-20" /> {/* Cả năm */}
+              <col className="w-14 sm:w-24" /> {/* Ghi chú */}
             </colgroup>
             <tbody>
               {/* Info row 1 */}
@@ -229,13 +229,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
               {/* Table Headers */}
               <tr className="font-bold text-center bg-[#0055A5] text-white">
-                <td className="p-2 border border-blue-800">TT</td>
-                <td className="p-2 border border-blue-800">Môn học</td>
-                <td className="p-2 border border-blue-800">Kỳ 1</td>
-                <td className="p-2 border border-blue-800">Kỳ 2</td>
-                <td className="p-2 border border-blue-800">Thi lại</td>
-                <td className="p-2 border border-blue-800 whitespace-nowrap">Cả năm</td>
-                <td className="p-2 border border-blue-800">Ghi chú</td>
+                <td className="p-1 sm:p-2 border border-blue-800">TT</td>
+                <td className="p-1 sm:p-2 border border-blue-800">Môn học</td>
+                <td className="p-1 sm:p-2 border border-blue-800">Kỳ 1</td>
+                <td className="p-1 sm:p-2 border border-blue-800">Kỳ 2</td>
+                <td className="p-1 sm:p-2 border border-blue-800">Thi lại</td>
+                <td className="p-1 sm:p-2 border border-blue-800 whitespace-nowrap">Cả năm</td>
+                <td className="p-1 sm:p-2 border border-blue-800">Ghi chú</td>
               </tr>
               
               {/* Subjects */}
