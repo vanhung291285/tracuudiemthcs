@@ -460,12 +460,19 @@ class DatabaseService {
     // 2. Query Supabase
     if (this.supabase) {
       try {
-        await this.checkSchemaCase();
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error("Supabase connection timeout")), 8000)
+        );
+        
+        await Promise.race([this.checkSchemaCase(), timeoutPromise]);
         
         const mapped = this.mapStudentToDb(student);
-        const { error } = await this.supabase
-          .from("students")
-          .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" });
+        const { error } = await Promise.race([
+          this.supabase
+            .from("students")
+            .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" }),
+          timeoutPromise
+        ]) as any;
 
         if (error) {
           console.error("Supabase upsert error:", error.message);
