@@ -324,7 +324,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         if (r1 && r2 && r3 && r4 && r5 && r6) {
           alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công và đồng bộ lên Supabase!");
         } else {
-          const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
+          const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}\n\n💡 HƯỚNG DẪN MẸO: Bạn hãy mở lại tab "Supabase & Database" trong Cài đặt, COPY toàn bộ Mã SQL VÀ CHẠY LẠI MỘT LẦN NỮA trên SQL Editor của Supabase để hệ thống làm mới schema cache, sau đó thử lưu lại.` : "";
           alert(`Cấu hình đã được lưu thành công ở trình duyệt của bạn (LocalStorage) nhưng không thể đồng bộ lên Supabase! Vui lòng đảm bảo bạn đã tạo bảng 'portal_settings' trong cơ sở dữ liệu Supabase bằng cách chạy đoạn mã SQL khởi tạo được hiển thị ở tab 'Supabase & Database' trong trang Quản trị này.${dbErr}`);
         }
       } else {
@@ -2635,7 +2635,10 @@ ALTER TABLE portal_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai portal_settings" ON portal_settings;
 DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings;
 CREATE POLICY "Cho phép đọc công khai portal_settings" ON portal_settings FOR SELECT USING (true);
-CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true) WITH CHECK (true);`}
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- D. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
+NOTIFY pgrst, 'reload schema';`}
                         </pre>
                       </div>
 
@@ -2704,7 +2707,10 @@ ALTER TABLE portal_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai portal_settings" ON portal_settings;
 DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings;
 CREATE POLICY "Cho phép đọc công khai portal_settings" ON portal_settings FOR SELECT USING (true);
-CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true) WITH CHECK (true);`}
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- D. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
+NOTIFY pgrst, 'reload schema';`}
                         </pre>
                       </div>
                     </div>

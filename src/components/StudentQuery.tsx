@@ -163,6 +163,17 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       
       {/* Top Banner Navigation Header */}
       <header className="w-full bg-[#0055A5] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
+        <div className="absolute top-3 right-3 md:top-5 md:right-5">
+          <button
+            type="button"
+            onClick={onNavigateToAdmin}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded text-[10px] font-bold tracking-wider uppercase transition-colors shadow-sm cursor-pointer"
+            title="Đăng nhập dành cho Quản trị viên"
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Quản trị</span>
+          </button>
+        </div>
         <div className="max-w-6xl mx-auto space-y-1.5">
           <div className="flex flex-col items-center">
             <span className="text-[10px] md:text-xs uppercase tracking-[0.15em] font-bold text-slate-100/90 leading-none">
