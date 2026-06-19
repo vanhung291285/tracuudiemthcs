@@ -644,7 +644,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       return;
     }
 
-    // Standardize saved dob date: if input is in DD/MM/YYYY format, it's fine, but our date matcher handles standard
     if (!formStudent.dob) {
       setFormError("Vui lòng điền Ngày sinh học sinh.");
       return;
@@ -665,15 +664,21 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     };
 
     setAuthIsLoading(true);
-    const success = await dbService.upsertStudent(preparedStudent as Student);
-    setAuthIsLoading(false);
-
-    if (success) {
-      loadStudents();
-      setIsFormOpen(false);
-    } else {
-      const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
-      setFormError(`Không thể lưu học sinh. Kiểm tra trùng mã học sinh/CCCD hoặc kết nối Supabase.${dbErr}`);
+    try {
+      const success = await dbService.upsertStudent(preparedStudent as Student);
+      
+      if (success) {
+        loadStudents();
+        setIsFormOpen(false);
+      } else {
+        const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
+        setFormError(`Không thể lưu học sinh. Kiểm tra trùng mã học sinh/CCCD hoặc kết nối Supabase.${dbErr}`);
+      }
+    } catch (err: any) {
+      console.error("Unhandled error when saving student:", err);
+      setFormError(`Có lỗi hệ thống khi lưu: ${err.message || String(err)}`);
+    } finally {
+      setAuthIsLoading(false);
     }
   };
 
