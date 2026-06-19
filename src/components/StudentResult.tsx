@@ -19,7 +19,19 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   const [term, setTerm] = useState<"hk1" | "hk2" | "canam">(initialTerm);
   
   const headerTop = localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
-  const schoolYear = localStorage.getItem("portal_school_year") || student.academicYear || "Năm học 2025-2026";
+  const schoolYearRaw = localStorage.getItem("portal_school_year") || student.academicYear || "Năm học 2025-2026";
+  const schoolYear = schoolYearRaw.replace(/năm học/i, "").trim();
+
+  const formatDob = (dob: string) => {
+    if (!dob) return "";
+    if (dob.includes("-")) {
+      const parts = dob.split("-");
+      if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+    return dob;
+  };
 
   // Compute live term summary as required under Circular 22 rules
   const scoreSubjects = student.subjects.filter(s => s.isEvaluatedByScore);
@@ -108,7 +120,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     // Student Info
     csvContent += "THÔNG TIN HỌC SINH\n";
     csvContent += `Mã HS,Họ tên,Ngày sinh,Giới tính,Kế quả học tập,Kết quả rèn luyện,Danh hiệu,Số ngày vắng\n`;
-    csvContent += `"${student.studentCode}","${student.fullName}","${student.dob}","${student.gender}","${student.academicGrade}","${student.behaviorGrade}","${student.distinction}",${student.daysAbsent}\n\n`;
+    csvContent += `"${student.studentCode}","${student.fullName}","${formatDob(student.dob)}","${student.gender}","${student.academicGrade}","${student.behaviorGrade}","${student.distinction}",${student.daysAbsent}\n\n`;
     
     // Grade Sheet Header
     csvContent += "BẢNG KẾT QUẢ HỌC TẬP\n";
@@ -135,21 +147,23 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
   return (
     <div className="w-full max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-6" id="student-result-container">
-      {/* Top Controls Bar - Compact to save space */}
-      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-4 mb-4 no-print w-full">
-        <button
-          onClick={onBack}
-          id="btn-back-query"
-          className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition cursor-pointer font-bold text-[10px] sm:text-xs shadow-sm whitespace-nowrap order-1"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Tra cứu khác</span>
-        </button>
+      {/* Top Controls Bar */}
+      <div className="flex items-center justify-between gap-2 sm:gap-3 mb-6 sm:mb-8 no-print w-full relative">
+        <div className="flex-1 flex justify-start">
+          <button
+            onClick={onBack}
+            id="btn-back-query"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition cursor-pointer shadow-sm shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-4 sm:h-4" />
+          </button>
+        </div>
 
-        {/* Term Switcher directly inline */}
-        <div className="flex bg-white p-0.5 sm:p-1 rounded-lg border border-slate-200 shadow-sm gap-0.5 items-center flex-1 sm:flex-initial max-w-full sm:max-w-[300px] shrink-0 mx-auto order-3 sm:order-2 w-full mt-1.5 sm:mt-0">
+        {/* Term Switcher - Centered */}
+        <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm gap-1 items-center w-full max-w-[260px] sm:max-w-xs md:max-w-sm shrink-1">
           <button
             onClick={() => setTerm("hk1")}
-            className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-1.5 text-center text-[10px] sm:text-xs font-black rounded-md transition duration-200 select-none cursor-pointer ${
+            className={`flex-1 py-1.5 sm:py-2 text-center text-xs sm:text-sm font-black rounded-lg transition duration-200 select-none cursor-pointer ${
               term === "hk1" ? "bg-[#0055A5] text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
             }`}
           >
@@ -157,7 +171,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
           </button>
           <button
             onClick={() => setTerm("hk2")}
-            className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-1.5 text-center text-[10px] sm:text-xs font-black rounded-md transition duration-200 select-none cursor-pointer ${
+            className={`flex-1 py-1.5 sm:py-2 text-center text-xs sm:text-sm font-black rounded-lg transition duration-200 select-none cursor-pointer ${
               term === "hk2" ? "bg-[#0055A5] text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
             }`}
           >
@@ -165,7 +179,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
           </button>
           <button
             onClick={() => setTerm("canam")}
-            className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-1.5 text-center text-[10px] sm:text-xs font-black rounded-md transition duration-200 select-none cursor-pointer ${
+            className={`flex-1 py-1.5 sm:py-2 text-center text-xs sm:text-sm font-black rounded-lg transition duration-200 select-none cursor-pointer ${
               term === "canam" ? "bg-[#0055A5] text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
             }`}
           >
@@ -173,20 +187,20 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0 justify-end order-2 sm:order-3">
+        <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-2">
           <button
             onClick={handleExportCSV}
             id="btn-export-excel"
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition cursor-pointer font-bold text-[10px] sm:text-xs shadow-sm whitespace-nowrap"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-[#00A65A] hover:bg-[#008f4c] text-white rounded-lg transition cursor-pointer shadow-sm shrink-0"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Excel</span>
+            <FileSpreadsheet className="w-4 h-4 sm:w-4 sm:h-4" />
           </button>
           <button
             onClick={handlePrint}
             id="btn-print-pdf"
-            className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 bg-[#E53935] hover:bg-[#C62828] text-white rounded-lg transition cursor-pointer font-bold text-[10px] sm:text-xs shadow-sm whitespace-nowrap"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-[#E53935] hover:bg-[#C62828] text-white rounded-lg transition cursor-pointer shadow-sm shrink-0"
           >
-            <Printer className="w-3.5 h-3.5" /> <span className="hidden xs:inline">PDF</span>
+            <Printer className="w-4 h-4 sm:w-4 sm:h-4" />
           </button>
         </div>
       </div>
@@ -244,7 +258,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               </div>
               <div className="flex flex-col">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Ngày sinh</span>
-                <span className="font-bold text-slate-700 text-xs sm:text-base">{student.dob}</span>
+                <span className="font-bold text-slate-700 text-xs sm:text-base">{formatDob(student.dob)}</span>
               </div>
               <div className="flex flex-col col-span-2 md:col-span-3 xl:col-span-6 border-t pt-1 border-slate-100">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Mã số học sinh (12 số CCCD)</span>
