@@ -197,7 +197,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between" id="student-query-root">
+    <div className="w-full flex-1 flex flex-col justify-between bg-sky-100" id="student-query-root">
       
       {/* Top Banner Navigation Header */}
       <header className="w-full bg-[#0055A5] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
