@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Student } from "../types";
 import { FileSpreadsheet, Printer, ArrowLeft, ShieldCheck, Calendar, Award, Clock } from "lucide-react";
-import QRGenerator from "./QRGenerator";
+import dbService from "../lib/supabase";
 
 interface StudentResultProps {
   student: Student;
@@ -17,6 +17,25 @@ interface StudentResultProps {
 export default function StudentResult({ student, initialTerm = "canam", onBack }: StudentResultProps) {
   const printAreaRef = useRef<HTMLDivElement>(null);
   const [term, setTerm] = useState<"hk1" | "hk2" | "canam">(initialTerm);
+  const [advisorName, setAdvisorName] = useState(student.teacher || "Vũ Văn Hùng");
+  
+  useEffect(() => {
+    let active = true;
+    const fetchAdvisor = async () => {
+      try {
+        const classes = await dbService.getClasses();
+        if (!active) return;
+        const matched = classes.find(c => c.className === student.className);
+        if (matched && matched.advisorName) {
+          setAdvisorName(matched.advisorName);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch advisor name:", err);
+      }
+    };
+    fetchAdvisor();
+    return () => { active = false; };
+  }, [student.className, student.teacher]);
   
   const headerTop = localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
   const schoolYearRaw = localStorage.getItem("portal_school_year") || student.academicYear || "Năm học 2025-2026";
@@ -296,7 +315,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 Ngày {new Date().getDate() < 10 ? `0${new Date().getDate()}` : new Date().getDate()} tháng {new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : new Date().getMonth() + 1} năm {new Date().getFullYear()}
               </span>
               <span className="font-medium">Giáo viên chủ nhiệm</span>
-              <span className="mt-16 sm:mt-24 font-black uppercase text-[#0055A5]">{student.teacher || "Vũ Văn Hùng"}</span>
+              <span className="mt-16 sm:mt-24 font-black uppercase text-[#0055A5]">{advisorName}</span>
             </div>
           </div>
         </div>
