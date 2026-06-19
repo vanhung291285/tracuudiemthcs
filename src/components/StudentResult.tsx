@@ -146,10 +146,10 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-2" id="student-result-container">
+    <div className="w-full max-w-5xl mx-auto" id="student-result-container">
       {/* Top Controls Bar */}
-      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-4 no-print w-full relative">
-        <div className="flex-1 flex justify-start">
+      <div className="flex items-center justify-between p-2 no-print w-full relative">
+        <div className="flex justify-start">
           <button
             onClick={onBack}
             id="btn-back-query"
@@ -161,14 +161,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
         {/* Term Switcher removed for optimized display space as requested */}
 
-        <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-2">
-          <button
-            onClick={handleExportCSV}
-            id="btn-export-excel"
-            className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-[#00A65A] hover:bg-[#008f4c] text-white rounded-lg transition cursor-pointer shadow-sm shrink-0"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-          </button>
+        <div className="flex items-center justify-end">
           <button
             onClick={handlePrint}
             id="btn-print-pdf"
@@ -183,31 +176,31 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       <div
         ref={printAreaRef}
         id="print-card-area"
-        className="bg-white px-2 sm:px-8 py-4 sm:py-6 text-black font-serif w-full max-w-4xl mx-auto"
+        className="bg-white px-2 py-2 sm:px-4 sm:py-4 text-black font-serif w-full max-w-5xl mx-auto"
       >
         {/* Document Header */}
-        <div className="mb-4 sm:mb-6 text-[#0055A5]">
+        <div className="mb-2 sm:mb-4 text-[#0055A5]">
           <div className="uppercase font-bold text-[13px] sm:text-sm leading-snug whitespace-nowrap">ỦY BAN NHÂN DÂN XÃ XA DUNG</div>
           <div className="uppercase font-bold text-[13px] sm:text-[15px] leading-snug whitespace-nowrap">TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ</div>
         </div>
 
         {/* Title */}
-        <div className="text-center mb-4 sm:mb-6 text-[#E53935]">
+        <div className="text-center mb-2 sm:mb-4 text-[#E53935]">
           <h1 className="font-black text-lg sm:text-xl uppercase mb-1 tracking-wide">KẾT QUẢ HỌC TẬP</h1>
           <h2 className="font-bold text-[13px] sm:text-sm text-[#0055A5]">Năm học {schoolYear}</h2>
         </div>
 
         {/* Outer wrapping to handle responsive scrolling if needed on very small devices, but print avoids scroll */}
         <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366]">
-          <table className="w-full border-collapse border border-slate-300 text-[13px] sm:text-sm min-w-[600px] mb-2 shadow-sm rounded-lg">
+          <table className="w-full border-collapse border border-slate-300 text-[12px] sm:text-[13px] md:text-sm min-w-[600px] mb-1">
             <colgroup>
-              <col className="w-10 sm:w-12" /> {/* TT */}
-              <col className="w-auto" /> {/* Môn học */}
-              <col className="w-14 sm:w-16" /> {/* Kỳ 1 */}
-              <col className="w-14 sm:w-16" /> {/* Kỳ 2 */}
-              <col className="w-16 sm:w-20" /> {/* Thi lại */}
-              <col className="w-16 sm:w-20" /> {/* Cả năm */}
-              <col className="w-20 sm:w-24" /> {/* Ghi chú */}
+              <col className="w-10 sm:w-12" />
+              <col className="w-auto" />
+              <col className="w-14 sm:w-16" />
+              <col className="w-14 sm:w-16" />
+              <col className="w-16 sm:w-20" />
+              <col className="w-16 sm:w-20" />
+              <col className="w-20 sm:w-24" />
             </colgroup>
             <tbody>
               {/* Info row 1 */}
@@ -259,13 +252,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
                 return (
                  <tr key={index} className="text-center even:bg-slate-50 hover:bg-slate-100 transition-colors">
-                     <td className="p-[6px] sm:p-2 border border-slate-300 font-medium text-slate-500">{index + 1}</td>
-                     <td className="p-[6px] sm:p-2 border border-slate-300 text-left px-3 font-semibold">{sub.subjectName}</td>
-                     <td className="p-[6px] sm:p-2 border border-slate-300 font-bold">{valHk1}</td>
-                     <td className="p-[6px] sm:p-2 border border-slate-300 font-bold">{valHk2}</td>
-                     <td className="p-[6px] sm:p-2 border border-slate-300"></td>
-                     <td className="p-[6px] sm:p-2 border border-slate-300 font-black text-[#E53935]">{valCaNam}</td>
-                     <td className="p-[6px] sm:p-2 border border-slate-300"></td>
+                     <td className="p-1 sm:p-[6px] border border-slate-300 font-medium text-slate-500">{index + 1}</td>
+                     <td className="p-1 sm:p-[6px] border border-slate-300 text-left px-3 font-semibold">{sub.subjectName}</td>
+                     <td className="p-1 sm:p-[6px] border border-slate-300 font-bold">{valHk1}</td>
+                     <td className="p-1 sm:p-[6px] border border-slate-300 font-bold">{valHk2}</td>
+                     <td className="p-1 sm:p-[6px] border border-slate-300"></td>
+                     <td className="p-1 sm:p-[6px] border border-slate-300 font-black text-[#E53935]">{valCaNam}</td>
+                     <td className="p-1 sm:p-[6px] border border-slate-300"></td>
                  </tr>
                 );
               })}
