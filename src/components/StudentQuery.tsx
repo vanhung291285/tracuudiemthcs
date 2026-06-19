@@ -403,10 +403,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             <div className="w-full bg-slate-100 border border-slate-250 text-slate-900 p-5 rounded-xl shadow-sm">
               <div className="flex items-center gap-1.5 mb-2 font-black uppercase text-slate-700 tracking-wider text-xs">
                 <Info className="w-4 h-4 text-[#0055A5]" />
-                <span>HỌC SINH ĐỂ DUYỆT THỬ NGHIỆM</span>
+                <span>HỌC SINH TIÊU BIỂU</span>
               </div>
               <p className="mb-3 leading-relaxed text-slate-500 font-bold uppercase text-[9px] tracking-wide">
-                Ấn nhanh để điền nhanh thông tin kiểm thử dữ liệu:
+                Danh sách học sinh giỏi và xuất sắc:
               </p>
               
               <div className="space-y-2">
