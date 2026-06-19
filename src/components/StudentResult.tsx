@@ -134,67 +134,60 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
   return (
     <div className="w-full max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-6" id="student-result-container">
-      {/* Action Buttons Bar - Hidden during printing */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 no-print">
+      {/* Top Controls Bar - Compact to save space */}
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-4 mb-4 no-print w-full">
         <button
           onClick={onBack}
           id="btn-back-query"
-          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition cursor-pointer font-semibold text-sm w-full sm:w-auto"
+          className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition cursor-pointer font-bold text-[10px] sm:text-xs shadow-sm whitespace-nowrap order-1"
         >
-          <ArrowLeft className="w-4 h-4" /> Tra cứu mã khác
+          <ArrowLeft className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Tra cứu khác</span>
         </button>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        {/* Term Switcher directly inline */}
+        <div className="flex bg-white p-0.5 sm:p-1 rounded-lg border border-slate-200 shadow-sm gap-0.5 items-center flex-1 sm:flex-initial max-w-full sm:max-w-[300px] shrink-0 mx-auto order-3 sm:order-2 w-full mt-1.5 sm:mt-0">
+          <button
+            onClick={() => setTerm("hk1")}
+            className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-1.5 text-center text-[10px] sm:text-xs font-black rounded-md transition duration-200 select-none cursor-pointer ${
+              term === "hk1" ? "bg-[#0055A5] text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            HK I
+          </button>
+          <button
+            onClick={() => setTerm("hk2")}
+            className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-1.5 text-center text-[10px] sm:text-xs font-black rounded-md transition duration-200 select-none cursor-pointer ${
+              term === "hk2" ? "bg-[#0055A5] text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            HK II
+          </button>
+          <button
+            onClick={() => setTerm("canam")}
+            className={`flex-1 px-1 sm:px-3 py-1.5 sm:py-1.5 text-center text-[10px] sm:text-xs font-black rounded-md transition duration-200 select-none cursor-pointer ${
+              term === "canam" ? "bg-[#0055A5] text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            Cả Năm
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0 justify-end order-2 sm:order-3">
           <button
             onClick={handleExportCSV}
             id="btn-export-excel"
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition cursor-pointer font-semibold text-sm shadow-sm"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition cursor-pointer font-bold text-[10px] sm:text-xs shadow-sm whitespace-nowrap"
           >
-            <FileSpreadsheet className="w-4 h-4" /> Xuất Excel
+            <FileSpreadsheet className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Excel</span>
           </button>
           <button
             onClick={handlePrint}
             id="btn-print-pdf"
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-[#E53935] hover:bg-[#C62828] text-white rounded-lg transition cursor-pointer font-semibold text-sm shadow-sm"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:py-2 bg-[#E53935] hover:bg-[#C62828] text-white rounded-lg transition cursor-pointer font-bold text-[10px] sm:text-xs shadow-sm whitespace-nowrap"
           >
-            <Printer className="w-4 h-4" /> In Bảng Điểm (PDF)
+            <Printer className="w-3.5 h-3.5" /> <span className="hidden xs:inline">PDF</span>
           </button>
         </div>
-      </div>
-
-      {/* Term Switcher for active report card view */}
-      <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm max-w-md mx-auto mb-5 gap-1 no-print items-center w-full">
-        <span className="text-[10px] font-black text-slate-400 uppercase px-2 tracking-wider hidden sm:inline-block">Báo cáo:</span>
-        <button
-          onClick={() => setTerm("hk1")}
-          className={`flex-1 py-2 px-2.5 text-center text-xs font-black rounded-lg transition duration-200 select-none cursor-pointer ${
-            term === "hk1"
-              ? "bg-[#0055A5] text-white shadow"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-          }`}
-        >
-          Học kỳ I
-        </button>
-        <button
-          onClick={() => setTerm("hk2")}
-          className={`flex-1 py-2 px-2.5 text-center text-xs font-black rounded-lg transition duration-200 select-none cursor-pointer ${
-            term === "hk2"
-              ? "bg-[#0055A5] text-white shadow"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-          }`}
-        >
-          Học kỳ II
-        </button>
-        <button
-          onClick={() => setTerm("canam")}
-          className={`flex-1 py-2 px-2.5 text-center text-xs font-black rounded-lg transition duration-200 select-none cursor-pointer ${
-            term === "canam"
-              ? "bg-[#0055A5] text-white shadow"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-          }`}
-        >
-          Cả Năm
-        </button>
       </div>
 
       {/* Main Printable report card container */}
@@ -233,34 +226,34 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                  Ảnh 3x4
                </div>
             </div>
-            <div className="flex-1 grid grid-cols-1 min-[420px]:grid-cols-2 gap-y-3 gap-x-4 sm:gap-x-6 text-sm w-full">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase text-slate-400 font-black tracking-wider">Họ và tên</span>
-                <span className="font-black text-[#0055A5] text-base xs:text-lg uppercase truncate">{student.fullName}</span>
+            <div className="flex-1 grid grid-cols-2 xl:grid-cols-4 gap-y-2 sm:gap-y-3 gap-x-2 sm:gap-x-6 w-full">
+              <div className="flex flex-col col-span-2 xl:col-span-1">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Họ và tên</span>
+                <span className="font-black text-[#0055A5] text-sm xs:text-base sm:text-lg uppercase truncate">{student.fullName}</span>
+              </div>
+              <div className="flex flex-col col-span-2 xl:col-span-1">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Trường THCS</span>
+                <span className="font-bold text-slate-800 text-[11px] sm:text-sm xs:text-base break-words leading-tight mt-0.5">{student.school}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase text-slate-400 font-black tracking-wider">Trường THCS</span>
-                <span className="font-bold text-slate-800 text-sm xs:text-base break-words">{student.school}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Lớp học</span>
+                <span className="font-bold text-slate-800 text-xs sm:text-base">{student.className}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase text-slate-400 font-black tracking-wider">Lớp học</span>
-                <span className="font-bold text-slate-800 text-base">{student.className}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Giới tính</span>
+                <span className="font-bold text-slate-700 text-xs sm:text-base">{student.gender}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase text-slate-400 font-black tracking-wider">Giới tính</span>
-                <span className="font-bold text-slate-700">{student.gender}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Năm học</span>
+                <span className="font-bold text-slate-700 text-xs sm:text-base">{student.academicYear}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase text-slate-400 font-black tracking-wider">Năm học</span>
-                <span className="font-bold text-slate-700">{student.academicYear}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Ngày sinh</span>
+                <span className="font-bold text-slate-700 text-xs sm:text-base">{student.dob}</span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase text-slate-400 font-black tracking-wider">Ngày sinh</span>
-                <span className="font-bold text-slate-700">{student.dob}</span>
-              </div>
-              <div className="flex flex-col col-span-1 min-[420px]:col-span-2 border-t pt-2 border-slate-100">
-                <span className="text-[10px] uppercase text-slate-400 font-black tracking-wider">Mã số học sinh</span>
-                <span className="font-mono font-bold text-xs text-[#0055A5]">{student.studentCode}</span>
+              <div className="flex flex-col col-span-2 xl:col-span-4 border-t pt-1 border-slate-100">
+                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Mã số học sinh</span>
+                <span className="font-mono font-bold text-[11px] sm:text-xs text-[#0055A5]">{student.studentCode}</span>
               </div>
             </div>
           </div>
@@ -275,58 +268,67 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         </div>
 
         {/* Mobile Swipe Indicator */}
-        <div className="no-print text-[11px] text-slate-500 mb-1 flex items-center gap-1 sm:hidden italic justify-end">
-          <span>Vuốt ngang để xem đầy đủ bảng điểm ↔</span>
+        <div className="no-print text-[10px] text-slate-500 mb-1 flex items-center gap-1 sm:hidden italic justify-end">
+          <span>Khung nhìn tổng quan. Có thể xoay ngang màn hình để xem chi tiết hơn.</span>
         </div>
 
         {/* Academic Grading Sheet Table */}
         <div className="overflow-x-auto mb-6 border border-slate-300 rounded-lg shadow-sm scrollbar-thin">
-          <table className="w-full text-left text-sm border-collapse min-w-[580px] xs:min-w-[640px] sm:min-w-[700px]">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#0055A5] text-white text-xs uppercase divide-x divide-blue-400">
-                <th className="px-4 py-3 font-black text-left w-40 sm:w-48 pl-4">Môn học</th>
-                <th className={`px-4 py-3 font-black text-center w-28 sm:w-32 transition-colors ${term === "hk1" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>Cuối kì I</th>
-                <th className={`px-4 py-3 font-black text-center w-28 sm:w-32 transition-colors ${term === "hk2" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>Cuối kì II</th>
-                <th className={`px-4 py-3 font-black text-center w-24 sm:w-28 transition-colors ${term === "canam" ? "bg-[#E53935]" : "bg-[#004282]"}`}>Cả năm</th>
+              <tr className="bg-[#0055A5] text-white text-[9px] sm:text-xs uppercase divide-x divide-blue-400">
+                <th className="px-2 sm:px-4 py-2 sm:py-3 font-black text-left w-auto sm:w-48 pl-2 sm:pl-4">Môn học</th>
+                <th className={`px-1 sm:px-4 py-2 sm:py-3 font-black text-center w-10 sm:w-32 transition-colors ${term === "hk1" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>
+                  <span className="hidden sm:inline">Cuối kì I</span>
+                  <span className="sm:hidden">HK I</span>
+                </th>
+                <th className={`px-1 sm:px-4 py-2 sm:py-3 font-black text-center w-10 sm:w-32 transition-colors ${term === "hk2" ? "bg-amber-500 text-slate-950 font-black" : ""}`}>
+                  <span className="hidden sm:inline">Cuối kì II</span>
+                  <span className="sm:hidden">HK II</span>
+                </th>
+                <th className={`px-1 sm:px-4 py-2 sm:py-3 font-black text-center w-12 sm:w-28 transition-colors ${term === "canam" ? "bg-[#E53935]" : "bg-[#004282]"}`}>
+                  <span className="hidden sm:inline">Cả năm</span>
+                  <span className="sm:hidden">CN</span>
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-300">
+            <tbody className="divide-y divide-slate-300 text-[10px] sm:text-sm">
               {student.subjects.map((sub, index) => {
                 const isEven = index % 2 === 0;
                 return (
                   <tr
                     key={sub.subjectId}
-                    className={`hover:bg-blue-50/40 text-center transition ${isEven ? "bg-white" : "bg-slate-50/60"}`}
+                    className={`hover:bg-blue-50/40 transition text-center ${isEven ? "bg-white" : "bg-slate-50/60"}`}
                   >
-                    <td className="px-4 py-2.5 font-bold text-slate-800 text-left border-r border-slate-300">
+                    <td className="px-2 sm:px-4 py-2 sm:py-2.5 font-bold text-slate-800 text-left border-r border-slate-300 leading-tight">
                       {sub.subjectName}
                     </td>
                     
                     {/* Semester 1 Details */}
                     {sub.isEvaluatedByScore ? (
-                      <td className={`px-2 py-2.5 text-slate-700 border-r border-slate-300 font-bold transition-colors ${term === "hk1" ? "bg-amber-150/40 text-slate-900 !font-black text-base" : ""}`}>
+                      <td className={`px-1 sm:px-2 py-2 sm:py-2.5 text-center text-slate-700 border-r border-slate-300 font-bold transition-colors ${term === "hk1" ? "bg-amber-150/40 text-slate-900 !font-black text-xs sm:text-base" : ""}`}>
                         {sub.end1 !== undefined ? sub.end1.toFixed(1) : "-"}
                       </td>
                     ) : (
-                      <td className={`px-2 py-2.5 font-bold border-r border-slate-300 uppercase text-center text-xs transition-colors ${term === "hk1" ? "bg-amber-50/30 text-emerald-800" : "text-emerald-600"}`}>
-                        {sub.semester1 || "Chưa đánh giá"}
+                      <td className={`px-1 sm:px-2 py-2 sm:py-2.5 font-bold border-r border-slate-300 uppercase text-center text-[9px] sm:text-xs transition-colors ${term === "hk1" ? "bg-amber-50/30 text-emerald-800" : "text-emerald-600"}`}>
+                        {sub.semester1 || "-"}
                       </td>
                     )}
 
                     {/* Semester 2 Details */}
                     {sub.isEvaluatedByScore ? (
-                      <td className={`px-2 py-2.5 text-slate-700 border-r border-slate-300 font-bold transition-colors ${term === "hk2" ? "bg-amber-150/40 text-slate-900 !font-black text-base" : ""}`}>
+                      <td className={`px-1 sm:px-2 py-2 sm:py-2.5 text-center text-slate-700 border-r border-slate-300 font-bold transition-colors ${term === "hk2" ? "bg-amber-150/40 text-slate-900 !font-black text-xs sm:text-base" : ""}`}>
                         {sub.end2 !== undefined ? sub.end2.toFixed(1) : "-"}
                       </td>
                     ) : (
-                      <td className={`px-2 py-2.5 font-bold border-r border-slate-300 uppercase text-center text-xs transition-colors ${term === "hk2" ? "bg-amber-50/30 text-emerald-800" : "text-emerald-600"}`}>
-                        {sub.semester2 || "Chưa đánh giá"}
+                      <td className={`px-1 sm:px-2 py-2 sm:py-2.5 font-bold border-r border-slate-300 uppercase text-center text-[9px] sm:text-xs transition-colors ${term === "hk2" ? "bg-amber-50/30 text-emerald-800" : "text-emerald-600"}`}>
+                        {sub.semester2 || "-"}
                       </td>
                     )}
 
                     {/* Year Average (Cả năm) */}
-                    <td className={`px-2 py-2.5 font-black text-white text-[#ffffff] text-center w-24 sm:w-28 border-none text-[13px] transition-all ${
-                      term === "canam" ? "bg-[#E53935] font-extrabold text-[14px] ring-2 ring-red-300 ring-inset" : 
+                    <td className={`px-1 sm:px-2 py-2 sm:py-2.5 font-black text-white text-center w-12 sm:w-28 border-none text-[10px] sm:text-[13px] transition-all ${
+                      term === "canam" ? "bg-[#E53935] font-extrabold text-[12px] sm:text-[14px] ring-2 ring-red-300 ring-inset" : 
                       sub.yearAvg === "Chưa đạt" ? "bg-rose-600" : 
                       sub.yearAvg === "Đạt" ? "bg-emerald-600" :
                       typeof sub.yearAvg === "number" && sub.yearAvg >= 8.0 ? "bg-[#0055A5]" :
