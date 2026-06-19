@@ -119,8 +119,8 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     
     // Student Info
     csvContent += "THÔNG TIN HỌC SINH\n";
-    csvContent += `Mã HS,Họ tên,Ngày sinh,Giới tính,Kế quả học tập,Kết quả rèn luyện,Danh hiệu,Số ngày vắng\n`;
-    csvContent += `"${student.studentCode}","${student.fullName}","${formatDob(student.dob)}","${student.gender}","${student.academicGrade}","${student.behaviorGrade}","${student.distinction}",${student.daysAbsent}\n\n`;
+    csvContent += `Mã HS,Họ tên,Ngày sinh,Kế quả học tập,Kết quả rèn luyện,Danh hiệu,Số ngày vắng\n`;
+    csvContent += `"${student.studentCode}","${student.fullName}","${formatDob(student.dob)}","${student.academicGrade}","${student.behaviorGrade}","${student.distinction}",${student.daysAbsent}\n\n`;
     
     // Grade Sheet Header
     csvContent += "BẢNG KẾT QUẢ HỌC TẬP\n";
@@ -241,17 +241,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Họ và tên</span>
                 <span className="font-black text-[#0055A5] text-sm sm:text-lg uppercase break-words leading-tight">{student.fullName}</span>
               </div>
-              <div className="flex flex-col col-span-2 px-3 py-2 sm:px-4 sm:py-2.5 border-r border-slate-100 bg-slate-50/50">
+              <div className="flex flex-col col-span-2 md:col-span-3 px-3 py-2 sm:px-4 sm:py-2.5 border-r border-slate-100 bg-slate-50/50">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Trường THCS</span>
                 <span className="font-bold text-[#003366] text-xs sm:text-sm break-words leading-tight">{student.school}</span>
               </div>
-              <div className="flex flex-col col-span-1 px-3 py-2 sm:px-4 sm:py-2.5 border-r border-slate-100">
+              <div className="flex flex-col col-span-2 md:col-span-1 px-3 py-2 sm:px-4 sm:py-2.5">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Lớp học</span>
                 <span className="font-bold text-[#003366] text-xs sm:text-base">{student.className}</span>
-              </div>
-              <div className="flex flex-col col-span-1 px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-50/50">
-                <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-extrabold tracking-wider mb-0.5">Giới tính</span>
-                <span className="font-bold text-[#003366] text-xs sm:text-base">{student.gender}</span>
               </div>
             </div>
             {/* Row 2 */}
