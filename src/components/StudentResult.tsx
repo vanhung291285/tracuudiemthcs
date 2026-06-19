@@ -19,6 +19,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   const [term, setTerm] = useState<"hk1" | "hk2" | "canam">(initialTerm);
   
   const headerTop = localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
+  const schoolYear = localStorage.getItem("portal_school_year") || student.academicYear || "Năm học 2025-2026";
 
   // Compute live term summary as required under Circular 22 rules
   const scoreSubjects = student.subjects.filter(s => s.isEvaluatedByScore);
@@ -102,7 +103,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     // Header
     csvContent += "CỔNG THÔNG TIN TRA CỨU ĐIỂM - KẾT QUẢ HỌC TẬP THCS\n";
     csvContent += `Trường: ${student.school}\n`;
-    csvContent += `Lớp: ${student.className} | Năm học: ${student.academicYear}\n\n`;
+    csvContent += `Lớp: ${student.className} | Năm học: ${schoolYear}\n\n`;
     
     // Student Info
     csvContent += "THÔNG TIN HỌC SINH\n";
@@ -239,7 +240,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               </div>
               <div className="flex flex-col">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Năm học</span>
-                <span className="font-bold text-slate-700 text-xs sm:text-base">{student.academicYear}</span>
+                <span className="font-bold text-slate-700 text-xs sm:text-base">{schoolYear}</span>
               </div>
               <div className="flex flex-col">
                 <span className="text-[9px] sm:text-[10px] uppercase text-slate-400 font-black tracking-wider">Ngày sinh</span>
