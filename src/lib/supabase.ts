@@ -692,15 +692,15 @@ class DatabaseService {
       try {
         const { data, error } = await this.supabase
           .from("portal_settings")
-          .select("value")
-          .eq("key", key)
+          .select("setting_value")
+          .eq("id", key)
           .maybeSingle();
 
-        if (!error && data && data.value !== undefined) {
-          localStorage.setItem(key, data.value);
+        if (!error && data && data.setting_value !== undefined) {
+          localStorage.setItem(key, data.setting_value);
           // Async sync to server to maintain centralized backup
-          this.syncSettingToServer(key, data.value);
-          return data.value;
+          this.syncSettingToServer(key, data.setting_value);
+          return data.setting_value;
         }
       } catch (err) {
         console.warn(`Supabase getPortalSetting for key "${key}" failed, fallback to local storage:`, err);
@@ -751,7 +751,7 @@ class DatabaseService {
       try {
         const { error } = await this.supabase
           .from("portal_settings")
-          .upsert({ key, value }, { onConflict: "key" });
+          .upsert({ id: key, setting_value: value }, { onConflict: "id" });
 
         if (error) {
           console.warn("Supabase portal_settings upsert failed:", error.message);
