@@ -755,11 +755,14 @@ class DatabaseService {
 
         if (error) {
           console.warn("Supabase portal_settings upsert failed:", error.message);
+          this.lastError = error.message;
           return false;
         }
+        this.lastError = null;
         return true;
-      } catch (err) {
+      } catch (err: any) {
         console.warn("Supabase savePortalSetting exception:", err);
+        this.lastError = err.message;
         return false;
       }
     }
