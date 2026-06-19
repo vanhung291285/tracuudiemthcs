@@ -195,23 +195,23 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       <div
         ref={printAreaRef}
         id="print-card-area"
-        className="bg-white px-2 py-2 sm:px-4 sm:py-4 text-black font-serif w-full max-w-5xl mx-auto"
+        className="bg-white px-2 py-2 sm:px-3 sm:py-3 text-black font-serif w-full max-w-4xl mx-auto border sm:shadow-lg"
       >
         {/* Document Header */}
-        <div className="mb-2 sm:mb-4 text-[#0055A5]">
-          <div className="uppercase font-bold text-[13px] sm:text-sm leading-snug whitespace-nowrap">ỦY BAN NHÂN DÂN XÃ XA DUNG</div>
-          <div className="uppercase font-bold text-[13px] sm:text-[15px] leading-snug whitespace-nowrap">TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ</div>
+        <div className="mb-2 text-[#0055A5]">
+          <div className="uppercase font-bold text-[11px] sm:text-[12px] leading-snug whitespace-nowrap">ỦY BAN NHÂN DÂN XÃ XA DUNG</div>
+          <div className="uppercase font-bold text-[11px] sm:text-[13px] leading-snug whitespace-nowrap">TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ</div>
         </div>
 
         {/* Title */}
-        <div className="text-center mb-2 sm:mb-4 text-[#E53935]">
-          <h1 className="font-black text-lg sm:text-xl uppercase mb-1 tracking-wide">KẾT QUẢ HỌC TẬP</h1>
-          <h2 className="font-bold text-[13px] sm:text-sm text-[#0055A5]">Năm học {schoolYear}</h2>
+        <div className="text-center mb-2 text-[#E53935]">
+          <h1 className="font-black text-base sm:text-lg uppercase mb-0.5 tracking-wide">KẾT QUẢ HỌC TẬP</h1>
+          <h2 className="font-bold text-[11px] sm:text-xs text-[#0055A5]">Năm học {schoolYear}</h2>
         </div>
 
         {/* Outer wrapping to handle responsive scrolling if needed on very small devices, but print avoids scroll */}
         <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366]">
-          <table className="w-full border-collapse border border-slate-300 text-[11px] sm:text-[13px] md:text-sm w-full mb-1">
+          <table className="w-full border-collapse border border-slate-300 text-[9px] sm:text-[10px] md:text-[11px] mb-1">
             <colgroup>
               <col className="w-8 sm:w-12" />
               <col className="w-auto" />
@@ -224,22 +224,22 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
             <tbody>
               {/* Info row 1 */}
               <tr>
-                <td className="p-2 border border-slate-300 font-bold whitespace-nowrap text-right pr-4 sm:pr-8 bg-[#f8fafc]" colSpan={2}>
+                <td className="p-1 sm:p-1.5 border border-slate-300 font-bold whitespace-nowrap text-right pr-4 sm:pr-8 bg-[#f8fafc]" colSpan={2}>
                   Mã HS :
                 </td>
-                <td className="p-2 border border-slate-300 font-bold text-left px-3 text-[#0055A5]" colSpan={5}>
+                <td className="p-1 sm:p-1.5 border border-slate-300 font-bold text-left px-3 text-[#0055A5]" colSpan={5}>
                   {student.studentCode}
                 </td>
               </tr>
               {/* Info row 2 */}
               <tr>
-                <td className="p-2 border border-slate-300 font-bold whitespace-nowrap text-right pr-4 sm:pr-8 bg-[#f8fafc]" colSpan={2}>
+                <td className="p-1 sm:p-1.5 border border-slate-300 font-bold whitespace-nowrap text-right pr-4 sm:pr-8 bg-[#f8fafc]" colSpan={2}>
                   Họ và tên:
                 </td>
-                <td className="p-2 border border-slate-300 font-black text-left px-3 text-[#E53935]" colSpan={3}>
+                <td className="p-1 sm:p-1.5 border border-slate-300 font-black text-left px-3 text-[#E53935]" colSpan={3}>
                   {student.fullName}
                 </td>
-                <td className="p-2 border border-slate-300 font-bold text-center bg-[#f8fafc]" colSpan={2}>
+                <td className="p-1 sm:p-1.5 border border-slate-300 font-bold text-center bg-[#f8fafc]" colSpan={2}>
                   Lớp: <span className="text-[#0055A5]">{student.className}</span>
                 </td>
               </tr>
@@ -248,13 +248,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
               {/* Table Headers */}
               <tr className="font-bold text-center bg-[#0055A5] text-white">
-                <td className="p-1 sm:p-2 border border-blue-800">TT</td>
-                <td className="p-1 sm:p-2 border border-blue-800">Môn học</td>
-                <td className="p-1 sm:p-2 border border-blue-800">Kỳ 1</td>
-                <td className="p-1 sm:p-2 border border-blue-800">Kỳ 2</td>
-                <td className="p-1 sm:p-2 border border-blue-800">Thi lại</td>
-                <td className="p-1 sm:p-2 border border-blue-800 whitespace-nowrap">Cả năm</td>
-                <td className="p-1 sm:p-2 border border-blue-800">Ghi chú</td>
+                <td className="p-1 border border-blue-800">TT</td>
+                <td className="p-1 border border-blue-800">Môn học</td>
+                <td className="p-1 border border-blue-800">Kỳ 1</td>
+                <td className="p-1 border border-blue-800">Kỳ 2</td>
+                <td className="p-1 border border-blue-800">Thi lại</td>
+                <td className="p-1 border border-blue-800 whitespace-nowrap">Cả năm</td>
+                <td className="p-1 border border-blue-800">Ghi chú</td>
               </tr>
               
               {/* Subjects */}
@@ -271,28 +271,28 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
                 return (
                  <tr key={index} className="text-center even:bg-slate-50 hover:bg-slate-100 transition-colors">
-                     <td className="p-1 sm:p-[6px] border border-slate-300 font-medium text-slate-500">{index + 1}</td>
-                     <td className="p-1 sm:p-[6px] border border-slate-300 text-left px-3 font-semibold">{sub.subjectName}</td>
-                     <td className="p-1 sm:p-[6px] border border-slate-300 font-bold">{valHk1}</td>
-                     <td className="p-1 sm:p-[6px] border border-slate-300 font-bold">{valHk2}</td>
-                     <td className="p-1 sm:p-[6px] border border-slate-300"></td>
-                     <td className="p-1 sm:p-[6px] border border-slate-300 font-black text-[#E53935]">{valCaNam}</td>
-                     <td className="p-1 sm:p-[6px] border border-slate-300"></td>
+                     <td className="p-0.5 sm:p-1 border border-slate-300 font-medium text-slate-500">{index + 1}</td>
+                     <td className="p-0.5 sm:p-1 border border-slate-300 text-left px-2 sm:px-3 font-semibold">{sub.subjectName}</td>
+                     <td className="p-0.5 sm:p-1 border border-slate-300 font-bold">{valHk1}</td>
+                     <td className="p-0.5 sm:p-1 border border-slate-300 font-bold">{valHk2}</td>
+                     <td className="p-0.5 sm:p-1 border border-slate-300"></td>
+                     <td className="p-0.5 sm:p-1 border border-slate-300 font-black text-[#E53935]">{valCaNam}</td>
+                     <td className="p-0.5 sm:p-1 border border-slate-300"></td>
                  </tr>
                 );
               })}
 
               {/* Summary Rows */}
               <tr className="bg-[#f8fafc]">
-                <td className="py-2 px-1 border border-slate-300 font-black text-[#0055A5] whitespace-nowrap text-center" colSpan={2} rowSpan={2}>
+                <td className="py-1 px-1 border border-slate-300 font-black text-[#0055A5] whitespace-nowrap text-center" colSpan={2} rowSpan={2}>
                   Kết quả CN:
                 </td>
-                <td className="p-1 sm:p-2 border border-slate-300 text-center whitespace-normal font-semibold" colSpan={5}>
+                <td className="p-1 border border-slate-300 text-center whitespace-normal font-semibold" colSpan={5}>
                   Vắng: <span className="text-[#E53935]">{student.daysAbsent}</span> (phép), <span className="text-[#E53935]">{student.daysAbsentUnexcused || 0}</span> (không), <span className="text-[#E53935]">0</span>(bỏ tiết)
                 </td>
               </tr>
               <tr className="bg-[#f8fafc]">
-                <td className="p-1 sm:p-2 border border-slate-300 text-center whitespace-normal font-bold" colSpan={5}>
+                <td className="p-1 border border-slate-300 text-center whitespace-normal font-bold" colSpan={5}>
                   KQHT: <span className="text-[#E53935]">{student.academicGrade?.toUpperCase() || "KHÁ"}</span> | KQRL: <span className="text-[#0055A5]">{student.behaviorGrade?.toUpperCase() || "TỐT"}</span> | Danh hiệu: (<span className="text-[#E53935]">{activeDistinction === "KHÔNG" || !activeDistinction ? "KHÔNG" : activeDistinction}</span>)
                 </td>
               </tr>
@@ -301,12 +301,12 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         </div>
 
         {/* Signatures */}
-        <div className="flex justify-between mt-4 sm:mt-6 text-[13px] sm:text-sm text-[#003366]">
-          <div className="w-5/12 text-center font-bold pt-2">
+        <div className="flex justify-between mt-2 sm:mt-4 text-[11px] sm:text-[12px] text-[#003366]">
+          <div className="w-5/12 text-center font-bold pt-1">
             Ý kiến của phụ huynh học sinh
           </div>
-          <div className="w-7/12 relative min-h-[160px] sm:min-h-[200px]">
-            <div className="absolute top-2 left-4 sm:left-10 font-bold">
+          <div className="w-7/12 relative min-h-[120px] sm:min-h-[140px]">
+            <div className="absolute top-1 left-4 sm:left-10 font-bold">
               Nhận xét của GVCN
             </div>
             
@@ -315,12 +315,12 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 Ngày {new Date().getDate() < 10 ? `0${new Date().getDate()}` : new Date().getDate()} tháng {new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : new Date().getMonth() + 1} năm {new Date().getFullYear()}
               </span>
               <span className="font-medium">Giáo viên chủ nhiệm</span>
-              <span className="mt-16 sm:mt-24 font-black uppercase text-[#0055A5]">{advisorName}</span>
+              <span className="mt-8 sm:mt-12 font-black uppercase text-[#0055A5]">{advisorName}</span>
             </div>
           </div>
         </div>
 
-        <div className="text-center mt-12 sm:mt-16 pt-4 text-[10px] sm:text-[11px] text-slate-500 font-medium no-print">
+        <div className="text-center mt-6 sm:mt-8 pt-2 text-[9px] sm:text-[10px] text-slate-500 font-medium no-print">
           Mã xác thực học bạ điện tử: <span className="font-mono text-slate-700">{student.id}</span>. Bản quyền kết quả thuộc về trường PTDTBT Tiểu học và THCS Suối Lư.
         </div>
       </div>
