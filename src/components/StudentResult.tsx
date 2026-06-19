@@ -290,17 +290,19 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
         {/* Signatures */}
         <div className="flex justify-between mt-4 sm:mt-6 text-[13px] sm:text-sm text-[#003366]">
-          <div className="w-5/12 text-center font-bold">
+          <div className="w-5/12 text-center font-bold pt-2">
             Ý kiến của phụ huynh học sinh
           </div>
-          <div className="w-7/12 flex flex-col items-end pr-2 sm:pr-10">
-            <div className="flex flex-col items-center">
-              <span className="font-bold mb-10 sm:mb-12">Nhận xét của GVCN</span>
-              
-              <span className="italic mt-6 sm:mt-8">
+          <div className="w-7/12 relative min-h-[160px] sm:min-h-[200px]">
+            <div className="absolute top-2 left-4 sm:left-10 font-bold">
+              Nhận xét của GVCN
+            </div>
+            
+            <div className="absolute bottom-0 right-2 sm:right-10 flex flex-col items-center">
+              <span className="italic mb-1">
                 Ngày {new Date().getDate() < 10 ? `0${new Date().getDate()}` : new Date().getDate()} tháng {new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : new Date().getMonth() + 1} năm {new Date().getFullYear()}
               </span>
-              <span className="mt-1 font-medium">Giáo viên chủ nhiệm</span>
+              <span className="font-medium">Giáo viên chủ nhiệm</span>
               <span className="mt-16 sm:mt-24 font-black uppercase text-[#0055A5]">{student.teacher || "Vũ Văn Hùng"}</span>
             </div>
           </div>
