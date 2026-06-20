@@ -495,23 +495,31 @@ class DatabaseService {
     // 2. Query Supabase
     if (this.supabase) {
       try {
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error("Supabase connection timeout")), 8000)
+        const timeoutPromise = new Promise<boolean>((_, resolve) => 
+          setTimeout(() => {
+            console.warn("Supabase connection timeout");
+            resolve(false);
+          }, 8000)
         );
         
         await Promise.race([this.checkSchemaCase(), timeoutPromise]);
         
         const mapped = this.mapStudentToDb(student);
-        const { error } = await Promise.race([
+        const result = await Promise.race([
           this.supabase
             .from("students")
             .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" }),
           timeoutPromise
         ]) as any;
 
-        if (error) {
-          console.error("Supabase upsert error:", error.message);
-          this.lastError = error.message;
+        if (result === false) { // timed out
+          this.lastError = "Kết nối máy chủ Supabase quá thời gian. Đã lưu bộ nhớ tạm (Offline).";
+          return true; // Still return true so local app continues
+        }
+
+        if (result.error) {
+          console.error("Supabase upsert error:", result.error.message);
+          this.lastError = result.error.message;
           return false;
         }
         this.lastError = null;
@@ -519,7 +527,7 @@ class DatabaseService {
       } catch (err: any) {
         console.error("Supabase upsert exception:", err);
         this.lastError = err.message || String(err);
-        return false;
+        return true; // Fallback to true because we already saved locally
       }
     }
     this.lastError = null;
