@@ -459,10 +459,18 @@ class DatabaseService {
   public async getAllStudents(): Promise<Student[]> {
     if (this.supabase) {
       try {
-        await this.checkSchemaCase();
-        const { data, error } = await this.supabase
-          .from("students")
-          .select("*");
+        const timeoutPromise = new Promise<{data: any, error: any}>((_, resolve) => 
+          setTimeout(() => resolve({ data: null, error: { message: "Timeout" } }), 3000)
+        );
+        await Promise.race([this.checkSchemaCase(), new Promise(r => setTimeout(r, 1000))]);
+        
+        const result = await Promise.race([
+          this.supabase.from("students").select("*"),
+          timeoutPromise
+        ]);
+
+        const data = result.data;
+        const error = result.error;
 
         if (!error && data) {
           const mappedList = data.map(row => this.mapDbToStudent(row));
@@ -499,7 +507,7 @@ class DatabaseService {
           setTimeout(() => {
             console.warn("Supabase connection timeout");
             resolve(false);
-          }, 8000)
+          }, 3000)
         );
         
         await Promise.race([this.checkSchemaCase(), timeoutPromise]);
