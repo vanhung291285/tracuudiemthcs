@@ -509,7 +509,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     >
                       <div>
                         <div className="font-black text-[#0055A5] text-[12px] uppercase">{student.fullName}</div>
-                        <div className="text-[10px] text-slate-500 font-mono font-bold mt-0.5">Lớp: {student.className} • NS: {student.dob.split('-').reverse().join('/')}</div>
+                        <div className="text-[10px] text-slate-500 font-mono font-bold mt-0.5">Lớp: {student.className}</div>
                       </div>
                       <span className={`text-[9px] ${badgeColors} border px-2 py-1 rounded font-black uppercase`}>{label}</span>
                     </div>
