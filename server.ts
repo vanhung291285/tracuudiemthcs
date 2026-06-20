@@ -343,6 +343,9 @@ async function startServer() {
     try {
       if (fs.existsSync(SETTINGS_FILE)) {
         const content = fs.readFileSync(SETTINGS_FILE, "utf-8");
+        if (!content || content.trim() === "") {
+          return {};
+        }
         return JSON.parse(content);
       }
     } catch (e) {
