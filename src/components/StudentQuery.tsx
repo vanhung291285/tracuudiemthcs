@@ -9,6 +9,7 @@ import {
   GraduationCap, 
   Calendar, 
   User, 
+  Users,
   HelpCircle, 
   Key, 
   Info, 
@@ -50,9 +51,27 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const [topStudents, setTopStudents] = useState<Student[]>([]);
   const [multipleMatches, setMultipleMatches] = useState<Student[]>([]);
+  
+  // Visitor statistics state
+  const [visitorMonthlyStats, setVisitorMonthlyStats] = useState<{ month: string; count: number }[]>([]);
+  const [totalVisitors, setTotalVisitors] = useState(0);
 
   useEffect(() => {
     let active = true;
+    
+    const loadVisitorStats = async () => {
+      try {
+        const stats = await dbService.getVisitorStats();
+        const total = await dbService.getTotalVisitors();
+        if (active) {
+          setVisitorMonthlyStats(stats);
+          setTotalVisitors(total);
+        }
+      } catch (err) {
+        console.warn("Failed to load visitor stats:", err);
+      }
+    };
+    
     const fetchNews = async () => {
       try {
         const response = await fetch("/api/news");
@@ -93,6 +112,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
     fetchNews();
     fetchTopStudents();
+    loadVisitorStats();
     return () => {
       active = false;
     };
@@ -249,7 +269,17 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between bg-sky-100" id="student-query-root">
+    <div className="w-full flex-1 flex flex-col justify-between decorative-page-bg" id="student-query-root">
+      
+      {/* Dynamic Background SVG blobs / patterns */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40 mix-blend-multiply overflow-hidden no-print">
+         <svg className="absolute top-[-10%] left-[-5%] w-[400px] h-[400px] text-[#0055A5] opacity-10" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path fill="currentColor" d="M44.5,-76.3C58.1,-69.1,70.1,-58.5,78.8,-45.5C87.4,-32.5,92.8,-17.1,92.2,-2.1C91.6,12.9,85.1,27.5,76,40.8C66.9,54.1,55.3,66.1,41.4,73.4C27.5,80.7,11.3,83.2,-4.5,91C-20.2,98.8,-35.4,111.9,-48.3,110.8C-61.2,109.8,-71.7,94.6,-78.9,79.5C-86.2,64.4,-90.1,49.4,-92.3,34.8C-94.5,20.2,-95,5.9,-93.4,-8.2C-91.8,-22.3,-88.2,-36.1,-80.6,-48.4C-73,-60.7,-61.4,-71.4,-48.4,-79.1C-35.4,-86.8,-21.1,-91.4,-6.2,-80.6C8.7,-69.9,23.5,-43.8,44.5,-76.3Z" transform="translate(100 100)" />
+         </svg>
+         <svg className="absolute bottom-[5%] right-[-5%] w-[350px] h-[350px] text-[#E53935] opacity-5" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path fill="currentColor" d="M38.1,-63.5C49.1,-57.4,57.7,-46.8,65.1,-35.2C72.5,-23.6,78.6,-11.1,78.4,1.1C78.2,13.4,71.7,25.4,63.9,36.5C56.1,47.6,47.1,57.8,36,65.5C24.9,73.2,11.7,78.4,-1.3,80.6C-14.3,82.8,-27.1,81.9,-38.7,75.7C-50.3,69.5,-60.7,58.1,-68,45.4C-75.3,32.7,-79.5,18.7,-80.1,4.7C-80.7,-9.3,-77.7,-23.3,-70.7,-35.6C-63.7,-47.9,-52.7,-58.5,-40.1,-63.8C-27.5,-69.1,-13.7,-69.1,-0.1,-68.9C13.5,-68.7,27.1,-69.6,38.1,-63.5Z" transform="translate(100 100)" />
+         </svg>
+      </div>
       
       {/* Top Banner Navigation Header */}
       <header className="w-full bg-[#0055A5] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
@@ -278,8 +308,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           <div className="lg:col-span-5 space-y-6">
             
             {/* Core Query Card */}
-            <div id="card-query" className="w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all hover:shadow-md">
-              <div className="h-2 bg-[#0055A5]" />
+            <div id="card-query" className="w-full glass-card rounded-xl shadow-xl border border-white/50 overflow-hidden transition-all hover:shadow-2xl relative z-10 animate-fadeIn">
+              <div className="h-2 bg-[#0055A5] shadow-sm" />
               
               <div className="p-6 md:p-8">
                 <h2 className="text-base font-black text-[#0055A5] uppercase text-center mb-1.5 tracking-tight">
@@ -479,7 +509,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Sandbox Quick Testing Data panel */}
-            <div className="w-full bg-slate-100 border border-slate-250 text-slate-900 p-5 rounded-xl shadow-sm">
+            <div className="w-full glass-card border border-white/50 text-slate-900 p-5 rounded-xl shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.1s' }}>
               <div className="flex items-center gap-1.5 mb-2 font-black uppercase text-slate-700 tracking-wider text-xs">
                 <Info className="w-4 h-4 text-[#0055A5]" />
                 <span>HỌC SINH TIÊU BIỂU</span>
@@ -526,10 +556,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           <div className="lg:col-span-7 space-y-6">
             
             {/* Realtime Statistics Bento Grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 relative z-10">
               
               {/* Stat 1 */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition animate-fadeIn" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">HỌC SINH SỐ HÓA</span>
                   <div className="w-7 h-7 rounded-md bg-[#0055A5]/10 flex items-center justify-center">
@@ -543,7 +573,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
 
               {/* Stat 2 */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition animate-fadeIn" style={{ animationDelay: '0.25s' }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TRƯỜNG LIÊN KẾT</span>
                   <div className="w-7 h-7 rounded-md bg-emerald-50 flex items-center justify-center border border-emerald-100">
@@ -557,7 +587,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
 
               {/* Stat 3 */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition animate-fadeIn" style={{ animationDelay: '0.3s' }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">XÁC MINH SỐ</span>
                   <div className="w-7 h-7 rounded-md bg-amber-50 flex items-center justify-center border border-amber-100">
@@ -571,7 +601,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
 
               {/* Stat 4 */}
-              <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition animate-fadeIn" style={{ animationDelay: '0.35s' }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TỐC ĐỘ PHẢN HỒI</span>
                   <div className="w-7 h-7 rounded-md bg-purple-50 flex items-center justify-center border border-purple-100">
@@ -587,7 +617,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Quick Three-Step Guideline */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center gap-1.5 border-b pb-2.5 border-slate-100">
                 <LayoutDashboard className="w-4.5 h-4.5 text-[#0055A5]" />
                 <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
@@ -623,7 +653,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Official Bulletin / Notifications */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.45s' }}>
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -731,6 +761,58 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* System Statistics Section */}
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2 mb-4">
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-4.5 h-4.5 text-[#0055A5]" />
+                  <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                    Thống kê truy cập (Visitor Traffic)
+                  </h3>
+                </div>
+                <div className="text-[10px] bg-blue-50 text-[#0055A5] px-3 py-1 rounded-full font-black border border-blue-100 uppercase tracking-tighter">
+                  Tổng lượt: {totalVisitors.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+                {visitorMonthlyStats.length > 0 ? (
+                  visitorMonthlyStats.slice(0, 4).map((stat, idx) => {
+                    const maxVal = Math.max(...visitorMonthlyStats.map(s => s.count), 1);
+                    const pct = (stat.count / maxVal) * 100;
+                    return (
+                      <div key={idx} className="bg-white/40 p-3 rounded-lg border border-white/50 space-y-2">
+                        <div className="flex justify-between items-center text-[10px] font-bold">
+                          <span className="text-slate-500 uppercase">Tháng {stat.month}</span>
+                          <span className="text-[#0055A5]">{stat.count}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-[#0055A5] rounded-full transition-all duration-1000" 
+                            style={{ width: `${pct}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="col-span-full text-center py-4 text-slate-400 text-[10px] italic">
+                    Đang nạp dữ liệu thống kê...
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 flex items-center justify-center gap-4 text-[9px] text-slate-300 font-bold uppercase tracking-tight">
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                  Hệ thống: Trực tuyến
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Cập nhật: {new Date().toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </div>
             </div>
 
