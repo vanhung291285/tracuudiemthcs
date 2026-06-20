@@ -345,7 +345,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         id="student-name"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Nhập tên học sinh (Ví dụ: Nguyễn Minh Anh)"
+                        placeholder="Nhập tên học sinh (Ví dụ: Vũ Văn Hùng)"
                         className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
                         autoComplete="off"
                       />
