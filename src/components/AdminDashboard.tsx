@@ -676,8 +676,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         setFormStudent({});
         loadStudents(); // Refresh from DB
       } else {
-        const dbErr = dbService.lastError ? `\n\nChi tiết lỗi: ${dbService.lastError}` : " Lỗi kết nối đến máy chủ Supabase hoặc lỗi dữ liệu.";
-        setFormError(`Không thể lưu bản ghi. Lỗi hệ thống: ${dbErr}`);
+        const dbErr = dbService.lastError ? `\n\nChi tiết lỗi: ${dbService.lastError}` : "";
+        alert(`Dữ liệu đã được lưu ngoại tuyến vào bộ nhớ thiết bị, nhưng không thể đồng bộ lên Supabase vì lỗi kết nối.${dbErr}`);
+        setIsFormOpen(false);
+        setFormStudent({});
+        loadStudents();
       }
     } catch (err: any) {
       console.error("Unhandled error when saving student:", err);
