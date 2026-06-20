@@ -122,6 +122,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   // Student Form Dialog
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSavingStudent, setIsSavingStudent] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [formStudent, setFormStudent] = useState<Partial<Student>>({});
   const [formError, setFormError] = useState("");
@@ -669,7 +670,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       dob: cleanDob
     };
 
-    setAuthIsLoading(true);
+    setIsSavingStudent(true);
     setFormError(""); // Reset any prior errors
     
     try {
@@ -686,7 +687,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         setFormStudent({});
         loadStudents(); // Refresh from DB
       } else {
-        let dbErr = dbService.lastError ? dbService.lastError : "";
+        let rawErr = dbService.lastError || "";
+        let dbErr = typeof rawErr === 'string' ? rawErr : JSON.stringify(rawErr);
+        
         if (dbErr.includes("Failed to fetch")) {
           dbErr = "Lỗi mạng hoặc CORS. Nếu bạn mới đưa lên Vercel: 1) Đảm bảo đã khai báo VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY trong Vercel Settings. 2) Cấu hình URL của Vercel vào danh sách cho phép (Allowed Origins / Site URL) trong cài đặt Supabase.";
         }
@@ -696,9 +699,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       }
     } catch (err: any) {
       console.error("Unhandled error when saving student:", err);
-      setFormError(`Có lỗi hệ thống khi lưu: ${err.message || String(err)}`);
+      let errMsg = err?.message || String(err);
+      setFormError(`Có lỗi hệ thống khi lưu: ${errMsg}`);
     } finally {
-      setAuthIsLoading(false);
+      setIsSavingStudent(false);
     }
   };
 
@@ -3415,11 +3419,11 @@ NOTIFY pgrst, 'reload schema';`}
                 Hủy bỏ
               </button>
               <button
-                disabled={authIsLoading}
+                disabled={isSavingStudent}
                 onClick={handleSaveStudent}
                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded transition cursor-pointer text-xs"
               >
-                {authIsLoading ? "Đang lưu..." : "Lưu Học Sinh"}
+                {isSavingStudent ? "Đang lưu..." : "Lưu Học Sinh"}
               </button>
             </div>
           </div>
