@@ -178,7 +178,21 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
           </button>
         </div>
 
-        {/* Term Switcher removed for optimized display space as requested */}
+        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+          {(["hk1", "hk2", "canam"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTerm(t)}
+              className={`px-3 py-1 rounded-md text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${
+                term === t
+                  ? "bg-[#0055A5] text-white shadow-sm"
+                  : "text-slate-600 hover:bg-white"
+              }`}
+            >
+              {t === "hk1" ? "Kỳ I" : t === "hk2" ? "Kỳ II" : "Cả Năm"}
+            </button>
+          ))}
+        </div>
 
         <div className="flex items-center justify-end">
           <button
@@ -195,7 +209,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       <div
         ref={printAreaRef}
         id="print-card-area"
-        className="bg-white px-3 py-3 sm:px-6 sm:py-6 text-black font-serif w-full max-w-4xl mx-auto border sm:shadow-lg"
+        className="bg-white px-3 py-3 sm:px-6 sm:py-6 text-black font-serif w-full max-w-5xl mx-auto border sm:shadow-lg"
       >
         {/* Document Header */}
         <div className="mb-4 text-[#0055A5]">
@@ -213,13 +227,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366]">
           <table className="w-full border-collapse border border-slate-400 text-[12px] sm:text-[14px] md:text-[15px] mb-2">
             <colgroup>
-              <col className="w-10 sm:w-14" />
+              <col className="w-[25px] sm:w-[50px]" />
               <col className="w-auto" />
-              <col className="w-12 sm:w-20" />
-              <col className="w-12 sm:w-20" />
-              <col className="w-14 sm:w-24" />
-              <col className="w-14 sm:w-24" />
-              <col className="w-16 sm:w-28" />
+              <col className="w-[40px] sm:w-[70px]" />
+              <col className="w-[40px] sm:w-[70px]" />
+              <col className="w-[40px] sm:w-[80px]" />
+              <col className="w-[50px] sm:w-[90px]" />
+              <col className="w-[40px] sm:w-[100px]" />
             </colgroup>
             <tbody>
               {/* Info row 1 */}
@@ -248,13 +262,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
               {/* Table Headers */}
               <tr className="font-bold text-center bg-[#0055A5] text-white">
-                <td className="p-2 border border-blue-900">TT</td>
-                <td className="p-2 border border-blue-900">Môn học</td>
-                <td className="p-2 border border-blue-900">Kỳ 1</td>
-                <td className="p-2 border border-blue-900">Kỳ 2</td>
-                <td className="p-2 border border-blue-900">Thi lại</td>
-                <td className="p-2 border border-blue-900 whitespace-nowrap">Cả năm</td>
-                <td className="p-2 border border-blue-900">Ghi chú</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900">TT</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900">Môn học</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900 whitespace-nowrap">Kỳ 1</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900 whitespace-nowrap">Kỳ 2</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900 whitespace-nowrap">Thi lại</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900 whitespace-nowrap">Cả năm</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900">Ghi chú</td>
               </tr>
               
               {/* Subjects */}
@@ -270,30 +284,30 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                   : sub.yearAvg || "";
 
                 return (
-                 <tr key={index} className="text-center even:bg-slate-50 hover:bg-slate-100 transition-colors">
-                     <td className="p-1.5 sm:p-2 border border-slate-400 font-medium text-slate-500">{index + 1}</td>
-                     <td className="p-1.5 sm:p-2 border border-slate-400 text-left px-3 sm:px-4 font-semibold">{sub.subjectName}</td>
-                     <td className="p-1.5 sm:p-2 border border-slate-400 font-bold">{valHk1}</td>
-                     <td className="p-1.5 sm:p-2 border border-slate-400 font-bold">{valHk2}</td>
-                     <td className="p-1.5 sm:p-2 border border-slate-400"></td>
-                     <td className="p-1.5 sm:p-2 border border-slate-400 font-black text-[#E53935]">{valCaNam}</td>
-                     <td className="p-1.5 sm:p-2 border border-slate-400"></td>
+                 <tr key={index} className="text-center even:bg-slate-50 hover:bg-slate-100 transition-colors text-[11px] sm:text-[14px]">
+                     <td className="p-1 sm:p-2 border border-slate-400 font-medium text-slate-500">{index + 1}</td>
+                     <td className="p-1 sm:p-2 border border-slate-400 text-left px-1.5 sm:px-4 font-semibold tracking-tight text-[11px] sm:text-[14px]">{sub.subjectName}</td>
+                     <td className="p-1 sm:p-2 border border-slate-400 font-bold whitespace-nowrap">{valHk1}</td>
+                     <td className="p-1 sm:p-2 border border-slate-400 font-bold whitespace-nowrap">{valHk2}</td>
+                     <td className="p-1 sm:p-2 border border-slate-400"></td>
+                     <td className="p-1 sm:p-2 border border-slate-400 font-black text-[#E53935] whitespace-nowrap">{valCaNam}</td>
+                     <td className="p-1 sm:p-2 border border-slate-400"></td>
                  </tr>
                 );
               })}
 
               {/* Summary Rows */}
-              <tr className="bg-[#f8fafc]">
-                <td className="py-2 px-2 border border-slate-400 font-black text-[#0055A5] whitespace-nowrap text-center text-[13px] sm:text-[15px]" colSpan={2} rowSpan={2}>
+              <tr className="bg-[#f8fafc] text-[11px] sm:text-[14px]">
+                <td className="py-2 px-1 border border-slate-400 font-black text-[#0055A5] whitespace-nowrap text-center text-[12px] sm:text-[15px]" colSpan={2} rowSpan={2}>
                   Kết quả CN:
                 </td>
-                <td className="p-2 border border-slate-400 text-center whitespace-normal font-semibold" colSpan={5}>
-                  Vắng: <span className="text-[#E53935]">{student.daysAbsent}</span> (phép), <span className="text-[#E53935]">{student.daysAbsentUnexcused || 0}</span> (không), <span className="text-[#E53935]">0</span>(bỏ tiết)
+                <td className="p-1 sm:p-2 border border-slate-400 text-center whitespace-normal font-semibold" colSpan={5}>
+                  Vắng: <span className="text-[#E53935]">{student.daysAbsent}</span> (p), <span className="text-[#E53935]">{student.daysAbsentUnexcused || 0}</span> (k), <span className="text-[#E53935]">0</span>(bt)
                 </td>
               </tr>
-              <tr className="bg-[#f8fafc]">
-                <td className="p-2 border border-slate-400 text-center whitespace-normal font-bold" colSpan={5}>
-                  KQHT: <span className="text-[#E53935]">{student.academicGrade?.toUpperCase() || "KHÁ"}</span> | KQRL: <span className="text-[#0055A5]">{student.behaviorGrade?.toUpperCase() || "TỐT"}</span> | Danh hiệu: (<span className="text-[#E53935]">{activeDistinction === "KHÔNG" || !activeDistinction ? "KHÔNG" : activeDistinction}</span>)
+              <tr className="bg-[#f8fafc] text-[11px] sm:text-[14px]">
+                <td className="p-1 sm:p-2 border border-slate-400 text-center whitespace-normal font-bold" colSpan={5}>
+                  KQHT: <span className="text-[#E53935]">{student.academicGrade?.toUpperCase() || "KHÁ"}</span> | KQRL: <span className="text-[#0055A5]">{student.behaviorGrade?.toUpperCase() || "TỐT"}</span> | Danh hiệu: (<span className="text-[#E53935]">{activeDistinction}</span>)
                 </td>
               </tr>
             </tbody>
