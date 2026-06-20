@@ -545,7 +545,7 @@ class DatabaseService {
 
     if (this.supabase) {
       try {
-        await this.checkSchemaCase();
+        await Promise.race([this.checkSchemaCase(), new Promise(r => setTimeout(r, 2000))]);
         
         let query = this.supabase.from("students").delete();
         if (this.isSnakeCaseSchema) {
@@ -553,11 +553,15 @@ class DatabaseService {
         } else {
           query = query.eq("studentCode", studentCode);
         }
-        const { error } = await query;
+        
+        const result = await Promise.race([
+          query,
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
+        ]);
 
-        if (error) {
-          console.error("Supabase delete failed:", error.message);
-          this.lastError = error.message;
+        if (result && result.error) {
+          console.error("Supabase delete failed:", result.error.message);
+          this.lastError = result.error.message;
           return false;
         }
         this.lastError = null;
@@ -579,15 +583,24 @@ class DatabaseService {
     }
 
     try {
-      await this.checkSchemaCase();
-      let uploadedCount = 0;
-      for (const student of this.localStudentsList) {
-        const mapped = this.mapStudentToDb(student);
-        const { error } = await this.supabase
-          .from("students")
-          .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" });
-        if (!error) uploadedCount++;
-      }
+      const syncWork = async () => {
+        await this.checkSchemaCase();
+        let uploadedCount = 0;
+        for (const student of this.localStudentsList) {
+          const mapped = this.mapStudentToDb(student);
+          const { error } = await this.supabase!
+            .from("students")
+            .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" });
+          if (!error) uploadedCount++;
+        }
+        return uploadedCount;
+      };
+
+      const uploadedCount = await Promise.race([
+        syncWork(),
+        new Promise<number>((_, reject) => setTimeout(() => reject(new Error("Quá thời gian đồng bộ. Vui lòng kiểm tra lại kết nối Supabase.")), 15000))
+      ]);
+
       return { success: true, count: uploadedCount };
     } catch (err: any) {
       return { success: false, count: 0, error: err.message || "An error occurred during synchronization." };
@@ -608,7 +621,7 @@ class DatabaseService {
 
     if (this.supabase) {
       try {
-        await this.checkSchemaCase();
+        await Promise.race([this.checkSchemaCase(), new Promise(r => setTimeout(r, 2000))]);
         
         let query = this.supabase.from("students").delete();
         if (this.isSnakeCaseSchema) {
@@ -616,11 +629,15 @@ class DatabaseService {
         } else {
           query = query.neq("studentCode", "");
         }
-        const { error } = await query;
+        
+        const result = await Promise.race([
+          query,
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+        ]);
 
-        if (error) {
-          console.error("Supabase clear all failed:", error.message);
-          this.lastError = error.message;
+        if (result && result.error) {
+          console.error("Supabase clear all failed:", result.error.message);
+          this.lastError = result.error.message;
           return false;
         }
         this.lastError = null;
@@ -720,7 +737,7 @@ class DatabaseService {
 
     if (this.supabase) {
       try {
-        await this.checkClassesSchema();
+        await Promise.race([this.checkClassesSchema(), new Promise(r => setTimeout(r, 2000))]);
         const mapped = classes.map(c => {
           if (this.isSnakeCaseClasses) {
             return {
@@ -735,12 +752,13 @@ class DatabaseService {
           }
         });
 
-        const { error } = await this.supabase
-          .from("portal_classes")
-          .upsert(mapped, { onConflict: "id" });
+        const result = await Promise.race([
+          this.supabase.from("portal_classes").upsert(mapped, { onConflict: "id" }),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout saving classes")), 5000))
+        ]);
 
-        if (error) {
-          console.error("Supabase portal_classes upsert failed:", error.message);
+        if (result && result.error) {
+          console.error("Supabase portal_classes upsert failed:", result.error.message);
           return false;
         }
         return true;
@@ -756,13 +774,13 @@ class DatabaseService {
   public async deleteClass(classId: string): Promise<boolean> {
     if (this.supabase) {
       try {
-        const { error } = await this.supabase
-          .from("portal_classes")
-          .delete()
-          .eq("id", classId);
+        const result = await Promise.race([
+          this.supabase.from("portal_classes").delete().eq("id", classId),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout deleting class")), 5000))
+        ]);
 
-        if (error) {
-          console.error("Supabase portal_classes delete failed:", error.message);
+        if (result && result.error) {
+          console.error("Supabase portal_classes delete failed:", result.error.message);
           return false;
         }
         return true;
