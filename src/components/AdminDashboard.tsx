@@ -666,25 +666,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     };
 
     setAuthIsLoading(true);
+    setFormError(""); // Reset any prior errors
+    
     try {
-      const timeoutPromise = new Promise<boolean>((resolve) => {
-        setTimeout(() => {
-          console.warn("Supabase timeout in UI");
-          resolve(true); // Treat as success because it's saved locally
-        }, 3000);
-      });
-      const success = await Promise.race([
-        dbService.upsertStudent(preparedStudent as Student),
-        timeoutPromise
-      ]);
+      const success = await dbService.upsertStudent(preparedStudent as Student);
       
       if (success) {
         setIsFormOpen(false);
         setFormStudent({});
-        loadStudents();
+        loadStudents(); // Refresh from DB
       } else {
-        const dbErr = dbService.lastError ? `\n\nChi tiết lỗi: ${dbService.lastError}` : " Lỗi kết nối đến máy chủ Supabase. Đã hết thời gian chờ.";
-        setFormError(`Không thể đồng bộ Supabase. Dữ liệu đã lưu nội bộ! ${dbErr}`);
+        const dbErr = dbService.lastError ? `\n\nChi tiết lỗi: ${dbService.lastError}` : " Lỗi kết nối đến máy chủ Supabase hoặc lỗi dữ liệu.";
+        setFormError(`Không thể lưu bản ghi. Lỗi hệ thống: ${dbErr}`);
       }
     } catch (err: any) {
       console.error("Unhandled error when saving student:", err);
