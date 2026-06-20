@@ -21,7 +21,11 @@ import {
   ChevronRight, 
   CheckSquare,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Zap,
+  Filter,
+  CalendarDays,
+  BarChartHorizontal
 } from "lucide-react";
 import dbService from "../lib/supabase";
 import { Student } from "../types";
@@ -53,19 +57,16 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [multipleMatches, setMultipleMatches] = useState<Student[]>([]);
   
   // Visitor statistics state
-  const [visitorMonthlyStats, setVisitorMonthlyStats] = useState<{ month: string; count: number }[]>([]);
-  const [totalVisitors, setTotalVisitors] = useState(0);
+  const [visitorOverview, setVisitorOverview] = useState({ online: 0, today: 0, thisMonth: 0, total: 0 });
 
   useEffect(() => {
     let active = true;
     
     const loadVisitorStats = async () => {
       try {
-        const stats = await dbService.getVisitorStats();
-        const total = await dbService.getTotalVisitors();
+        const overview = await dbService.getVisitorOverview();
         if (active) {
-          setVisitorMonthlyStats(stats);
-          setTotalVisitors(total);
+          setVisitorOverview(overview);
         }
       } catch (err) {
         console.warn("Failed to load visitor stats:", err);
@@ -270,7 +271,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between decorative-page-bg" id="student-query-root">
+    <div className="w-full flex-1 flex flex-col justify-between bg-slate-100/80" id="student-query-root">
       
       {/* Dynamic Background SVG blobs / patterns */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40 mix-blend-multiply overflow-hidden no-print">
@@ -765,54 +766,54 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
             </div>
 
-            {/* System Statistics Section */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
-              <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2 mb-4">
-                <div className="flex items-center gap-1.5">
-                  <Users className="w-4.5 h-4.5 text-[#0055A5]" />
-                  <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
-                    Thống kê truy cập (Visitor Traffic)
-                  </h3>
+            {/* Redesigned Visitor Statistics Section - Matching User Image */}
+            <div className="bg-white rounded border border-blue-100 shadow-sm overflow-hidden relative z-10 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
+              {/* Header: Green with White text */}
+              <div className="bg-[#2E7D32] px-4 py-3 flex items-center gap-2">
+                <div className="bg-white rounded-full p-0.5">
+                   <ChevronRight className="w-3.5 h-3.5 text-[#2E7D32] rotate-[-45deg] stroke-[4]" />
                 </div>
-                <div className="text-[10px] bg-blue-50 text-[#0055A5] px-3 py-1 rounded-full font-black border border-blue-100 uppercase tracking-tighter">
-                  Tổng lượt: {totalVisitors.toLocaleString()}
-                </div>
+                <h3 className="text-white font-bold text-[13px] uppercase tracking-wide">
+                  THỐNG KÊ
+                </h3>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
-                {visitorMonthlyStats.length > 0 ? (
-                  visitorMonthlyStats.slice(0, 4).map((stat, idx) => {
-                    const maxVal = Math.max(...visitorMonthlyStats.map(s => s.count), 1);
-                    const pct = (stat.count / maxVal) * 100;
-                    return (
-                      <div key={idx} className="bg-white/40 p-3 rounded-lg border border-white/50 space-y-2">
-                        <div className="flex justify-between items-center text-[10px] font-bold">
-                          <span className="text-slate-500 uppercase">Tháng {stat.month}</span>
-                          <span className="text-[#0055A5]">{stat.count}</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-[#0055A5] rounded-full transition-all duration-1000" 
-                            style={{ width: `${pct}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="col-span-full text-center py-4 text-slate-400 text-[10px] italic">
-                    Đang nạp dữ liệu thống kê...
+              {/* Rows */}
+              <div className="p-0 text-[13px] text-slate-700 font-medium">
+                {/* Row 1: Online */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Zap className="w-5 h-5 text-slate-800" fill="currentColor" />
+                    <span>Đang truy cập</span>
                   </div>
-                )}
-              </div>
-              <div className="mt-4 flex items-center justify-center gap-4 text-[9px] text-slate-300 font-bold uppercase tracking-tight">
-                <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                  Hệ thống: Trực tuyến
+                  <span className="font-bold">{visitorOverview.online}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Cập nhật: {new Date().toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+
+                {/* Row 2: Today */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Filter className="w-5 h-5 text-slate-800" fill="currentColor" />
+                    <span>Hôm nay</span>
+                  </div>
+                  <span className="font-bold">{visitorOverview.today.toLocaleString()}</span>
+                </div>
+
+                {/* Row 3: This Month */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <CalendarDays className="w-5 h-5 text-slate-800" />
+                    <span>Tháng hiện tại</span>
+                  </div>
+                  <span className="font-bold">{visitorOverview.thisMonth.toLocaleString()}</span>
+                </div>
+
+                {/* Row 4: Total */}
+                <div className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <BarChartHorizontal className="w-5 h-5 text-slate-800 stroke-[3]" />
+                    <span>Tổng lượt truy cập</span>
+                  </div>
+                  <span className="font-bold">{visitorOverview.total.toLocaleString()}</span>
                 </div>
               </div>
             </div>
