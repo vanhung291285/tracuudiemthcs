@@ -49,6 +49,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [newsSource, setNewsSource] = useState("Hệ thống");
 
   const [topStudents, setTopStudents] = useState<Student[]>([]);
+  const [multipleMatches, setMultipleMatches] = useState<Student[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -199,13 +200,24 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     }
 
     setIsLoading(true);
+    setMultipleMatches([]);
+    
     try {
-      const student = searchMode === "cccd"
-        ? await dbService.queryStudent(cleanCode, queryDob)
-        : await dbService.queryStudentByName(cleanName, queryDob);
+      let results: Student[] = [];
+      if (searchMode === "cccd") {
+        const student = await dbService.queryStudent(cleanCode, queryDob);
+        if (student) results = [student];
+      } else {
+        results = await dbService.queryStudentsByName(cleanName, queryDob);
+      }
 
-      if (student) {
-        onQueryResult(student, selectedTerm);
+      if (results && results.length > 0) {
+        if (results.length === 1) {
+          onQueryResult(results[0], selectedTerm);
+        } else {
+          // Found multiple matches
+          setMultipleMatches(results);
+        }
       } else {
         if (searchMode === "cccd") {
           setError(
@@ -222,6 +234,11 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSelectMatch = (student: Student) => {
+    setMultipleMatches([]);
+    onQueryResult(student, selectedTerm);
   };
 
   const handleFillDemo = (code: string, name: string, date: string) => {
@@ -400,6 +417,33 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   {error && (
                     <div className="p-3.5 bg-rose-50 border-l-4 border-[#E53935] text-rose-800 rounded text-xs leading-relaxed font-bold">
                       {error}
+                    </div>
+                  )}
+
+                  {/* Multiple Matches handling */}
+                  {multipleMatches.length > 0 && (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-sm">
+                      <p className="font-bold text-orange-900 mb-3">
+                        Tìm thấy {multipleMatches.length} học sinh trùng khớp. Vui lòng chọn học sinh thuộc lớp của bạn:
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {multipleMatches.map((student, idx) => (
+                          <button
+                            key={student.studentCode || idx}
+                            type="button"
+                            onClick={() => handleSelectMatch(student)}
+                            className="bg-white border border-orange-200 hover:border-orange-400 hover:shadow-sm p-3 rounded text-left transition-all cursor-pointer flex justify-between items-center"
+                          >
+                            <div>
+                              <div className="font-black text-slate-800 uppercase text-sm">{student.fullName}</div>
+                              <div className="text-xs text-slate-500 font-medium mt-0.5">Sinh ngày: <span className="text-slate-800 font-bold">{student.dob}</span> | Số CCCD: <span className="font-mono text-slate-600">{student.studentCode}</span></div>
+                            </div>
+                            <div className="bg-[#0055A5] text-white px-3 py-1 rounded font-bold text-xs uppercase shadow-sm">
+                              Lớp {student.className}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
 
