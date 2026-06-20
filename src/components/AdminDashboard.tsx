@@ -914,6 +914,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           // Find index excluding identity columns to prevent false positives (like CCCD matching "công dân")
           const idx = headerParts.findIndex((p, pIdx) => 
             pIdx !== cccdCol && pIdx !== nameCol && pIdx !== dobCol &&
+            // Additional safety: skip columns that obviously look like identity data
+            !p.includes("định danh") && !p.includes("căn cước") && !p.includes("cccd") && !p.includes("mã số") &&
             sub.keywords.some(kw => p.includes(kw))
           );
           if (idx !== -1) {
@@ -1024,6 +1026,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                 const clean = rawVal.replace(",", ".");
                 const parsed = parseFloat(clean);
                 if (isNaN(parsed) || parsed < 0 || parsed > 10) {
+                  // If it doesn't look like a valid score, check if it's maybe Đ/CĐ shorthand for a comment subject that was misidentified
+                  // But here we enforce score for these 8 subjects as per circular 22
                   collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Điểm số môn ${sName} "${rawVal}" không hợp lệ (Phải từ 0 đến 10).`);
                 }
               }
@@ -1031,8 +1035,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               // Evaluated by check comment "Đạt" or "Chưa đạt"
               if (rawVal) {
                 const cleanLower = rawVal.toLowerCase();
-                if (cleanLower !== "đạt" && cleanLower !== "chưa đạt" && cleanLower !== "đ" && cleanLower !== "cd") {
-                  collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Nhận xét môn ${sName} "${rawVal}" không đúng chuẩn quy định (Nhập "Đạt", "Chưa đạt", "Đ", hoặc "CD").`);
+                // Support shorthands: Đ, CĐ, Đạt, Chưa đạt, D, CD, Dat...
+                const isValidComment = 
+                  cleanLower === "đạt" || cleanLower === "chưa đạt" || 
+                  cleanLower === "đ" || cleanLower === "cd" || 
+                  cleanLower === "cđ" || cleanLower === "d" || 
+                  cleanLower === "dat" || cleanLower.includes("chưa");
+                
+                if (!isValidComment) {
+                  collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Nhận xét môn ${sName} "${rawVal}" không đúng chuẩn quy định (Nhập "Đ", "CĐ", "Đạt" hoặc "Chưa đạt").`);
                 }
               }
             }
@@ -1049,11 +1060,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           const parseComment = (val: string): "Đạt" | "Chưa đạt" | "" => {
             if (!val || val.trim() === "") return "";
             const clean = val?.trim()?.toLowerCase() || "";
-            if (clean.includes("chưa") || clean === "cd" || clean === "chưa đạt") {
-              return "Chưa đạt";
-            }
-            if (clean.includes("đạt") || clean === "đ" || clean === "d" || clean === "dat") {
+            // Priority: shorthand checks
+            if (clean === "đ" || clean === "d" || clean === "đạt" || clean === "dat") {
               return "Đạt";
+            }
+            if (clean === "cđ" || clean === "cd" || clean === "chưa đạt" || clean.includes("chưa")) {
+              return "Chưa đạt";
             }
             return "";
           };
@@ -1062,8 +1074,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             const clean = val?.trim()?.toLowerCase() || "";
             if (clean.includes("tốt") || clean === "t") return "Tốt";
             if (clean.includes("khá") || clean === "k") return "Khá";
-            if (clean.includes("chưa đạt") || clean === "cd") return "Chưa đạt";
-            if (clean.includes("đạt") || clean === "đ") return "Đạt";
+            if (clean.includes("chưa đạt") || clean === "cd" || clean === "cđ" || clean.includes("chưa")) return "Chưa đạt";
+            if (clean.includes("đạt") || clean === "đ" || clean === "d") return "Đạt";
             return "Tốt";
           };
 
@@ -1071,8 +1083,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             const clean = val?.trim()?.toLowerCase() || "";
             if (clean.includes("tốt") || clean === "t") return "Tốt";
             if (clean.includes("khá") || clean === "k") return "Khá";
-            if (clean.includes("chưa đạt") || clean === "cd") return "Chưa đạt";
-            if (clean.includes("đạt") || clean === "đ") return "Đạt";
+            if (clean.includes("chưa đạt") || clean === "cd" || clean === "cđ" || clean.includes("chưa")) return "Chưa đạt";
+            if (clean.includes("đạt") || clean === "đ" || clean === "d") return "Đạt";
             return "Tốt";
           };
 
