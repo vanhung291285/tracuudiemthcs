@@ -1620,10 +1620,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                   <button
                     onClick={() => openStudentForm("create")}
                     id="btn-add-student"
-                    className="flex items-center gap-1.5 bg-[#E53935] hover:bg-[#C62828] text-white px-4 py-2   rounded-lg text-xs font-bold transition cursor-pointer"
+                    className="flex items-center gap-1.5 bg-[#E53935] hover:bg-[#C62828] text-white px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm hover:shadow-md"
                   >
                     <Plus className="w-4 h-4" /> Thêm Học Sinh Mới
                   </button>
+                  
+                  {selectedClass !== "all" && filteredStudents.length > 0 && (
+                    <button
+                      onClick={() => handleDeleteClassStudents(selectedClass)}
+                      className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm hover:shadow-md"
+                    >
+                      <UserX className="w-4 h-4" /> Xóa toàn bộ học sinh lớp {selectedClass}
+                    </button>
+                  )}
                 </div>
 
                 {/* Filter and Search Bar */}
@@ -3175,30 +3184,30 @@ NOTIFY pgrst, 'reload schema';`}
                                     </span>
                                   </td>
                                   <td className="px-4 py-2.5">
-                                    <div className="flex items-center justify-center gap-1.5">
+                                    <div className="flex items-center justify-center gap-2">
                                       <button
                                         onClick={() => handleStartEditClass(c)}
                                         title="Chỉnh sửa thông tin lớp"
-                                        className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition cursor-pointer"
+                                        className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition cursor-pointer border border-blue-100"
                                       >
                                         <Edit className="w-3.5 h-3.5" />
                                       </button>
                                       <button
                                         onClick={() => handleDeleteClassStudents(c.className)}
                                         disabled={rosterCount === 0}
-                                        title={rosterCount > 0 ? "Xóa toàn bộ học sinh của lớp này" : "Lớp trống"}
-                                        className={`p-1 rounded transition ${
+                                        title={rosterCount > 0 ? `Xóa toàn bộ ${rosterCount} học sinh của lớp ${c.className}` : "Lớp trống"}
+                                        className={`p-1.5 rounded-lg transition border ${
                                           rosterCount > 0 
-                                            ? "text-amber-600 hover:text-amber-800 hover:bg-amber-50 cursor-pointer" 
-                                            : "text-slate-300 cursor-not-allowed"
+                                            ? "text-rose-600 hover:text-rose-800 hover:bg-rose-50 border-rose-100 cursor-pointer" 
+                                            : "text-slate-300 border-slate-100 cursor-not-allowed"
                                         }`}
                                       >
                                         <UserX className="w-3.5 h-3.5" />
                                       </button>
                                       <button
                                         onClick={() => handleDeleteClass(c.id)}
-                                        title="Xóa lớp học"
-                                        className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition cursor-pointer"
+                                        title="Xóa lớp học khỏi hệ thống"
+                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer border border-slate-100"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
