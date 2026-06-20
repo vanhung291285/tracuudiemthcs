@@ -669,18 +669,23 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     setFormError(""); // Reset any prior errors
     
     try {
-      const success = await dbService.upsertStudent(preparedStudent as Student);
+      const success = await Promise.race([
+        dbService.upsertStudent(preparedStudent as Student),
+        new Promise<boolean>((resolve) => setTimeout(() => {
+          dbService.lastError = "Xử lý vượt quá thời gian tối đa (8 giây).";
+          resolve(false);
+        }, 8000))
+      ]);
       
       if (success) {
         setIsFormOpen(false);
         setFormStudent({});
         loadStudents(); // Refresh from DB
       } else {
-        const dbErr = dbService.lastError ? `\n\nChi tiết lỗi: ${dbService.lastError}` : "";
-        alert(`Dữ liệu đã được lưu ngoại tuyến vào bộ nhớ thiết bị, nhưng không thể đồng bộ lên Supabase vì lỗi kết nối.${dbErr}`);
-        setIsFormOpen(false);
-        setFormStudent({});
-        loadStudents();
+        const dbErr = dbService.lastError ? `\n\nChi tiết: ${dbService.lastError}` : "";
+        setFormError(`Lưu dữ liệu nội bộ thành công, nhưng lỗi đồng bộ Supabase: ${dbErr}`);
+        // We do NOT close the form so the user sees the error message
+        loadStudents(); 
       }
     } catch (err: any) {
       console.error("Unhandled error when saving student:", err);
