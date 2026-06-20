@@ -71,3 +71,8 @@ export interface VisitorMonthlyStats {
   month: string;
   count: number;
 }
+
+export interface VisitorDailyStats {
+  date: string;
+  count: number;
+}
