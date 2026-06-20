@@ -8,12 +8,12 @@ export interface SubjectResult {
   subjectName: string;
   isEvaluatedByScore: boolean; // True for Math, Lit, etc. False for Physical Ed, Art, etc.
   // Semester 1
-  mid1?: number; // Giữa kì 1
-  end1?: number; // Cuối kì 1
+  mid1?: number | string; // Giữa kì 1
+  end1?: number | string; // Cuối kì 1
   semester1?: number | string; // ĐTBmhk1 hoặc "Đạt"/"Chưa đạt"
   // Semester 2
-  mid2?: number; // Giữa kì 2
-  end2?: number; // Cuối kì 2
+  mid2?: number | string; // Giữa kì 2
+  end2?: number | string; // Cuối kì 2
   semester2?: number | string; // ĐTBmhk2 hoặc "Đạt"/"Chưa đạt"
   // Year
   yearAvg?: number | string; // ĐTBmcn hoặc "Đạt"/"Chưa đạt"
@@ -41,7 +41,8 @@ export interface Student {
   
   // Verification details
   verificationToken: string;
-  
+  teacher?: string; // Giáo viên chủ nhiệm
+
   // Subject results
   subjects: SubjectResult[];
 }
