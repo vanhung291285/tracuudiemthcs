@@ -113,6 +113,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     fetchNews();
     fetchTopStudents();
     loadVisitorStats();
+    dbService.recordVisit();
     return () => {
       active = false;
     };
