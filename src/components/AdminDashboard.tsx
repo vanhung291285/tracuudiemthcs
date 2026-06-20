@@ -3210,131 +3210,193 @@ NOTIFY pgrst, 'reload schema';`}
               </button>
             </div>
             
-            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs text-slate-800">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Số Căn cước công dân (12 số) (*)</label>
-                  <input
-                    type="text"
-                    value={formStudent.studentCode || ""}
-                    onChange={(e) => setFormStudent({ ...formStudent, studentCode: e.target.value })}
-                    className="w-full border p-2 rounded bg-slate-50 font-bold"
-                    placeholder="Ví dụ: 037206123456"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Họ và tên (*)</label>
-                  <input
-                    type="text"
-                    value={formStudent.fullName || ""}
-                    onChange={(e) => setFormStudent({ ...formStudent, fullName: e.target.value })}
-                    className="w-full border p-2 rounded font-bold"
-                    placeholder="Nguyễn Văn A"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Ngày sinh (DD/MM/YYYY) (*)</label>
-                  <input
-                    type="text"
-                    value={formStudent.dob || ""}
-                    onChange={(e) => setFormStudent({ ...formStudent, dob: e.target.value })}
-                    className="w-full border p-2 rounded font-bold"
-                    placeholder="Ví dụ: 15/05/2011"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Giới tính</label>
-                  <select
-                    value={formStudent.gender || "Nam"}
-                    onChange={(e) => setFormStudent({ ...formStudent, gender: e.target.value as any })}
-                    className="w-full border p-2 rounded bg-white"
-                  >
-                    <option value="Nam">Nam</option>
-                    <option value="Nữ">Nữ</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Cơ sở trường học</label>
-                  <input
-                    type="text"
-                    value={formStudent.school || "Trường PTDTBT Tiểu Học và THCS Suối Lư"}
-                    onChange={(e) => setFormStudent({ ...formStudent, school: e.target.value })}
-                    className="w-full border p-2 rounded"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Lớp học (*)</label>
-                  <select
-                    value={formStudent.className || ""}
-                    onChange={(e) => {
-                      const selectedClassName = e.target.value;
-                      const matchedClass = classes.find(c => c.className === selectedClassName);
-                      setFormStudent({
-                        ...formStudent,
-                        className: selectedClassName,
-                        gradeLevel: matchedClass ? matchedClass.gradeLevel : formStudent.gradeLevel
-                      });
-                    }}
-                    className="w-full border p-2 rounded bg-white font-bold"
-                  >
-                    <option value="">-- Chọn lớp học --</option>
-                    {classes.map(c => (
-                      <option key={c.id} value={c.className}>
-                        Lớp {c.className} (Khối {c.gradeLevel})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Xếp loại rèn luyện (Hạnh kiểm)</label>
-                  <select
-                    value={formStudent.behaviorGrade || "Tốt"}
-                    onChange={(e) => setFormStudent({ ...formStudent, behaviorGrade: e.target.value as any })}
-                    className="w-full border p-2 rounded bg-white"
-                  >
-                    <option value="Tốt">Tốt</option>
-                    <option value="Khá">Khá</option>
-                    <option value="Đạt">Đạt</option>
-                    <option value="Chưa đạt">Chưa đạt</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Vắng có phép / không phép</label>
-                  <div className="flex gap-2">
+            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto text-xs text-slate-800">
+              
+              <div>
+                <h3 className="uppercase font-bold text-slate-400 mb-3 border-b pb-1">Thông tin cá nhân</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Số Căn cước công dân (12 số) (*)</label>
                     <input
-                      type="number"
-                      value={formStudent.daysAbsent || 0}
-                      onChange={(e) => setFormStudent({ ...formStudent, daysAbsent: parseInt(e.target.value) || 0 })}
-                      className="w-full border p-2 rounded"
-                      placeholder="Tổng phép"
-                    />
-                    <input
-                      type="number"
-                      value={formStudent.daysAbsentUnexcused || 0}
-                      onChange={(e) => setFormStudent({ ...formStudent, daysAbsentUnexcused: parseInt(e.target.value) || 0 })}
-                      className="w-full border p-2 rounded"
-                      placeholder="Không phép"
+                      type="text"
+                      value={formStudent.studentCode || ""}
+                      onChange={(e) => setFormStudent({ ...formStudent, studentCode: e.target.value })}
+                      className="w-full border p-2 rounded bg-slate-50 font-bold"
+                      placeholder="Ví dụ: 037206123456"
                     />
                   </div>
-                </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block font-bold text-slate-700 uppercase mb-1">Nhận xét chi tiết học bạ</label>
-                  <textarea
-                    rows={2}
-                    value={formStudent.notes || ""}
-                    onChange={(e) => setFormStudent({ ...formStudent, notes: e.target.value })}
-                    className="w-full border p-2 rounded"
-                    placeholder="Ưu điểm của học sinh..."
-                  />
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Họ và tên (*)</label>
+                    <input
+                      type="text"
+                      value={formStudent.fullName || ""}
+                      onChange={(e) => setFormStudent({ ...formStudent, fullName: e.target.value })}
+                      className="w-full border p-2 rounded font-bold"
+                      placeholder="Nguyễn Văn A"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Ngày sinh (*)</label>
+                    <input
+                      type="text"
+                      value={formStudent.dob || ""}
+                      onChange={(e) => setFormStudent({ ...formStudent, dob: e.target.value })}
+                      className="w-full border p-2 rounded font-bold"
+                      placeholder="Ví dụ: 15/05/2011"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Giới tính</label>
+                    <select
+                      value={formStudent.gender || "Nam"}
+                      onChange={(e) => setFormStudent({ ...formStudent, gender: e.target.value as any })}
+                      className="w-full border p-2 rounded bg-white"
+                    >
+                      <option value="Nam">Nam</option>
+                      <option value="Nữ">Nữ</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="uppercase font-bold text-slate-400 mb-3 border-b pb-1">Thông tin học tập</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Cơ sở trường học</label>
+                    <input
+                      type="text"
+                      value={formStudent.school || "Trường PTDTBT Tiểu Học và THCS Suối Lư"}
+                      onChange={(e) => setFormStudent({ ...formStudent, school: e.target.value })}
+                      className="w-full border p-2 rounded"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Năm học</label>
+                    <input
+                      type="text"
+                      value={formStudent.academicYear || "2025-2026"}
+                      onChange={(e) => setFormStudent({ ...formStudent, academicYear: e.target.value })}
+                      className="w-full border p-2 rounded font-bold bg-white"
+                      placeholder="2025-2026"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Lớp học (*)</label>
+                    <select
+                      value={formStudent.className || ""}
+                      onChange={(e) => {
+                        const selectedClassName = e.target.value;
+                        const matchedClass = classes.find(c => c.className === selectedClassName);
+                        setFormStudent({
+                          ...formStudent,
+                          className: selectedClassName,
+                          gradeLevel: matchedClass ? matchedClass.gradeLevel : formStudent.gradeLevel
+                        });
+                      }}
+                      className="w-full border p-2 rounded bg-white font-bold"
+                    >
+                      <option value="">-- Chọn lớp học --</option>
+                      {classes.map(c => (
+                        <option key={c.id} value={c.className}>
+                          Lớp {c.className} (Khối {c.gradeLevel})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Kết quả học tập</label>
+                    <select
+                      value={formStudent.academicGrade || "Đạt"}
+                      onChange={(e) => setFormStudent({ ...formStudent, academicGrade: e.target.value as any })}
+                      className="w-full border p-2 rounded bg-white"
+                    >
+                      <option value="Tốt">Tốt</option>
+                      <option value="Khá">Khá</option>
+                      <option value="Đạt">Đạt</option>
+                      <option value="Chưa đạt">Chưa đạt</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Xếp loại rèn luyện</label>
+                    <select
+                      value={formStudent.behaviorGrade || "Tốt"}
+                      onChange={(e) => setFormStudent({ ...formStudent, behaviorGrade: e.target.value as any })}
+                      className="w-full border p-2 rounded bg-white"
+                    >
+                      <option value="Tốt">Tốt</option>
+                      <option value="Khá">Khá</option>
+                      <option value="Đạt">Đạt</option>
+                      <option value="Chưa đạt">Chưa đạt</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1" title="Kết quả rèn luyện trong năm (sau hè)">Rèn luyện sau hè</label>
+                    <select
+                      value={formStudent.behaviorGradeSummer || "Không"}
+                      onChange={(e) => setFormStudent({ ...formStudent, behaviorGradeSummer: e.target.value as any })}
+                      className="w-full border p-2 rounded bg-white"
+                    >
+                      <option value="Không">Không khảo sát</option>
+                      <option value="Tốt">Tốt</option>
+                      <option value="Khá">Khá</option>
+                      <option value="Đạt">Đạt</option>
+                      <option value="Chưa đạt">Chưa đạt</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Danh hiệu / Khen thưởng</label>
+                    <select
+                      value={formStudent.distinction || "Không"}
+                      onChange={(e) => setFormStudent({ ...formStudent, distinction: e.target.value as any })}
+                      className="w-full border p-2 rounded bg-white"
+                    >
+                      <option value="Không">Không</option>
+                      <option value="Học sinh Tiêu biểu">Học sinh Tiêu biểu</option>
+                      <option value="Học sinh Giỏi">Học sinh Giỏi</option>
+                      <option value="Học sinh Xuất sắc">Học sinh Xuất sắc</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Vắng có phép / không phép</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        value={formStudent.daysAbsent || 0}
+                        onChange={(e) => setFormStudent({ ...formStudent, daysAbsent: parseInt(e.target.value) || 0 })}
+                        className="w-full border p-2 rounded"
+                        placeholder="Tổng phép"
+                      />
+                      <input
+                        type="number"
+                        value={formStudent.daysAbsentUnexcused || 0}
+                        onChange={(e) => setFormStudent({ ...formStudent, daysAbsentUnexcused: parseInt(e.target.value) || 0 })}
+                        className="w-full border p-2 rounded"
+                        placeholder="Không phép"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Nhận xét chi tiết học bạ</label>
+                    <textarea
+                      rows={2}
+                      value={formStudent.notes || ""}
+                      onChange={(e) => setFormStudent({ ...formStudent, notes: e.target.value })}
+                      className="w-full border p-2 rounded"
+                      placeholder="Ưu điểm của học sinh..."
+                    />
+                  </div>
                 </div>
               </div>
 
