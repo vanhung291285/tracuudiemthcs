@@ -902,7 +902,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           { id: "tin", keywords: ["tin học", "tin", "cntt", "tin hoc"] },
           { id: "van", keywords: ["ngữ văn", "văn", "ngữ văn học", "tiếng việt"] },
           { id: "anh", keywords: ["ngoại ngữ", "tiếng anh", "anh", "english", "anh văn"] },
-          { id: "gdcd", keywords: ["gdcd", "giáo dục công dân", "công dân"] },
+          { id: "gdcd", keywords: ["gdcd", "giáo dục công dân", "gd công dân"] },
           { id: "cong_nghe", keywords: ["công nghệ", "kỹ thuật"] },
           { id: "the_duc", keywords: ["thể chất", "thể dục", "giáo dục thể chất", "thể dục thể thao"] },
           { id: "nghe_thuat", keywords: ["nghệ thuật", "âm nhạc", "mỹ thuật", "am nhac", "my thuat"] },
@@ -911,7 +911,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         ];
 
         subjectsMapping.forEach(sub => {
-          const idx = headerParts.findIndex(p => sub.keywords.some(kw => p.includes(kw)));
+          // Find index excluding identity columns to prevent false positives (like CCCD matching "công dân")
+          const idx = headerParts.findIndex((p, pIdx) => 
+            pIdx !== cccdCol && pIdx !== nameCol && pIdx !== dobCol &&
+            sub.keywords.some(kw => p.includes(kw))
+          );
           if (idx !== -1) {
             subjCols[sub.id] = idx;
           }
