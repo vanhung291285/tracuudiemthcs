@@ -4,7 +4,7 @@
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { Student, SchoolClass } from "../types";
+import { Student, SchoolClass, VisitorMonthlyStats } from "../types";
 import { DEFAULT_STUDENTS } from "./mockData";
 
 // Environment variables
@@ -886,6 +886,80 @@ class DatabaseService {
       });
     } catch (e) {
       // quiet fail
+    }
+  }
+
+  // Visitor statistics tracking
+  public async recordVisit(): Promise<void> {
+    if (!this.supabase) {
+      // Offline mode: keep track in localStorage for simple feedback
+      const current = localStorage.getItem("thcs_visitor_count") || "0";
+      localStorage.setItem("thcs_visitor_count", (parseInt(current) + 1).toString());
+      return;
+    }
+
+    try {
+      const now = new Date();
+      // Month format: YYYY-MM
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      
+      // We use a simple insert. Table 'visitor_stats' needs to exist in Supabase.
+      // Columns: id (auto), visited_at (timestamp), month (text)
+      await this.supabase.from("visitor_stats").insert({
+        visited_at: now.toISOString(),
+        month: monthStr
+      });
+    } catch (err) {
+      console.warn("Failed to record visitor stat to Supabase:", err);
+    }
+  }
+
+  public async getVisitorStats(): Promise<VisitorMonthlyStats[]> {
+    if (!this.supabase) {
+       const offlineCount = parseInt(localStorage.getItem("thcs_visitor_count") || "0");
+       return [{ month: "Ngoại tuyến (Offline)", count: offlineCount }];
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from("visitor_stats")
+        .select("month");
+      
+      if (error) {
+        console.warn("Supabase stats query failed. Does table 'visitor_stats' exist?", error.message);
+        return [];
+      }
+
+      const counts: Record<string, number> = {};
+      data.forEach((row: any) => {
+        if (row.month) {
+          counts[row.month] = (counts[row.month] || 0) + 1;
+        }
+      });
+
+      return Object.entries(counts)
+        .map(([month, count]) => ({ month, count }))
+        .sort((a, b) => b.month.localeCompare(a.month)); // Newest month first
+    } catch (err) {
+      console.warn("Failed to fetch visitor stats:", err);
+      return [];
+    }
+  }
+
+  public async getTotalVisitors(): Promise<number> {
+    if (!this.supabase) {
+      return parseInt(localStorage.getItem("thcs_visitor_count") || "0");
+    }
+
+    try {
+      const { count, error } = await this.supabase
+        .from("visitor_stats")
+        .select("*", { count: 'exact', head: true });
+      
+      if (error) return 0;
+      return count || 0;
+    } catch {
+      return 0;
     }
   }
 }
