@@ -615,14 +615,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         notes: "Hoàn thành tốt nhiệm vụ học tập.",
         verificationToken: `VERIFY-NEW-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         subjects: [
-          { subjectId: "toan", subjectName: "Toán học", isEvaluatedByScore: true, mid1: "", end1: "", semester1: "", mid2: "", end2: "", semester2: "", yearAvg: "" },
-          { subjectId: "ly_dia", subjectName: "Lịch sử và Địa lí", isEvaluatedByScore: true, mid1: "", end1: "", semester1: "", mid2: "", end2: "", semester2: "", yearAvg: "" },
-          { subjectId: "khtn", subjectName: "Khoa học tự nhiên", isEvaluatedByScore: true, mid1: "", end1: "", semester1: "", mid2: "", end2: "", semester2: "", yearAvg: "" },
-          { subjectId: "tin", subjectName: "Tin học", isEvaluatedByScore: true, mid1: "", end1: "", semester1: "", mid2: "", end2: "", semester2: "", yearAvg: "" },
-          { subjectId: "van", subjectName: "Ngữ văn", isEvaluatedByScore: true, mid1: "", end1: "", semester1: "", mid2: "", end2: "", semester2: "", yearAvg: "" },
-          { subjectId: "anh", subjectName: "Ngoại ngữ", isEvaluatedByScore: true, mid1: "", end1: "", semester1: "", mid2: "", end2: "", semester2: "", yearAvg: "" },
-          { subjectId: "gdcd", subjectName: "GDCD", isEvaluatedByScore: true, mid1: "", end1: "", semester1: "", mid2: "", end2: "", semester2: "", yearAvg: "" },
-          { subjectId: "cong_nghe", subjectName: "Công nghệ", isEvaluatedByScore: true, mid1: "", end1: "", semester1: "", mid2: "", end2: "", semester2: "", yearAvg: "" },
+          { subjectId: "toan", subjectName: "Toán học", isEvaluatedByScore: true, semester1: "", semester2: "", yearAvg: "" },
+          { subjectId: "ly_dia", subjectName: "Lịch sử và Địa lí", isEvaluatedByScore: true, semester1: "", semester2: "", yearAvg: "" },
+          { subjectId: "khtn", subjectName: "Khoa học tự nhiên", isEvaluatedByScore: true, semester1: "", semester2: "", yearAvg: "" },
+          { subjectId: "tin", subjectName: "Tin học", isEvaluatedByScore: true, semester1: "", semester2: "", yearAvg: "" },
+          { subjectId: "van", subjectName: "Ngữ văn", isEvaluatedByScore: true, semester1: "", semester2: "", yearAvg: "" },
+          { subjectId: "anh", subjectName: "Ngoại ngữ", isEvaluatedByScore: true, semester1: "", semester2: "", yearAvg: "" },
+          { subjectId: "gdcd", subjectName: "GDCD", isEvaluatedByScore: true, semester1: "", semester2: "", yearAvg: "" },
+          { subjectId: "cong_nghe", subjectName: "Công nghệ", isEvaluatedByScore: true, semester1: "", semester2: "", yearAvg: "" },
           { subjectId: "the_duc", subjectName: "Giáo dục thể chất", isEvaluatedByScore: false, semester1: "", semester2: "", yearAvg: "" },
           { subjectId: "nghe_thuat", subjectName: "Nghệ thuật", isEvaluatedByScore: false, semester1: "", semester2: "", yearAvg: "" },
           { subjectId: "gd_dia_phuong", subjectName: "Nội dung giáo dục của địa phương", isEvaluatedByScore: false, semester1: "", semester2: "", yearAvg: "" },
@@ -668,11 +668,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       if (sub.isEvaluatedByScore) {
         return {
           ...sub,
-          mid1: sub.mid1 === "" || sub.mid1 === undefined ? "" : (parseFloat(String(sub.mid1)) || 0),
-          end1: sub.end1 === "" || sub.end1 === undefined ? "" : (parseFloat(String(sub.end1)) || 0),
           semester1: sub.semester1 === "" || sub.semester1 === undefined ? "" : (parseFloat(String(sub.semester1)) || 0),
-          mid2: sub.mid2 === "" || sub.mid2 === undefined ? "" : (parseFloat(String(sub.mid2)) || 0),
-          end2: sub.end2 === "" || sub.end2 === undefined ? "" : (parseFloat(String(sub.end2)) || 0),
           semester2: sub.semester2 === "" || sub.semester2 === undefined ? "" : (parseFloat(String(sub.semester2)) || 0),
           yearAvg: sub.yearAvg === "" || sub.yearAvg === undefined ? "" : (parseFloat(String(sub.yearAvg)) || 0),
         };
@@ -3439,18 +3435,14 @@ NOTIFY pgrst, 'reload schema';`}
                     <thead className="bg-slate-50 border-b">
                       <tr className="divide-x border-b">
                         <th className="p-2 text-left sticky left-0 bg-slate-50 z-10 w-32 border-r">Môn học</th>
-                        <th className="p-2 text-center" colSpan={3}>Học kỳ I</th>
-                        <th className="p-2 text-center" colSpan={3}>Học kỳ II</th>
+                        <th className="p-2 text-center" colSpan={1}>Học kỳ I</th>
+                        <th className="p-2 text-center" colSpan={1}>Học kỳ II</th>
                         <th className="p-2 text-center bg-rose-50/50">Cả năm</th>
                       </tr>
                       <tr className="bg-slate-100/50 text-[10px] uppercase tracking-wider text-slate-500 divide-x">
                         <th className="p-1 sticky left-0 bg-slate-100/50 z-10 border-r"></th>
-                        <th className="p-1 font-medium bg-white/50">Giữa kỳ</th>
-                        <th className="p-1 font-medium bg-white/50">Cuối kỳ</th>
-                        <th className="p-1 font-bold text-blue-600 bg-blue-50/50">Tổng kết</th>
-                        <th className="p-1 font-medium bg-white/50">Giữa kỳ</th>
-                        <th className="p-1 font-medium bg-white/50">Cuối kỳ</th>
-                        <th className="p-1 font-bold text-blue-600 bg-blue-50/50">Tổng kết</th>
+                        <th className="p-1 font-bold text-blue-600 bg-blue-50/50">Tổng kết I</th>
+                        <th className="p-1 font-bold text-blue-600 bg-blue-50/50">Tổng kết II</th>
                         <th className="p-1 font-bold text-rose-600 bg-rose-100/50">TB Năm</th>
                       </tr>
                     </thead>
@@ -3460,34 +3452,6 @@ NOTIFY pgrst, 'reload schema';`}
                           <td className="p-2 font-semibold sticky left-0 bg-white z-10 border-r text-slate-700">{sub.subjectName}</td>
                           {sub.isEvaluatedByScore ? (
                             <>
-                              <td className="p-1">
-                                <input
-                                  type="text"
-                                  value={sub.mid1 ?? ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(",", ".");
-                                    const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, mid1: val };
-                                    setFormStudent({ ...formStudent, subjects: updated });
-                                  }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-emerald-400 p-1"
-                                  placeholder="-"
-                                />
-                              </td>
-                              <td className="p-1">
-                                <input
-                                  type="text"
-                                  value={sub.end1 ?? ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(",", ".");
-                                    const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, end1: val };
-                                    setFormStudent({ ...formStudent, subjects: updated });
-                                  }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-emerald-400 p-1"
-                                  placeholder="-"
-                                />
-                              </td>
                               <td className="p-1 bg-blue-50/20 font-bold">
                                 <input
                                   type="text"
@@ -3499,34 +3463,6 @@ NOTIFY pgrst, 'reload schema';`}
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
                                   className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-1 text-blue-700"
-                                  placeholder="-"
-                                />
-                              </td>
-                              <td className="p-1">
-                                <input
-                                  type="text"
-                                  value={sub.mid2 ?? ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(",", ".");
-                                    const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, mid2: val };
-                                    setFormStudent({ ...formStudent, subjects: updated });
-                                  }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-emerald-400 p-1"
-                                  placeholder="-"
-                                />
-                              </td>
-                              <td className="p-1">
-                                <input
-                                  type="text"
-                                  value={sub.end2 ?? ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value.replace(",", ".");
-                                    const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, end2: val };
-                                    setFormStudent({ ...formStudent, subjects: updated });
-                                  }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-emerald-400 p-1"
                                   placeholder="-"
                                 />
                               </td>
@@ -3561,7 +3497,6 @@ NOTIFY pgrst, 'reload schema';`}
                             </>
                           ) : (
                             <>
-                              <td className="p-1 bg-slate-50 text-slate-400 text-center" colSpan={2}>Nhận xét</td>
                               <td className="p-1 bg-blue-50/20">
                                 <select
                                   value={sub.semester1 || ""}
@@ -3577,7 +3512,6 @@ NOTIFY pgrst, 'reload schema';`}
                                   <option value="Chưa đạt">Chưa đạt</option>
                                 </select>
                               </td>
-                              <td className="p-1 bg-slate-50 text-slate-400 text-center" colSpan={2}>Nhận xét</td>
                               <td className="p-1 bg-blue-50/20">
                                 <select
                                   value={sub.semester2 || ""}
