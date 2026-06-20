@@ -899,18 +899,47 @@ class DatabaseService {
     }
 
     try {
-      const now = new Date();
-      // Month format: YYYY-MM
-      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
       
-      // We use a simple insert. Table 'visitor_stats' needs to exist in Supabase.
-      // Columns: id (auto), visited_at (timestamp), month (text)
-      await this.supabase.from("visitor_stats").insert({
-        visited_at: now.toISOString(),
-        month: monthStr
-      });
+      // We'll use a specific table 'visitor_counts' for daily aggregation
+      // Columns: visit_date (date, PK), count (integer)
+      
+      // Try to get today's record first
+      const { data, error: fetchError } = await this.supabase
+        .from("visitor_counts")
+        .select("count")
+        .eq("visit_date", today)
+        .maybeSingle();
+
+      if (!fetchError) {
+        if (data) {
+          // Update existing
+          await this.supabase
+            .from("visitor_counts")
+            .update({ count: (data.count || 0) + 1 })
+            .eq("visit_date", today);
+        } else {
+          // Insert new
+          await this.supabase
+            .from("visitor_counts")
+            .insert({ visit_date: today, count: 1 });
+        }
+      }
+      
+      // Also keep legacy 'visitor_stats' if it exists (one row per visit) for backward compatibility
+      // but in a separate try/catch
+      try {
+        const monthStr = today.substring(0, 7); // YYYY-MM
+        await this.supabase.from("visitor_stats").insert({
+          visited_at: new Date().toISOString(),
+          month: monthStr
+        }).select().single();
+      } catch (e) {
+        // Ignore if visitor_stats table doesn't exist
+      }
+
     } catch (err) {
-      console.warn("Failed to record visitor stat to Supabase:", err);
+      console.warn("Failed to record visitor stats to Supabase:", err);
     }
   }
 
@@ -921,25 +950,40 @@ class DatabaseService {
     }
 
     try {
+      // We'll aggregate from 'visitor_counts' (daily) as it's more accurate now
       const { data, error } = await this.supabase
-        .from("visitor_stats")
-        .select("month");
+        .from("visitor_counts")
+        .select("visit_date, count");
       
       if (error) {
-        console.warn("Supabase stats query failed. Does table 'visitor_stats' exist?", error.message);
-        return [];
+        // Fallback to legacy visitor_stats if visitor_counts doesn't exist
+        const { data: legacyData, error: legacyError } = await this.supabase
+          .from("visitor_stats")
+          .select("month");
+        
+        if (legacyError) return [];
+        
+        const counts: Record<string, number> = {};
+        legacyData.forEach((row: any) => {
+          if (row.month) {
+            counts[row.month] = (counts[row.month] || 0) + 1;
+          }
+        });
+        return Object.entries(counts)
+          .map(([month, count]) => ({ month, count }))
+          .sort((a, b) => b.month.localeCompare(a.month));
       }
 
-      const counts: Record<string, number> = {};
+      // Aggregate daily counts into monthly
+      const monthlyCounts: Record<string, number> = {};
       data.forEach((row: any) => {
-        if (row.month) {
-          counts[row.month] = (counts[row.month] || 0) + 1;
-        }
+        const month = row.visit_date.substring(0, 7); // YYYY-MM
+        monthlyCounts[month] = (monthlyCounts[month] || 0) + row.count;
       });
 
-      return Object.entries(counts)
+      return Object.entries(monthlyCounts)
         .map(([month, count]) => ({ month, count }))
-        .sort((a, b) => b.month.localeCompare(a.month)); // Newest month first
+        .sort((a, b) => b.month.localeCompare(a.month));
     } catch (err) {
       console.warn("Failed to fetch visitor stats:", err);
       return [];
@@ -952,11 +996,20 @@ class DatabaseService {
     }
 
     try {
-      const { count, error } = await this.supabase
+      // Sum counts from visitor_counts
+      const { data, error } = await this.supabase
+        .from("visitor_counts")
+        .select("count");
+      
+      if (!error && data) {
+        return data.reduce((sum, row) => sum + (row.count || 0), 0);
+      }
+
+      // Fallback to legacy count
+      const { count, error: legacyError } = await this.supabase
         .from("visitor_stats")
         .select("*", { count: 'exact', head: true });
       
-      if (error) return 0;
       return count || 0;
     } catch {
       return 0;
