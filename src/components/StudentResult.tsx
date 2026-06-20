@@ -53,7 +53,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   };
 
   // Compute live term summary as required under Circular 22 rules
-  const scoreSubjects = student.subjects.filter(s => s.isEvaluatedByScore);
+  const scoreSubjects = (student.subjects || []).filter(s => s.isEvaluatedByScore);
   let scoreCount = 0;
   let scoreSum = 0;
   scoreSubjects.forEach(s => {
@@ -68,7 +68,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   // Academic Classification
   let activeAcademicGrade = student.academicGrade;
   if (scoreCount > 0) {
-    const nonScorePassed = student.subjects
+    const nonScorePassed = (student.subjects || [])
       .filter(s => !s.isEvaluatedByScore)
       .every(s => {
         const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
@@ -145,7 +145,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     csvContent += "BẢNG KẾT QUẢ HỌC TẬP\n";
     csvContent += "Môn học,Cuối kì I,Cuối kì II,Cả năm\n";
     
-    student.subjects.forEach(sub => {
+    (student.subjects || []).forEach(sub => {
       if (sub.isEvaluatedByScore) {
         csvContent += `"${sub.subjectName}",${sub.end1 || ""},${sub.end2 || ""},${sub.yearAvg || ""}\n`;
       } else {
@@ -258,15 +258,15 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               </tr>
               
               {/* Subjects */}
-              {student.subjects.map((sub, index) => {
+              {(student.subjects || []).map((sub, index) => {
                 const valHk1 = sub.isEvaluatedByScore 
-                  ? (sub.semester1 !== undefined && typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : (sub.end1 !== undefined ? sub.end1.toFixed(1).replace(".", ",") : "")) 
+                  ? (typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : (typeof sub.end1 === "number" ? sub.end1.toFixed(1).replace(".", ",") : "")) 
                   : sub.semester1 || "";
                 const valHk2 = sub.isEvaluatedByScore 
-                  ? (sub.semester2 !== undefined && typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : (sub.end2 !== undefined ? sub.end2.toFixed(1).replace(".", ",") : "")) 
+                  ? (typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : (typeof sub.end2 === "number" ? sub.end2.toFixed(1).replace(".", ",") : "")) 
                   : sub.semester2 || "";
                 const valCaNam = sub.isEvaluatedByScore
-                  ? (sub.yearAvg !== undefined && typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "")
+                  ? (typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "")
                   : sub.yearAvg || "";
 
                 return (
