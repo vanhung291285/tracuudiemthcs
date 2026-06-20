@@ -224,7 +224,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
             <tbody>
               {/* Info row 1 */}
               <tr>
-                <td className="p-2 border border-slate-400 font-bold whitespace-nowrap text-right pr-6 sm:pr-12 bg-[#f8fafc]" colSpan={2}>
+                <td className="p-2 border border-slate-400 font-bold whitespace-nowrap text-right pr-6 sm:pr-12 bg-[#f0f9ff]" colSpan={2}>
                   Mã HS :
                 </td>
                 <td className="p-2 border border-slate-400 font-bold text-left px-4 text-[#0055A5]" colSpan={5}>
@@ -239,7 +239,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 <td className="p-2 border border-slate-400 font-black text-left px-4 text-[#E53935] text-[12px] sm:text-[14px]" colSpan={3}>
                   {student.fullName}
                 </td>
-                <td className="p-2 border border-slate-400 font-bold text-center bg-[#f8fafc]" colSpan={2}>
+                <td className="p-2 border border-slate-400 font-bold text-center bg-[#f0f9ff]" colSpan={2}>
                   Lớp: <span className="text-[#0055A5]">{student.className}</span>
                 </td>
               </tr>
@@ -270,7 +270,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                   : sub.yearAvg || "";
 
                 return (
-                 <tr key={index} className="text-center even:bg-slate-50 hover:bg-slate-100 transition-colors text-[11px] sm:text-[14px]">
+                 <tr key={index} className="text-center even:bg-sky-50 hover:bg-sky-100 transition-colors text-[11px] sm:text-[14px]">
                      <td className="p-1 sm:p-2 border border-slate-400 font-medium text-slate-500">{index + 1}</td>
                      <td className="p-1 sm:p-2 border border-slate-400 text-left px-1.5 sm:px-4 font-semibold tracking-tight text-[11px] sm:text-[14px]">{sub.subjectName}</td>
                      <td className="p-1 sm:p-2 border border-slate-400 font-bold whitespace-nowrap">{valHk1}</td>
@@ -283,7 +283,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               })}
 
               {/* Summary Rows */}
-              <tr className="bg-[#f8fafc] text-[11px] sm:text-[13px]">
+              <tr className="bg-[#f0f9ff] text-[11px] sm:text-[13px]">
                 <td className="py-2 px-1 border-2 border-slate-500 font-black text-[#0055A5] whitespace-nowrap text-center text-[11px] sm:text-[15px] uppercase italic" colSpan={2} rowSpan={2}>
                   <div className="flex flex-col items-center gap-1">
                     <span className="print-only">
@@ -310,7 +310,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                   Vắng: <span className="text-[#E53935]">{activeDaysAbsent}</span> (p), <span className="text-[#E53935]">0</span> (k), <span className="text-[#E53935]">0</span>(bt)
                 </td>
               </tr>
-              <tr className="bg-[#f8fafc] text-[11px] sm:text-[13px]">
+              <tr className="bg-[#f0f9ff] text-[11px] sm:text-[13px]">
                 <td className="p-1.5 sm:p-3 border-2 border-slate-500 text-center whitespace-normal font-black text-[14px] sm:text-[18px]" colSpan={5}>
                   KQHT: <span className="text-[#E53935]">{activeAcademicGrade?.toUpperCase() || "KHÁ"}
                   </span> <span className="mx-2 sm:mx-3 text-slate-300">|</span> KQRL: <span className="text-[#0055A5]">{activeBehaviorGrade?.toUpperCase() || "TỐT"}
