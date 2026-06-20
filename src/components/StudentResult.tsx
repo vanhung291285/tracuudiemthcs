@@ -195,31 +195,31 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       <div
         ref={printAreaRef}
         id="print-card-area"
-        className="bg-white px-3 py-3 sm:px-6 sm:py-6 text-black font-serif w-full max-w-4xl mx-auto border sm:shadow-lg"
+        className="bg-white px-3 py-3 sm:px-5 sm:py-5 text-black font-serif w-full max-w-3xl mx-auto border sm:shadow-lg"
       >
         {/* Document Header */}
-        <div className="mb-4 text-[#0055A5]">
-          <div className="uppercase font-bold text-xs sm:text-sm leading-snug whitespace-nowrap">ỦY BAN NHÂN DÂN XÃ XA DUNG</div>
-          <div className="uppercase font-bold text-sm sm:text-base leading-snug whitespace-nowrap border-b border-[#0055A5] inline-block">TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ</div>
+        <div className="mb-3 text-[#0055A5]">
+          <div className="uppercase font-bold text-[10px] sm:text-xs leading-none whitespace-nowrap">ỦY BAN NHÂN DÂN XÃ XA DUNG</div>
+          <div className="uppercase font-bold text-xs sm:text-sm leading-tight whitespace-nowrap border-b border-[#0055A5] inline-block">TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ</div>
         </div>
 
         {/* Title */}
-        <div className="text-center mb-4 text-[#E53935]">
-          <h1 className="font-black text-2xl sm:text-3xl uppercase mb-1 tracking-wider italic">KẾT QUẢ HỌC TẬP</h1>
-          <h2 className="font-bold text-sm sm:text-base text-[#0055A5]">Năm học {schoolYear}</h2>
+        <div className="text-center mb-3 text-[#E53935]">
+          <h1 className="font-black text-xl sm:text-2xl uppercase mb-0.5 tracking-wider italic">KẾT QUẢ HỌC TẬP</h1>
+          <h2 className="font-bold text-xs sm:text-sm text-[#0055A5]">Năm học {schoolYear}</h2>
         </div>
 
         {/* Outer wrapping to handle responsive scrolling if needed on very small devices, but print avoids scroll */}
         <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366] custom-scrollbar">
-          <table className="w-full border-collapse border-2 border-slate-500 text-[12px] sm:text-[14px] md:text-[15px] mb-2">
+          <table className="w-full border-collapse border-2 border-slate-500 text-[11px] sm:text-[13px] mb-2">
             <colgroup>
-              <col className="w-[30px] sm:w-[50px]" />
+              <col className="w-[30px] sm:w-[45px]" />
               <col className="w-auto" />
-              <col className="w-[45px] sm:w-[70px]" />
-              <col className="w-[45px] sm:w-[70px]" />
-              <col className="w-[45px] sm:w-[70px]" />
-              <col className="w-[60px] sm:w-[90px]" />
-              <col className="w-[50px] sm:w-[90px]" />
+              <col className="w-[40px] sm:w-[60px]" />
+              <col className="w-[40px] sm:w-[60px]" />
+              <col className="w-[40px] sm:w-[60px]" />
+              <col className="w-[55px] sm:w-[80px]" />
+              <col className="w-[45px] sm:w-[80px]" />
             </colgroup>
             <tbody>
               {/* Info row 1 */}
@@ -236,7 +236,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 <td className="p-2 border border-slate-400 font-bold whitespace-nowrap text-right pr-6 sm:pr-12 bg-[#f8fafc]" colSpan={2}>
                   Họ và tên:
                 </td>
-                <td className="p-2 border border-slate-400 font-black text-left px-4 text-[#E53935] text-[14px] sm:text-[16px]" colSpan={3}>
+                <td className="p-2 border border-slate-400 font-black text-left px-4 text-[#E53935] text-[12px] sm:text-[14px]" colSpan={3}>
                   {student.fullName}
                 </td>
                 <td className="p-2 border border-slate-400 font-bold text-center bg-[#f8fafc]" colSpan={2}>
@@ -283,8 +283,8 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               })}
 
               {/* Summary Rows */}
-              <tr className="bg-[#f8fafc] text-[12px] sm:text-[14px]">
-                <td className="py-2 px-1 border-2 border-slate-500 font-black text-[#0055A5] whitespace-nowrap text-center text-[12px] sm:text-[16px] uppercase italic" colSpan={2} rowSpan={2}>
+              <tr className="bg-[#f8fafc] text-[11px] sm:text-[13px]">
+                <td className="py-2 px-1 border-2 border-slate-500 font-black text-[#0055A5] whitespace-nowrap text-center text-[11px] sm:text-[15px] uppercase italic" colSpan={2} rowSpan={2}>
                   <div className="flex flex-col items-center gap-1">
                     <span className="print-only">
                       {term === "hk1" ? "Kết quả HK I:" : term === "hk2" ? "Kết quả HK II:" : "Kết quả CN:"}
@@ -294,7 +294,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                         <button
                           key={t}
                           onClick={() => setTerm(t)}
-                          className={`w-full py-1 rounded-md text-[10px] sm:text-xs font-black uppercase transition-all cursor-pointer border-2 ${
+                          className={`w-full py-1 rounded-md text-[9px] sm:text-[11px] font-black uppercase transition-all cursor-pointer border-2 ${
                             term === t
                               ? "bg-[#0055A5] text-white border-blue-900 shadow-md shadow-blue-200"
                               : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
@@ -306,15 +306,15 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                     </div>
                   </div>
                 </td>
-                <td className="p-2 sm:p-3 border-2 border-slate-500 text-center whitespace-normal font-bold text-sm sm:text-lg" colSpan={5}>
+                <td className="p-1.5 sm:p-2 border-2 border-slate-500 text-center whitespace-normal font-bold text-xs sm:text-base" colSpan={5}>
                   Vắng: <span className="text-[#E53935]">{activeDaysAbsent}</span> (p), <span className="text-[#E53935]">0</span> (k), <span className="text-[#E53935]">0</span>(bt)
                 </td>
               </tr>
-              <tr className="bg-[#f8fafc] text-[12px] sm:text-[14px]">
-                <td className="p-2 sm:p-4 border-2 border-slate-500 text-center whitespace-normal font-black text-[15px] sm:text-[20px]" colSpan={5}>
+              <tr className="bg-[#f8fafc] text-[11px] sm:text-[13px]">
+                <td className="p-1.5 sm:p-3 border-2 border-slate-500 text-center whitespace-normal font-black text-[14px] sm:text-[18px]" colSpan={5}>
                   KQHT: <span className="text-[#E53935]">{activeAcademicGrade?.toUpperCase() || "KHÁ"}
                   </span> <span className="mx-2 sm:mx-3 text-slate-300">|</span> KQRL: <span className="text-[#0055A5]">{activeBehaviorGrade?.toUpperCase() || "TỐT"}
-                  </span> <span className="mx-2 sm:mx-3 text-slate-300">|</span> Danh hiệu: <span className="text-[#E53935] underline decoration-double decoration-2 underline-offset-4">({activeDistinction})</span>
+                  </span> <span className="mx-1 sm:mx-2 text-slate-300">|</span> <span className="whitespace-nowrap">Danh hiệu: <span className="text-[#E53935] underline decoration-double decoration-2 underline-offset-2">({activeDistinction})</span></span>
                 </td>
               </tr>
             </tbody>
