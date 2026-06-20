@@ -61,3 +61,13 @@ export interface SchoolClass {
   advisorName?: string; // Giáo viên chủ nhiệm
   roomNumber?: string; // Phòng học
 }
+
+export interface VisitorStat {
+  visited_at: string;
+  month: string;
+}
+
+export interface VisitorMonthlyStats {
+  month: string;
+  count: number;
+}
