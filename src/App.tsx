@@ -104,7 +104,7 @@ export default function App() {
   // Switch dynamically between pages
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-[#EEF2F5] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-sky-50 flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-[#0055A5] border-t-transparent rounded-full animate-spin"></div>
           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest animate-pulse">Đang nạp cấu hình hệ thống...</p>
