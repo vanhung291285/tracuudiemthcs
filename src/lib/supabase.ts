@@ -492,9 +492,9 @@ class DatabaseService {
   // Create or Update student
   public async upsertStudent(student: Student): Promise<boolean> {
     // 1. Update in local memory immediately
-    const idx = this.localStudentsList.findIndex(s => s.studentCode === student.studentCode);
-    if (idx !== -1) {
-      this.localStudentsList[idx] = student;
+    const existingIdx = this.localStudentsList.findIndex(s => s.studentCode === student.studentCode);
+    if (existingIdx !== -1) {
+      this.localStudentsList[existingIdx] = student;
     } else {
       this.localStudentsList.push(student);
     }
@@ -503,41 +503,29 @@ class DatabaseService {
     // 2. Query Supabase
     if (this.supabase) {
       try {
-        const timeoutPromise = new Promise<boolean>((_, resolve) => 
-          setTimeout(() => {
-            console.warn("Supabase connection timeout");
-            resolve(false);
-          }, 3000)
-        );
-        
-        await Promise.race([this.checkSchemaCase(), timeoutPromise]);
+        await this.checkSchemaCase();
         
         const mapped = this.mapStudentToDb(student);
-        const result = await Promise.race([
-          this.supabase
-            .from("students")
-            .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" }),
-          timeoutPromise
-        ]) as any;
+        const { error } = await this.supabase
+          .from("students")
+          .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" });
 
-        if (result === false) { // timed out
-          this.lastError = "Kết nối máy chủ Supabase quá thời gian. Đã lưu bộ nhớ tạm (Offline).";
-          return true; // Still return true so local app continues
-        }
-
-        if (result.error) {
-          console.error("Supabase upsert error:", result.error.message);
-          this.lastError = result.error.message;
+        if (error) {
+          console.error("Supabase upsert error:", error.message);
+          this.lastError = error.message;
           return false;
         }
+        
         this.lastError = null;
         return true;
       } catch (err: any) {
         console.error("Supabase upsert exception:", err);
         this.lastError = err.message || String(err);
-        return true; // Fallback to true because we already saved locally
+        return false;
       }
     }
+    
+    // Offline mode
     this.lastError = null;
     return true;
   }
