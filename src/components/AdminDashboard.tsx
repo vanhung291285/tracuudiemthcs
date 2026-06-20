@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Student, SubjectResult, SchoolClass } from "../types";
+import { Student, SubjectResult, SchoolClass, VisitorMonthlyStats } from "../types";
 import dbService from "../lib/supabase";
 import * as XLSX from "xlsx";
 import { 
@@ -150,6 +150,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [importStatus, setImportStatus] = useState("");
   const [importErrors, setImportErrors] = useState<string[]>([]);
   
+  // Visitor stats state
+  const [visitorMonthlyStats, setVisitorMonthlyStats] = useState<VisitorMonthlyStats[]>([]);
+  const [totalVisitors, setTotalVisitors] = useState(0);
+
   // Keep importClass valid based on available classes
   useEffect(() => {
     if (classes.length > 0 && !classes.find(c => c.className === importClass)) {
@@ -163,8 +167,16 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       loadStudents();
       loadSupabaseConfig();
       loadPortalConfig();
+      loadVisitorStats();
     }
   }, [isAuthenticated]);
+
+  const loadVisitorStats = async () => {
+    const stats = await dbService.getVisitorStats();
+    setVisitorMonthlyStats(stats);
+    const total = await dbService.getTotalVisitors();
+    setTotalVisitors(total);
+  };
 
   const loadStudents = async () => {
     const list = await dbService.getAllStudents();
@@ -2564,9 +2576,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     <div className="text-[11px] text-slate-500">tỷ lệ đạt {totalStudentsCount > 0 ? ((goodBehaviorCount / totalStudentsCount) * 100).toFixed(1) : 0}% học sinh</div>
                   </div>
                   <div className="bg-white border rounded-xl p-5 shadow-sm space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-rose-600 tracking-wider">Chưa hoàn thành chỉ tiêu</span>
-                    <div className="text-3xl font-black text-rose-600">{academicChuaDatCount}</div>
-                    <div className="text-[11px] text-slate-500">đang bổ sung kế hoạch khảo sát hè</div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Lượng Truy Cập Hệ Thống</span>
+                    <div className="text-3xl font-black text-indigo-700">{totalVisitors}</div>
+                    <div className="text-[11px] text-slate-500">lượt tra cứu học tịch trực tuyến</div>
                   </div>
                 </div>
 
@@ -2652,6 +2664,45 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         );
                       })}
                     </div>
+                  </div>
+
+                  {/* Chart 3: Visitor Statistics by Month */}
+                  <div className="bg-white border rounded-xl p-5 shadow-sm space-y-4 lg:col-span-2">
+                    <h3 className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5 border-b pb-2">
+                       <BarChart3 className="w-5 h-5 text-indigo-600" /> Biểu đồ lưu lượng truy cập cổng điện tử (Tổng hợp theo tháng)
+                    </h3>
+                    
+                    {visitorMonthlyStats.length > 0 ? (
+                      <div className="space-y-4 pt-2">
+                        {visitorMonthlyStats.map((stat, idx) => {
+                          const maxCount = Math.max(...visitorMonthlyStats.map(s => s.count)) || 1;
+                          const width = (stat.count / maxCount) * 100;
+                          
+                          return (
+                            <div key={idx}>
+                              <div className="flex justify-between items-center text-xs font-bold mb-1">
+                                <span className="text-slate-600">Tháng {stat.month}</span>
+                                <span className="font-black text-indigo-700">{stat.count} lượt truy cập</span>
+                              </div>
+                              <div className="w-full bg-slate-50 rounded-full h-4 overflow-hidden border border-slate-100">
+                                <div 
+                                  className="bg-indigo-500 h-full rounded-full transition-all duration-700 ease-out flex items-center justify-end px-2" 
+                                  style={{ width: `${width}%` }}
+                                >
+                                  {width > 15 && <span className="text-[8px] text-white font-bold">{stat.count}</span>}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="py-12 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed rounded-xl">
+                        <Users className="w-8 h-8 mb-2 opacity-20" />
+                        <p className="text-[10px]">Chưa có dữ liệu truy cập từ hệ thống Supabase.</p>
+                      </div>
+                    )}
+                    <p className="text-[9px] text-slate-400 italic mt-2">* Dữ liệu được tổng hợp theo thời gian thực từ đám mây cơ sở dữ liệu.</p>
                   </div>
                 </div>
               </div>
@@ -2838,11 +2889,17 @@ CREATE TABLE IF NOT EXISTS portal_settings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Tạo bảng thống kê truy cập (visitor_stats)
+-- 4. Tạo bảng thống kê truy cập (visitor_stats & visitor_counts)
 CREATE TABLE IF NOT EXISTS visitor_stats (
   id BIGSERIAL PRIMARY KEY,
   visited_at TIMESTAMPTZ DEFAULT NOW(),
   month TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS visitor_counts (
+  visit_date DATE PRIMARY KEY,
+  count INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -2926,11 +2983,17 @@ CREATE TABLE IF NOT EXISTS portal_settings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Tạo bảng thống kê truy cập (visitor_stats)
+-- 4. Tạo bảng thống kê truy cập (visitor_stats & visitor_counts)
 CREATE TABLE IF NOT EXISTS visitor_stats (
   id BIGSERIAL PRIMARY KEY,
   visited_at TIMESTAMPTZ DEFAULT NOW(),
   month TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS visitor_counts (
+  visit_date DATE PRIMARY KEY,
+  count INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
