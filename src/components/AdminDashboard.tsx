@@ -1556,7 +1556,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const academicChuaDatCount = students.filter(s => s.academicGrade === "Chưa đạt").length;
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 flex flex-col" id="admin-dashboard-container">
+    <div className="w-full min-h-screen bg-sky-50 flex flex-col" id="admin-dashboard-container">
       
       {/* Admin Logged-In Top Navigation Bar */}
       <nav className="bg-[#0055A5] text-white px-6 py-4 flex items-center justify-between border-b-2 border-amber-500 shadow-md">
@@ -1594,8 +1594,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
       {/* Auth Screen (Login Screen) if not authenticated */}
       {!isAuthenticated ? (
-        <div className="flex-1 flex items-center justify-center py-16 px-4 bg-slate-100">
-          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+        <div className="flex-1 flex items-center justify-center py-16 px-4 bg-sky-100">
+          <div className="w-full max-w-md bg-white border border-sky-200 rounded-2xl shadow-xl overflow-hidden">
             <div className="h-2 bg-[#E53935]" />
             <div className="p-6 md:p-8">
               
