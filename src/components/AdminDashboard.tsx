@@ -298,9 +298,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     const result = await dbService.syncLocalDataToSupabase();
     setAuthIsLoading(false);
     if (result.success) {
-      alert(`Đồng bộ thành công! Đã tải lên ${result.count} hồ sơ học sinh lên bảng 'students' Supabase.`);
+      alert(`Đồng bộ thành công! Đã tải lên ${result.count} hồ sơ học sinh lên Supabase.`);
     } else {
-      alert("Thất bại: " + result.error);
+      let errStr = result.error || "";
+      if (errStr.includes("Failed to fetch")) {
+        errStr = "Lỗi mạng hoặc CORS do chưa thiết lập Site URL trong Supabase Authentication cài đặt, hoặc chưa thêm biến môi trường trên Vercel.";
+      }
+      alert("Thất bại khi đồng bộ: \n" + errStr);
     }
   };
 
@@ -682,8 +686,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         setFormStudent({});
         loadStudents(); // Refresh from DB
       } else {
-        const dbErr = dbService.lastError ? `\n\nChi tiết: ${dbService.lastError}` : "";
-        setFormError(`Lưu dữ liệu nội bộ thành công, nhưng lỗi đồng bộ Supabase: ${dbErr}`);
+        let dbErr = dbService.lastError ? dbService.lastError : "";
+        if (dbErr.includes("Failed to fetch")) {
+          dbErr = "Lỗi mạng hoặc CORS. Nếu bạn mới đưa lên Vercel: 1) Đảm bảo đã khai báo VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY trong Vercel Settings. 2) Cấu hình URL của Vercel vào danh sách cho phép (Allowed Origins / Site URL) trong cài đặt Supabase.";
+        }
+        setFormError(`Lưu dữ liệu nội bộ thành công, nhưng lỗi đồng bộ Supabase:\n ${dbErr}`);
         // We do NOT close the form so the user sees the error message
         loadStudents(); 
       }
