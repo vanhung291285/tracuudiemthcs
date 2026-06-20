@@ -664,43 +664,58 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       return;
     }
 
+    const preparedSubjects = (formStudent.subjects || []).map(sub => {
+      if (sub.isEvaluatedByScore) {
+        return {
+          ...sub,
+          mid1: sub.mid1 === "" || sub.mid1 === undefined ? "" : (parseFloat(String(sub.mid1)) || 0),
+          end1: sub.end1 === "" || sub.end1 === undefined ? "" : (parseFloat(String(sub.end1)) || 0),
+          semester1: sub.semester1 === "" || sub.semester1 === undefined ? "" : (parseFloat(String(sub.semester1)) || 0),
+          mid2: sub.mid2 === "" || sub.mid2 === undefined ? "" : (parseFloat(String(sub.mid2)) || 0),
+          end2: sub.end2 === "" || sub.end2 === undefined ? "" : (parseFloat(String(sub.end2)) || 0),
+          semester2: sub.semester2 === "" || sub.semester2 === undefined ? "" : (parseFloat(String(sub.semester2)) || 0),
+          yearAvg: sub.yearAvg === "" || sub.yearAvg === undefined ? "" : (parseFloat(String(sub.yearAvg)) || 0),
+        };
+      }
+      return sub;
+    });
+
     const preparedStudent = {
       ...formStudent,
       studentCode: cleanCode,
-      dob: cleanDob
+      dob: cleanDob,
+      subjects: preparedSubjects
     };
 
     setIsSavingStudent(true);
     setFormError(""); // Reset any prior errors
     
     try {
-      const success = await Promise.race([
-        dbService.upsertStudent(preparedStudent as Student),
-        new Promise<boolean>((resolve) => setTimeout(() => {
-          dbService.lastError = "Xử lý vượt quá thời gian tối đa (8 giây).";
-          resolve(false);
-        }, 8000))
-      ]);
+      const dbPromise = dbService.upsertStudent(preparedStudent as Student);
+      const timeoutPromise = new Promise<boolean>((resolve) => setTimeout(() => {
+        dbService.lastError = "Xử lý vượt quá thời gian tối đa (10 giây).";
+        resolve(false);
+      }, 10000));
+
+      const success = await Promise.race([dbPromise, timeoutPromise]);
       
       if (success) {
         setIsFormOpen(false);
         setFormStudent({});
-        loadStudents(); // Refresh from DB
+        await loadStudents(); // Refresh from DB
       } else {
-        let rawErr = dbService.lastError || "";
+        let rawErr = dbService.lastError || "Lỗi không xác định";
         let dbErr = typeof rawErr === 'string' ? rawErr : JSON.stringify(rawErr);
         
-        if (dbErr.includes("Failed to fetch")) {
-          dbErr = "Lỗi mạng hoặc CORS. Nếu bạn mới đưa lên Vercel: 1) Đảm bảo đã khai báo VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY trong Vercel Settings. 2) Cấu hình URL của Vercel vào danh sách cho phép (Allowed Origins / Site URL) trong cài đặt Supabase.";
+        if (dbErr.includes("Failed to fetch") || dbErr.includes("NetworkError")) {
+          dbErr = "Lỗi kết nối máy chủ (Supabase). Vui lòng kiểm tra internet hoặc cấu hình API Key.";
         }
-        setFormError(`Lưu dữ liệu nội bộ thành công, nhưng lỗi đồng bộ Supabase:\n ${dbErr}`);
-        // We do NOT close the form so the user sees the error message
-        loadStudents(); 
+        setFormError(`Lỗi đồng bộ: ${dbErr}`);
+        await loadStudents(); 
       }
     } catch (err: any) {
       console.error("Unhandled error when saving student:", err);
-      let errMsg = err?.message || String(err);
-      setFormError(`Có lỗi hệ thống khi lưu: ${errMsg}`);
+      setFormError(`Lỗi hệ thống: ${err?.message || "Không rõ nguyên nhân"}`);
     } finally {
       setIsSavingStudent(false);
     }
@@ -809,10 +824,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         distinction: academicGrade === "Tốt" && student.behaviorGrade === "Tốt" ? "Học sinh Giỏi" : academicGrade === "Khá" && student.behaviorGrade === "Tốt" ? "Học sinh Tiêu biểu" : "Không"
       };
 
-      await dbService.upsertStudent(updatedStudent);
-      setEditingStudentCode(null);
-      setEditingSubjectId(null);
-      loadStudents();
+      try {
+        setIsSavingStudent(true);
+        await dbService.upsertStudent(updatedStudent);
+        setEditingStudentCode(null);
+        setEditingSubjectId(null);
+        await loadStudents();
+      } catch (err) {
+        console.error("Failed to save grade:", err);
+        alert("Lỗi khi lưu điểm. Vui lòng thử lại.");
+      } finally {
+        setIsSavingStudent(false);
+      }
     }
   };
 
@@ -1683,22 +1706,23 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                               </td>
                               <td className="px-4 py-3.5 font-semibold text-amber-700 text-[10px]">{student.distinction}</td>
                               <td className="px-4 py-3.5 text-right pr-6">
-                                <div className="flex justify-end gap-1.5">
-                                  <button
-                                    onClick={() => openStudentForm("edit", student)}
-                                    className="p-1 text-slate-500 hover:text-[#0055A5] hover:bg-blue-50 rounded transition cursor-pointer"
-                                    title="Sửa lý lịch"
-                                  >
-                                    <Edit className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteStudent(student.studentCode)}
-                                    className="p-1 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
-                                    title="Mút xóa"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </div>
+                                  <div className="flex justify-end gap-1.5">
+                                    <button
+                                      onClick={() => openStudentForm("edit", student)}
+                                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                                      title="Chỉnh sửa lý lịch & điểm số"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                      <span className="text-[10px] font-bold">Sửa</span>
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteStudent(student.studentCode)}
+                                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                                      title="Xóa học sinh"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                               </td>
                             </tr>
                           ))
@@ -3443,7 +3467,7 @@ NOTIFY pgrst, 'reload schema';`}
                                   onChange={(e) => {
                                     const val = e.target.value.replace(",", ".");
                                     const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, mid1: val === "" ? "" : (parseFloat(val) || 0) };
+                                    updated[sIdx] = { ...sub, mid1: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
                                   className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-emerald-400 p-1"
@@ -3457,7 +3481,7 @@ NOTIFY pgrst, 'reload schema';`}
                                   onChange={(e) => {
                                     const val = e.target.value.replace(",", ".");
                                     const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, end1: val === "" ? "" : (parseFloat(val) || 0) };
+                                    updated[sIdx] = { ...sub, end1: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
                                   className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-emerald-400 p-1"
@@ -3471,7 +3495,7 @@ NOTIFY pgrst, 'reload schema';`}
                                   onChange={(e) => {
                                     const val = e.target.value.replace(",", ".");
                                     const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, semester1: val === "" ? "" : (parseFloat(val) || 0) };
+                                    updated[sIdx] = { ...sub, semester1: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
                                   className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-1 text-blue-700"
@@ -3485,7 +3509,7 @@ NOTIFY pgrst, 'reload schema';`}
                                   onChange={(e) => {
                                     const val = e.target.value.replace(",", ".");
                                     const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, mid2: val === "" ? "" : (parseFloat(val) || 0) };
+                                    updated[sIdx] = { ...sub, mid2: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
                                   className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-emerald-400 p-1"
@@ -3499,7 +3523,7 @@ NOTIFY pgrst, 'reload schema';`}
                                   onChange={(e) => {
                                     const val = e.target.value.replace(",", ".");
                                     const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, end2: val === "" ? "" : (parseFloat(val) || 0) };
+                                    updated[sIdx] = { ...sub, end2: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
                                   className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-emerald-400 p-1"
@@ -3513,24 +3537,24 @@ NOTIFY pgrst, 'reload schema';`}
                                   onChange={(e) => {
                                     const val = e.target.value.replace(",", ".");
                                     const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, semester2: val === "" ? "" : (parseFloat(val) || 0) };
+                                    updated[sIdx] = { ...sub, semester2: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
                                   className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-1 text-blue-700"
                                   placeholder="-"
                                 />
                               </td>
-                              <td className="p-1 bg-rose-50/20 font-bold">
+                              <td className="p-3 bg-rose-50/20 font-bold border-l-2 border-rose-200">
                                 <input
                                   type="text"
                                   value={sub.yearAvg ?? ""}
                                   onChange={(e) => {
                                     const val = e.target.value.replace(",", ".");
                                     const updated = [...(formStudent.subjects || [])];
-                                    updated[sIdx] = { ...sub, yearAvg: val === "" ? "" : (parseFloat(val) || 0) };
+                                    updated[sIdx] = { ...sub, yearAvg: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-rose-400 p-1 text-rose-700"
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-rose-400 p-1 text-rose-700 font-black"
                                   placeholder="-"
                                 />
                               </td>
