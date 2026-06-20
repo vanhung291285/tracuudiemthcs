@@ -850,24 +850,101 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const gradeLvl = targetClassObj?.gradeLevel || "9";
       const collectedErrors: string[] = [];
 
-      // Subject translation map matching columns 4-15
-      const subjIdsOrdered = [
-        "toan",          // Toán học (4)
-        "ly_dia",        // Lịch sử và Địa lí (5)
-        "khtn",          // Khoa học tự nhiên (6)
-        "tin",           // Tin học (7)
-        "van",           // Ngữ văn (8)
-        "anh",           // Ngoại ngữ (9)
-        "gdcd",          // GDCD (10)
-        "cong_nghe",     // Công nghệ (11)
-        "the_duc",       // Giáo dục thể chất (12)
-        "nghe_thuat",    // Nghệ thuật (13)
-        "gd_dia_phuong", // Nội dung giáo dục của địa phương (14)
-        "trai_nghiem"    // Hoạt động trải nghiệm, hướng nghiệp (15)
-      ];
+      // Default column indexes matching template structure
+      let cccdCol = 1;
+      let nameCol = 2;
+      let dobCol = 3;
+
+      const subjCols: { [subjectId: string]: number } = {
+        toan: 4, ly_dia: 5, khtn: 6, tin: 7, van: 8, anh: 9, gdcd: 10, cong_nghe: 11,
+        the_duc: 12, nghe_thuat: 13, gd_dia_phuong: 14, trai_nghiem: 15
+      };
+
+      let academicCol = 16;
+      let behaviorCol = 17;
+      let behaviorSummerCol = importTerm === "canam" ? 18 : -1;
+      let absentPCol = importTerm === "canam" ? 19 : 18;
+      let absentKCol = importTerm === "canam" ? 20 : 19;
+      let distinctionCol = importTerm === "canam" ? 22 : -1;
+      let notesCol = importTerm === "canam" ? 23 : 21;
+
+      // Identify header line index dynamically to protect against cell shifts
+      let headerLineIdx = -1;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const parts = line.split("\t");
+        const hasName = parts.some(p => p.toLowerCase().includes("họ và tên") || p.toLowerCase().includes("họ tên") || p.toLowerCase() === "tên");
+        const hasCccd = parts.some(p => p.toLowerCase().includes("cccd") || p.toLowerCase().includes("căn cước") || p.toLowerCase().includes("mã học sinh") || p.toLowerCase().includes("mã định danh") || p.toLowerCase().includes("chữ số"));
+        if (hasName && hasCccd) {
+          headerLineIdx = i;
+          break;
+        }
+      }
+
+      if (headerLineIdx !== -1) {
+        const headerParts = lines[headerLineIdx].split("\t").map(p => p.trim().toLowerCase());
+        
+        const cccdIdx = headerParts.findIndex(p => p.includes("cccd") || p.includes("căn cước") || p.includes("mã học sinh") || p.includes("mã định danh") || p.includes("định danh") || p.includes("chữ số"));
+        if (cccdIdx !== -1) cccdCol = cccdIdx;
+
+        const nameIdx = headerParts.findIndex(p => p.includes("họ và tên") || p.includes("họ tên") || p === "họ và tên học sinh" || p === "họ tên học sinh" || p === "tên");
+        if (nameIdx !== -1) nameCol = nameIdx;
+
+        const dobIdx = headerParts.findIndex(p => p.includes("ngày sinh") || p.includes("gày sinh") || p.includes("dob"));
+        if (dobIdx !== -1) dobCol = dobIdx;
+
+        // Find subjects
+        const subjectsMapping = [
+          { id: "toan", keywords: ["toán", "toán học", "math"] },
+          { id: "ly_dia", keywords: ["lịch sử và địa", "sử địa", "lịch sử", "địa lý", "địa lí", "ly_dia", "sử và địa"] },
+          { id: "khtn", keywords: ["khoa học tự nhiên", "khtn", "tự nhiên", "khoa học"] },
+          { id: "tin", keywords: ["tin học", "tin", "cntt", "tin hoc"] },
+          { id: "van", keywords: ["ngữ văn", "văn", "ngữ văn học", "tiếng việt"] },
+          { id: "anh", keywords: ["ngoại ngữ", "tiếng anh", "anh", "english", "anh văn"] },
+          { id: "gdcd", keywords: ["gdcd", "giáo dục công dân", "công dân"] },
+          { id: "cong_nghe", keywords: ["công nghệ", "kỹ thuật"] },
+          { id: "the_duc", keywords: ["thể chất", "thể dục", "giáo dục thể chất", "thể dục thể thao"] },
+          { id: "nghe_thuat", keywords: ["nghệ thuật", "âm nhạc", "mỹ thuật", "am nhac", "my thuat"] },
+          { id: "gd_dia_phuong", keywords: ["địa phương", "giáo dục địa phương", "gd địa phương", "nội dung giáo dục của địa phương"] },
+          { id: "trai_nghiem", keywords: ["trải nghiệm", "hoạt động trải nghiệm", "hướng nghiệp", "trai nghiem"] }
+        ];
+
+        subjectsMapping.forEach(sub => {
+          const idx = headerParts.findIndex(p => sub.keywords.some(kw => p.includes(kw)));
+          if (idx !== -1) {
+            subjCols[sub.id] = idx;
+          }
+        });
+
+        const academicIdx = headerParts.findIndex(p => p.includes("kết quả học tập") || p.includes("học lực") || p.includes("loại học tập") || p.includes("kq học tập") || p.includes("kqht") || p === "học tập" || p.includes("h.tập"));
+        if (academicIdx !== -1) academicCol = academicIdx;
+
+        const behaviorIdx = headerParts.findIndex(p => p.includes("kết quả rèn luyện") || p.includes("hạnh kiểm") || p.includes("loại rèn luyện") || p.includes("kq rèn luyện") || p.includes("kqrl") || p === "rèn luyện" || p.includes("r.luyện"));
+        if (behaviorIdx !== -1) behaviorCol = behaviorIdx;
+
+        const summerIdx = headerParts.findIndex(p => p.includes("sau hè") || p.includes("hè") || p.includes("sau he"));
+        if (summerIdx !== -1) behaviorSummerCol = summerIdx;
+
+        const dpIdx = headerParts.findIndex(p => (p.includes("vắng") || p.includes("nghỉ")) && (p.includes("phép") || p.includes("có phép")) && !p.includes("không"));
+        if (dpIdx !== -1) absentPCol = dpIdx;
+
+        const dkIdx = headerParts.findIndex(p => (p.includes("vắng") || p.includes("nghỉ")) && p.includes("không"));
+        if (dkIdx !== -1) absentKCol = dkIdx;
+
+        const distIdx = headerParts.findIndex(p => p.includes("danh hiệu") || p.includes("khen thưởng") || p.includes("tiêu biểu"));
+        if (distIdx !== -1) distinctionCol = distIdx;
+
+        const nIdx = headerParts.findIndex(p => p.includes("ghi chú") || p.includes("nhận xét") || p.includes("notes"));
+        if (nIdx !== -1) notesCol = nIdx;
+      }
 
       lines.forEach((line, idx) => {
         if (!line.trim()) return;
+        
+        // If this is the detected header line, skip it
+        if (idx === headerLineIdx) return;
+
         const parts = line.split("\t");
         const rowNum = idx + 1;
 
@@ -887,10 +964,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         }
 
         // We process rows with some integrity
-        if (parts.length >= 4) {
-          const rawCode = parts[1]?.trim() || "";
-          const fullName = parts[2]?.trim() || "";
-          const dob = parts[3]?.trim() || "";
+        if (parts.length > Math.max(cccdCol, nameCol, dobCol)) {
+          const rawCode = parts[cccdCol]?.trim() || "";
+          const fullName = parts[nameCol]?.trim() || "";
+          const dob = parts[dobCol]?.trim() || "";
+
+          // Clean names checking for safe mapping
+          const cleanString = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+          const rowNameClean = cleanString(fullName);
+          const rowDobClean = dob.trim();
 
           // Validation of key attributes
           if (!rawCode) {
@@ -929,8 +1011,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           ];
 
           subjNames.forEach((sName, subIdx) => {
-            const colIndex = 4 + subIdx;
-            const rawVal = parts[colIndex]?.trim() || "";
+            const defSubjectId = ["toan", "ly_dia", "khtn", "tin", "van", "anh", "gdcd", "cong_nghe", "the_duc", "nghe_thuat", "gd_dia_phuong", "trai_nghiem"][subIdx];
+            const colIndex = subjCols[defSubjectId] !== undefined ? subjCols[defSubjectId] : (4 + subIdx);
+            const rawVal = colIndex < parts.length ? parts[colIndex]?.trim() || "" : "";
             if (subIdx < 8) {
               // Evaluated by float score
               if (rawVal) {
@@ -997,10 +1080,38 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             return "Không";
           };
 
-          // Try to look up existing student to preserve other semester values!
-          const existing = students.find(s => s.studentCode === studentCode);
+          // ROBUST ROSTER SHIFT PROTECTION:
+          // Try to look up existing student with premium validation of Identity to prevent shifts
+          const isDummyCode = studentCode === "012345678901" || studentCode === "012345678902";
+          let existing = isDummyCode ? undefined : students.find(s => s.studentCode === studentCode);
 
-          // Build/Merge Subjects list
+          // If CCCD matches but name is totally different, prevent overwriting and look up by Name + DOB within current class instead
+          if (existing && cleanString(existing.fullName) !== rowNameClean) {
+            const matchedByNameDob = students.find(
+              s => s.className === importClass && 
+                   cleanString(s.fullName) === rowNameClean && 
+                   s.dob.trim() === rowDobClean
+            );
+            if (matchedByNameDob) {
+              // Redirect mapping to match the database's existing student
+              existing = matchedByNameDob;
+              collectedErrors.push(`Chú ý dòng ${rowNum}: Học sinh "${fullName}" có CCCD khác biệt trong database (${matchedByNameDob.studentCode}). Hệ thống tự động sửa khớp theo lịch sử Học kỳ I.`);
+            } else {
+              // To avoid hijacking another student, treat as new
+              existing = undefined;
+            }
+          }
+
+          // Fallback search strictly by Name + DOB in the importing class (if CCCD not resolved)
+          if (!existing) {
+            existing = students.find(
+              s => s.className === importClass && 
+                   cleanString(s.fullName) === rowNameClean && 
+                   s.dob.trim() === rowDobClean
+            );
+          }
+
+          // Build/Merge Subjects list with absolute cell alignment
           const mockSubjects: SubjectResult[] = [
             { subjectId: "toan", subjectName: "Toán học", isEvaluatedByScore: true },
             { subjectId: "ly_dia", subjectName: "Lịch sử và Địa lí", isEvaluatedByScore: true },
@@ -1019,31 +1130,32 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             const targetSub = { ...def, ...existingSub };
 
             // Find matching index in columns
-            const idxInOrdered = subjIdsOrdered.indexOf(def.subjectId);
-            const colIndex = 4 + idxInOrdered; // offset by 4 (STT=0, CCCD=1, Name=2, DOB=3)
-            const rawVal = parts[colIndex] || "";
+            const colIndex = subjCols[def.subjectId] !== undefined ? subjCols[def.subjectId] : -1;
+            const rawVal = colIndex !== -1 && colIndex < parts.length ? parts[colIndex]?.trim() || "" : "";
 
-            if (def.isEvaluatedByScore) {
-              const score = parseScore(rawVal);
-              if (importTerm === "hk1") {
-                targetSub.semester1 = score;
-                if (targetSub.mid1 === undefined) targetSub.mid1 = score;
-                if (targetSub.end1 === undefined) targetSub.end1 = score;
-              } else if (importTerm === "hk2") {
-                targetSub.semester2 = score;
-                if (targetSub.mid2 === undefined) targetSub.mid2 = score;
-                if (targetSub.end2 === undefined) targetSub.end2 = score;
+            if (rawVal !== "") {
+              if (def.isEvaluatedByScore) {
+                const score = parseScore(rawVal);
+                if (importTerm === "hk1") {
+                  targetSub.semester1 = score;
+                  if (targetSub.mid1 === undefined || targetSub.mid1 === "") targetSub.mid1 = score;
+                  if (targetSub.end1 === undefined || targetSub.end1 === "") targetSub.end1 = score;
+                } else if (importTerm === "hk2") {
+                  targetSub.semester2 = score;
+                  if (targetSub.mid2 === undefined || targetSub.mid2 === "") targetSub.mid2 = score;
+                  if (targetSub.end2 === undefined || targetSub.end2 === "") targetSub.end2 = score;
+                } else {
+                  targetSub.yearAvg = score;
+                }
               } else {
-                targetSub.yearAvg = score;
-              }
-            } else {
-              const comment = parseComment(rawVal);
-              if (importTerm === "hk1") {
-                targetSub.semester1 = comment;
-              } else if (importTerm === "hk2") {
-                targetSub.semester2 = comment;
-              } else {
-                targetSub.yearAvg = comment;
+                const comment = parseComment(rawVal);
+                if (importTerm === "hk1") {
+                  targetSub.semester1 = comment;
+                } else if (importTerm === "hk2") {
+                  targetSub.semester2 = comment;
+                } else {
+                  targetSub.yearAvg = comment;
+                }
               }
             }
             return targetSub;
@@ -1058,8 +1170,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           let distinction: any = existing?.distinction || "Không";
           let notes = existing?.notes || "";
 
-          const academicVal = parts[16];
-          const behaviorVal = parts[17];
+          const academicVal = academicCol < parts.length ? parts[academicCol] : "";
+          const behaviorVal = behaviorCol < parts.length ? parts[behaviorCol] : "";
 
           if (academicVal) {
             const cleanAc = academicVal.trim().toLowerCase();
@@ -1076,30 +1188,30 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           }
 
           if (importTerm === "hk1") {
-            academicGrade = parseAcademic(parts[16]);
-            behaviorGrade = parseBehavior(parts[17]);
-            daysAbsent = parseInt(parts[18]) || 0;
-            daysAbsentUnexcused = parseInt(parts[19]) || 0;
-            notes = parts[21]?.trim() || "Nhập từ Excel HK1";
+            academicGrade = academicCol < parts.length ? parseAcademic(parts[academicCol]) : academicGrade;
+            behaviorGrade = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : behaviorGrade;
+            daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
+            daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel HK1") : notes;
           } else if (importTerm === "hk2") {
-            academicGrade = parseAcademic(parts[16]);
-            behaviorGrade = parseBehavior(parts[17]);
-            daysAbsent = parseInt(parts[18]) || 0;
-            daysAbsentUnexcused = parseInt(parts[19]) || 0;
-            notes = parts[21]?.trim() || "Nhập từ Excel HK2";
+            academicGrade = academicCol < parts.length ? parseAcademic(parts[academicCol]) : academicGrade;
+            behaviorGrade = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : behaviorGrade;
+            daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
+            daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel HK2") : notes;
           } else if (importTerm === "canam") {
-            academicGrade = parseAcademic(parts[16]);
-            behaviorGrade = parseBehavior(parts[17]);
-            behaviorGradeSummer = parseBehavior(parts[18]) as any;
-            daysAbsent = parseInt(parts[19]) || 0;
-            daysAbsentUnexcused = parseInt(parts[20]) || 0;
-            distinction = parseDistinction(parts[22]);
-            notes = parts[23]?.trim() || "Nhập từ Excel Cả năm";
+            academicGrade = academicCol < parts.length ? parseAcademic(parts[academicCol]) : academicGrade;
+            behaviorGrade = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : behaviorGrade;
+            behaviorGradeSummer = (behaviorSummerCol !== -1 && behaviorSummerCol < parts.length) ? (parseBehavior(parts[behaviorSummerCol]) as any) : behaviorGradeSummer;
+            daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
+            daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            distinction = (distinctionCol !== -1 && distinctionCol < parts.length) ? parseDistinction(parts[distinctionCol]) : distinction;
+            notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel Cả năm") : notes;
           }
 
           parsedResults.push({
             id: existing?.id || `student_${studentCode}`,
-            studentCode,
+            studentCode: existing?.studentCode || studentCode,
             fullName,
             dob,
             gender: existing?.gender || "Nam",
@@ -1315,24 +1427,22 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
         const formattedRows: string[] = [];
         rawJson.forEach((row, idx) => {
-          // Skip or format custom header row
           if (idx === 0) {
-            const headerLine = importTerm === "canam" 
-              ? "STT\tCCCD\tHọ tên\tNgày sinh\tToán\tSửĐịa\tKHTN\tTin\tVăn\tAnh\tGDCD\tCôngNghệ\tThểChất\tNghệThuật\tĐịaPhương\tTrảiNghiệm\tKQ H.tập\tKQ R.luyện\tKQRL Sau Hè\tVắng P\tVắng K\tTổng vắng\tDanh hiệu\tGhi chú"
-              : "STT\tCCCD\tHọ tên\tNgày sinh\tToán\tSửĐịa\tKHTN\tTin\tVăn\tAnh\tGDCD\tCôngNghệ\tThểChất\tNghệThuật\tĐịaPhương\tTrảiNghiệm\tKQ H.tập\tKQ R.luyện\tVắng P\tVắng K\tTổng vắng\tGhi chú";
-            formattedRows.push(headerLine);
+            // Reconstruct original header cells exactly so the dynamic parser can read them
+            const headerCells = Array.from(row).map(val => val === undefined || val === null ? "" : String(val).trim());
+            formattedRows.push(headerCells.join("\t"));
             return;
           }
 
-          // Force formatting each cell securely
-          const cells = Array.from({ length: importTerm === "canam" ? 24 : 22 }, (_, cIdx) => {
+          // Force formatting each cell securely matching the actual row length
+          const cells = Array.from({ length: row.length }, (_, cIdx) => {
             const val = row[cIdx];
             if (val === undefined || val === null) return "";
             return String(val).trim();
           });
 
-          // Check if CCCD or Name is filled
-          if (cells[1] || cells[2]) {
+          // Check if any significant info is present
+          if (cells.some(c => c !== "")) {
             formattedRows.push(cells.join("\t"));
           }
         });
