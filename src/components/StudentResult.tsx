@@ -132,16 +132,33 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     activeDistinction = "KHÔNG";
   } else if (term === "canam") {
     let d = student.distinction && student.distinction !== "Không" ? student.distinction : "KHÔNG";
-    // Correction: If calculated grade doesn't support the current distinction, downgrade it for visual consistency
-    if (activeAcademicGrade === "Khá" && (d === "Học sinh Giỏi" || d === "Học sinh Xuất sắc")) {
+    
+    // Recalculate dynamic distinction if it's "canam" and we have valid results
+    if (activeAcademicGrade === "Tốt" && activeBehaviorGrade === "Tốt") {
+      const currentScores = scoreSubjects.map(s => {
+        if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
+          return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
+        }
+        return typeof s.yearAvg === "number" ? s.yearAvg : null;
+      }).filter(v => v !== null) as number[];
+      const countAbove9 = currentScores.filter(v => v >= 9.0).length;
+      d = countAbove9 >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
+    } else if (activeAcademicGrade === "Khá" && activeBehaviorGrade === "Tốt") {
       d = "Học sinh Tiêu biểu";
-    } else if ((activeAcademicGrade === "Đạt" || activeAcademicGrade === "Chưa đạt") && d !== "KHÔNG") {
+    } else {
       d = "KHÔNG";
     }
+    
     activeDistinction = d.toUpperCase();
   } else {
+    const currentScores = scoreSubjects.map(s => {
+       const val = term === "hk1" ? s.semester1 : s.semester2;
+       return typeof val === "number" ? val : null;
+    }).filter(v => v !== null) as number[];
+    const countAbove9 = currentScores.filter(v => v >= 9.0).length;
+
     if (activeAcademicGrade === "Tốt" && activeBehaviorGrade === "Tốt") {
-      activeDistinction = "HỌC SINH GIỎI";
+      activeDistinction = countAbove9 >= 6 ? "HỌC SINH XUẤT SẮC" : "HỌC SINH GIỎI";
     } else if (activeAcademicGrade === "Khá" && activeBehaviorGrade === "Tốt") {
       activeDistinction = "HỌC SINH TIÊU BIỂU";
     }
