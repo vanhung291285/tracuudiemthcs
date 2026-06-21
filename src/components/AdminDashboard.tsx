@@ -795,7 +795,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             const s1 = typeof updatedSub.semester1 === "number" ? updatedSub.semester1 : null;
             const s2 = typeof updatedSub.semester2 === "number" ? updatedSub.semester2 : null;
             if (s1 !== null && s2 !== null) {
-              updatedSub.yearAvg = parseFloat(((s1 + s2) / 2).toFixed(1));
+              updatedSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
             }
             // No auto-fill yearAvg with only one semester
 
@@ -849,16 +849,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         
         if (termScores.length === 0) return "";
         
-        const avg = termScores.reduce((a, b) => a + b, 0) / termScores.length;
         const nonScorePassed = updatedSubjects.filter(s => !s.isEvaluatedByScore).every(s => (term === "hk1" ? s.semester1 : s.semester2) === "Đạt" || !(term === "hk1" ? s.semester1 : s.semester2));
         
+        const countAbove8 = termScores.filter(v => v >= 8.0).length;
+        const countAbove65 = termScores.filter(v => v >= 6.5).length;
         const allAbove65 = termScores.every(v => v >= 6.5);
         const allAbove50 = termScores.every(v => v >= 5.0);
         const allAbove35 = termScores.every(v => v >= 3.5);
+        const countBelow50 = termScores.filter(v => v < 5.0).length;
 
-        if (avg >= 8.0 && nonScorePassed && allAbove65) return "Tốt";
-        if (avg >= 6.5 && nonScorePassed && allAbove50) return "Khá";
-        if (avg >= 5.0 && nonScorePassed && allAbove35) return "Đạt";
+        if (nonScorePassed && allAbove65 && countAbove8 >= 6) return "Tốt";
+        if (nonScorePassed && allAbove50 && countAbove65 >= 6) return "Khá";
+        if (nonScorePassed && allAbove35 && countBelow50 <= 1) return "Đạt";
         return "Chưa đạt";
       };
 
@@ -884,15 +886,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           .filter(s => !s.isEvaluatedByScore)
           .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
 
-        const allAbove65 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 6.5);
-        const allAbove50 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 5.0);
-        const allAbove35 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 3.5);
+        const yearScores = validScoreSubjects.map(s => s.yearAvg as number);
+        const countAbove8 = yearScores.filter(v => v >= 8.0).length;
+        const countAbove65 = yearScores.filter(v => v >= 6.5).length;
+        const allAbove65 = yearScores.every(v => v >= 6.5);
+        const allAbove50 = yearScores.every(v => v >= 5.0);
+        const allAbove35 = yearScores.every(v => v >= 3.5);
+        const countBelow50 = yearScores.filter(v => v < 5.0).length;
 
-        if (newGpa >= 8.0 && nonScorePassed && allAbove65) {
+        if (nonScorePassed && allAbove65 && countAbove8 >= 6) {
           academicGrade = "Tốt";
-        } else if (newGpa >= 6.5 && nonScorePassed && allAbove50) {
+        } else if (nonScorePassed && allAbove50 && countAbove65 >= 6) {
           academicGrade = "Khá";
-        } else if (newGpa >= 5.0 && nonScorePassed && allAbove35) {
+        } else if (nonScorePassed && allAbove35 && countBelow50 <= 1) {
           academicGrade = "Đạt";
         } else {
           academicGrade = "Chưa đạt";
@@ -1323,7 +1329,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               
               if (importTerm !== "canam") {
                 if (s1 !== null && s2 !== null) {
-                  targetSub.yearAvg = parseFloat(((s1 + s2) / 2).toFixed(1));
+                  targetSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
                 }
                 // No auto-fill yearAvg with only one semester to prevent "jumping" scores
               }
