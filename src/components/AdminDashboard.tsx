@@ -886,8 +886,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         const line = lines[i].trim();
         if (!line) continue;
         const parts = line.split("\t");
-        const hasName = parts.some(p => p.toLowerCase().includes("họ và tên") || p.toLowerCase().includes("họ tên") || p.toLowerCase() === "tên");
-        const hasCccd = parts.some(p => p.toLowerCase().includes("cccd") || p.toLowerCase().includes("căn cước") || p.toLowerCase().includes("mã học sinh") || p.toLowerCase().includes("mã định danh") || p.toLowerCase().includes("chữ số"));
+        const hasName = parts.some(p => p.toLowerCase().includes("họ và tên") || p.toLowerCase().includes("họ tên") || p.toLowerCase().includes("tên"));
+        const hasCccd = parts.some(p => p.toLowerCase().includes("cccd") || p.toLowerCase().includes("căn cước") || p.toLowerCase().includes("mã") || p.toLowerCase().includes(" định danh") || p.toLowerCase().includes("chữ số"));
         if (hasName && hasCccd) {
           headerLineIdx = i;
           break;
@@ -897,10 +897,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       if (headerLineIdx !== -1) {
         const headerParts = lines[headerLineIdx].split("\t").map(p => p.trim().toLowerCase());
         
-        const cccdIdx = headerParts.findIndex(p => p.includes("cccd") || p.includes("căn cước") || p.includes("mã học sinh") || p.includes("mã định danh") || p.includes("định danh") || p.includes("chữ số"));
+        const cccdIdx = headerParts.findIndex(p => p.includes("cccd") || p.includes("căn cước") || p.includes("mã") || p.includes("định danh") || p.includes("chữ số"));
         if (cccdIdx !== -1) cccdCol = cccdIdx;
 
-        const nameIdx = headerParts.findIndex(p => p.includes("họ và tên") || p.includes("họ tên") || p === "họ và tên học sinh" || p === "họ tên học sinh" || p === "tên");
+        const nameIdx = headerParts.findIndex(p => p.includes("họ và tên") || p.includes("họ tên") || p.includes(" tên") || p === "tên");
         if (nameIdx !== -1) nameCol = nameIdx;
 
         const dobIdx = headerParts.findIndex(p => p.includes("ngày sinh") || p.includes("gày sinh") || p.includes("dob"));
@@ -908,18 +908,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
         // Find subjects
         const subjectsMapping = [
-          { id: "toan", keywords: ["toán", "toán học", "math"] },
-          { id: "ly_dia", keywords: ["lịch sử và địa", "sử địa", "lịch sử", "địa lý", "địa lí", "ly_dia", "sử và địa"] },
+          { id: "toan", keywords: ["toán", "toán học", "math", "mon toan"] },
+          { id: "ly_dia", keywords: ["lịch sử và địa", "sử địa", "sử & địa", "lịch sử", "địa lý", "địa lí", "ly_dia", "sử và địa", "sử", "địa"] },
           { id: "khtn", keywords: ["khoa học tự nhiên", "khtn", "tự nhiên", "khoa học"] },
           { id: "tin", keywords: ["tin học", "tin", "cntt", "tin hoc"] },
-          { id: "van", keywords: ["ngữ văn", "văn", "ngữ văn học", "tiếng việt"] },
-          { id: "anh", keywords: ["ngoại ngữ", "tiếng anh", "anh", "english", "anh văn"] },
+          { id: "van", keywords: ["ngữ văn", "văn", "ngữ văn học", "tiếng việt", "mon van"] },
+          { id: "anh", keywords: ["ngoại ngữ", "tiếng anh", "anh", "english", "anh văn", "n.ngữ"] },
           { id: "gdcd", keywords: ["gdcd", "giáo dục công dân", "gd công dân"] },
-          { id: "cong_nghe", keywords: ["công nghệ", "kỹ thuật"] },
-          { id: "the_duc", keywords: ["thể chất", "thể dục", "giáo dục thể chất", "thể dục thể thao"] },
-          { id: "nghe_thuat", keywords: ["nghệ thuật", "âm nhạc", "mỹ thuật", "am nhac", "my thuat"] },
-          { id: "gd_dia_phuong", keywords: ["địa phương", "giáo dục địa phương", "gd địa phương", "nội dung giáo dục của địa phương"] },
-          { id: "trai_nghiem", keywords: ["trải nghiệm", "hoạt động trải nghiệm", "hướng nghiệp", "trai nghiem"] }
+          { id: "cong_nghe", keywords: ["công nghệ", "kỹ thuật", "c.nghệ"] },
+          { id: "the_duc", keywords: ["thể chất", "thể dục", "giáo dục thể chất", "thể dục thể thao", "gd tc", "gdtc"] },
+          { id: "nghe_thuat", keywords: ["nghệ thuật", "âm nhạc", "mỹ thuật", "am nhac", "my thuat", "n.thuật", "n nghệ thuật"] },
+          { id: "gd_dia_phuong", keywords: ["địa phương", "giáo dục địa phương", "gd địa phương", "nội dung giáo dục của địa phương", "gd đf"] },
+          { id: "trai_nghiem", keywords: ["trải nghiệm", "hoạt động trải nghiệm", "hướng nghiệp", "trai nghiem", "hđtn"] }
         ];
 
         subjectsMapping.forEach(sub => {
@@ -998,10 +998,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             return;
           }
 
-          const studentCode = rawCode.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
+          let studentCode = rawCode.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
           if (!studentCode) {
             collectedErrors.push(`Dòng ${rowNum}: Số CCCD "${rawCode}" không chứa ký tự hợp lệ.`);
             return;
+          }
+
+          // Resilient identity handling: pad leading zeros if Excel stripped them (e.g. 11 digits to 12 digits)
+          if (studentCode.length === 11 && /^[0-9]+$/.test(studentCode)) {
+            studentCode = "0" + studentCode;
           }
 
           if (!/^[0-9]{12}$/.test(studentCode)) {
@@ -1032,20 +1037,22 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             const defSubjectId = ["toan", "ly_dia", "khtn", "tin", "van", "anh", "gdcd", "cong_nghe", "the_duc", "nghe_thuat", "gd_dia_phuong", "trai_nghiem"][subIdx];
             const colIndex = subjCols[defSubjectId] !== undefined ? subjCols[defSubjectId] : (4 + subIdx);
             const rawVal = colIndex < parts.length ? parts[colIndex]?.trim() || "" : "";
+            
+            // Treat isolated dashes as explicitly empty values to avoid numeric errors
+            const isExplicitPlaceholder = rawVal === "-" || rawVal === "—" || rawVal === "_";
+
             if (subIdx < 8) {
               // Evaluated by float score
-              if (rawVal) {
+              if (rawVal && !isExplicitPlaceholder) {
                 const clean = rawVal.replace(",", ".");
                 const parsed = parseFloat(clean);
                 if (isNaN(parsed) || parsed < 0 || parsed > 10) {
-                  // If it doesn't look like a valid score, check if it's maybe Đ/CĐ shorthand for a comment subject that was misidentified
-                  // But here we enforce score for these 8 subjects as per circular 22
                   collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Điểm số môn ${sName} "${rawVal}" không hợp lệ (Phải từ 0 đến 10).`);
                 }
               }
             } else {
               // Evaluated by check comment "Đạt" or "Chưa đạt"
-              if (rawVal) {
+              if (rawVal && !isExplicitPlaceholder) {
                 const cleanLower = rawVal.toLowerCase();
                 // Support shorthands: Đ, CĐ, Đạt, Chưa đạt, D, CD, Dat...
                 const isValidComment = 
@@ -1063,14 +1070,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
           // Helper definitions
           const parseScore = (val: string): number | "" => {
-            if (!val || val.trim() === "") return "";
+            if (!val || val.trim() === "" || val.trim() === "-" || val.trim() === "—") return "";
             const clean = val.trim().replace(",", ".");
             const parsed = parseFloat(clean);
             return isNaN(parsed) ? "" : parsed;
           };
 
           const parseComment = (val: string): "Đạt" | "Chưa đạt" | "" => {
-            if (!val || val.trim() === "") return "";
+            if (!val || val.trim() === "" || val.trim() === "-" || val.trim() === "—") return "";
             const clean = val?.trim()?.toLowerCase() || "";
             // Priority: shorthand checks
             if (clean === "đ" || clean === "d" || clean === "đạt" || clean === "dat") {
@@ -1088,6 +1095,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             if (clean.includes("khá") || clean === "k") return "Khá";
             if (clean.includes("chưa đạt") || clean === "cd" || clean === "cđ" || clean.includes("chưa")) return "Chưa đạt";
             if (clean.includes("đạt") || clean === "đ" || clean === "d") return "Đạt";
+            // Check for explicit "Chưa" or failing indicating indicators if no other match and it's not a common positive word
+            if (clean.length > 0 && clean !== "-" && (clean.includes("yếu") || clean.includes("kém"))) return "Chưa đạt";
             return "Tốt";
           };
 
