@@ -2284,9 +2284,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                           <th className="px-1 py-3 text-center w-20">GD Địa Phương<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
                           <th className="px-1 py-3 text-center w-20">Trải Nghiệm HN<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
 
-                          <th className="px-2 py-3 text-center bg-amber-50 text-amber-800 w-20 font-black">
-                            {gradesTerm === "hk1" ? "ĐTB HK I" : gradesTerm === "hk2" ? "ĐTB HK II" : "ĐTB Cả Năm"}
-                          </th>
                           <th className="px-3 py-3 text-center bg-slate-50 w-24">Kết Quả Chung</th>
                         </tr>
                       </thead>
@@ -2396,11 +2393,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                   </td>
                                 );
                               })}
-
-                              {/* Dynamic term GPA */}
-                              <td className="px-2 py-2.5 bg-amber-50/20 text-center font-black text-amber-900 text-xs border-x border-slate-200">
-                                {scoreCount > 0 ? termGpa.toFixed(1) : "-"}
-                              </td>
 
                               {/* Dynamic term Academic Grade */}
                               <td className="px-3 py-2.5 bg-slate-50 text-center">
