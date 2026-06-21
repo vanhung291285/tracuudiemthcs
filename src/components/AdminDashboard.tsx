@@ -1070,14 +1070,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
           // Helper definitions
           const parseScore = (val: string): number | "" => {
-            if (!val || val.trim() === "" || val.trim() === "-" || val.trim() === "—") return "";
+            if (!val || val.trim() === "" || val.trim() === "-" || val.trim() === "—" || val.trim() === "_" || val.trim() === "...") return "";
             const clean = val.trim().replace(",", ".");
             const parsed = parseFloat(clean);
             return isNaN(parsed) ? "" : parsed;
           };
 
           const parseComment = (val: string): "Đạt" | "Chưa đạt" | "" => {
-            if (!val || val.trim() === "" || val.trim() === "-" || val.trim() === "—") return "";
+            if (!val || val.trim() === "" || val.trim() === "-" || val.trim() === "—" || val.trim() === "_" || val.trim() === "...") return "";
             const clean = val?.trim()?.toLowerCase() || "";
             // Priority: shorthand checks
             if (clean === "đ" || clean === "d" || clean === "đạt" || clean === "dat") {
@@ -1169,32 +1169,65 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             // Find matching index in columns
             const colIndex = subjCols[def.subjectId] !== undefined ? subjCols[def.subjectId] : -1;
             const rawVal = colIndex !== -1 && colIndex < parts.length ? parts[colIndex]?.trim() || "" : "";
+            
+            const isPlaceholder = rawVal === "-" || rawVal === "—" || rawVal === "_" || rawVal === "...";
 
-            if (rawVal !== "") {
+            if (rawVal !== "" && !isPlaceholder) {
               if (def.isEvaluatedByScore) {
                 const score = parseScore(rawVal);
-                if (importTerm === "hk1") {
-                  targetSub.semester1 = score;
-                  if (targetSub.mid1 === undefined || targetSub.mid1 === "") targetSub.mid1 = score;
-                  if (targetSub.end1 === undefined || targetSub.end1 === "") targetSub.end1 = score;
-                } else if (importTerm === "hk2") {
-                  targetSub.semester2 = score;
-                  if (targetSub.mid2 === undefined || targetSub.mid2 === "") targetSub.mid2 = score;
-                  if (targetSub.end2 === undefined || targetSub.end2 === "") targetSub.end2 = score;
-                } else {
-                  targetSub.yearAvg = score;
+                if (score !== "") {
+                  if (importTerm === "hk1") {
+                    targetSub.semester1 = score;
+                    if (targetSub.mid1 === undefined || targetSub.mid1 === "") targetSub.mid1 = score;
+                    if (targetSub.end1 === undefined || targetSub.end1 === "") targetSub.end1 = score;
+                  } else if (importTerm === "hk2") {
+                    targetSub.semester2 = score;
+                    if (targetSub.mid2 === undefined || targetSub.mid2 === "") targetSub.mid2 = score;
+                    if (targetSub.end2 === undefined || targetSub.end2 === "") targetSub.end2 = score;
+                  } else {
+                    targetSub.yearAvg = score;
+                  }
                 }
               } else {
                 const comment = parseComment(rawVal);
-                if (importTerm === "hk1") {
-                  targetSub.semester1 = comment;
-                } else if (importTerm === "hk2") {
-                  targetSub.semester2 = comment;
-                } else {
-                  targetSub.yearAvg = comment;
+                if (comment !== "") {
+                  if (importTerm === "hk1") {
+                    targetSub.semester1 = comment;
+                  } else if (importTerm === "hk2") {
+                    targetSub.semester2 = comment;
+                  } else {
+                    targetSub.yearAvg = comment;
+                  }
                 }
               }
             }
+
+            // Auto-calculate yearAvg if semesters are newly populated or merged
+            if (def.isEvaluatedByScore) {
+              const s1 = typeof targetSub.semester1 === "number" ? targetSub.semester1 : null;
+              const s2 = typeof targetSub.semester2 === "number" ? targetSub.semester2 : null;
+              
+              if (importTerm !== "canam") {
+                if (s1 !== null && s2 !== null) {
+                  targetSub.yearAvg = parseFloat(((s1 + s2) / 2).toFixed(1));
+                } else if (s1 !== null) {
+                  targetSub.yearAvg = s1;
+                } else if (s2 !== null) {
+                  targetSub.yearAvg = s2;
+                }
+              }
+            } else {
+               const s1 = targetSub.semester1;
+               const s2 = targetSub.semester2;
+               if (importTerm !== "canam") {
+                 if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
+                   targetSub.yearAvg = "Chưa đạt";
+                 } else if (s1 === "Đạt" || s2 === "Đạt") {
+                   targetSub.yearAvg = "Đạt";
+                 }
+               }
+            }
+
             return targetSub;
           });
 
@@ -1244,6 +1277,43 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
             distinction = (distinctionCol !== -1 && distinctionCol < parts.length) ? parseDistinction(parts[distinctionCol]) : distinction;
             notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel Cả năm") : notes;
+          }
+
+          // Finalizing overall summary if scores were updated but summary columns were empty
+          // This ensures that importing sem2 scores updates the yearly result if not explicitly provided
+          const scoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
+          const totalYearScore = scoreSubjects.reduce((sum, s) => sum + (typeof s.yearAvg === "number" ? s.yearAvg : 0), 0);
+          const calculatedYearGpa = scoreSubjects.length > 0 ? (totalYearScore / scoreSubjects.length) : 0;
+          
+          // Only auto-recalculate if the file didn't provide an explicit grade OR we are in Year-end mode
+          if (!academicVal || importTerm === "canam") {
+             if (scoreSubjects.length > 0) {
+                const nonScorePassed = mockSubjects
+                  .filter(s => !s.isEvaluatedByScore)
+                  .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
+
+                const allAbove65 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 6.5);
+                const allAbove50 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 5.0);
+                const allAbove35 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 3.5);
+
+                if (calculatedYearGpa >= 8.0 && nonScorePassed && allAbove65) {
+                  academicGrade = "Tốt";
+                } else if (calculatedYearGpa >= 6.5 && nonScorePassed && allAbove50) {
+                  academicGrade = "Khá";
+                } else if (calculatedYearGpa >= 5.0 && nonScorePassed && allAbove35) {
+                  academicGrade = "Đạt";
+                } else {
+                  academicGrade = "Chưa đạt";
+                }
+             }
+          }
+
+          if (importTerm === "canam" || (!distinction || distinction === "Không")) {
+            distinction = academicGrade === "Tốt" && behaviorGrade === "Tốt" 
+              ? "Học sinh Giỏi" 
+              : academicGrade === "Khá" && behaviorGrade === "Tốt" 
+                ? "Học sinh Tiêu biểu" 
+                : "Không";
           }
 
           parsedResults.push({
