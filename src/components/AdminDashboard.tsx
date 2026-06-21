@@ -16,6 +16,24 @@ interface AdminDashboardProps {
   onBackToPortal: () => void;
 }
 
+/**
+ * Helper to compare Vietnamese names correctly (Tên -> Đệm -> Họ)
+ */
+const compareVietnameseNames = (nameA: string, nameB: string) => {
+  const aParts = (nameA || "").trim().split(/\s+/);
+  const bParts = (nameB || "").trim().split(/\s+/);
+  
+  const aFirstName = aParts.pop() || "";
+  const bFirstName = bParts.pop() || "";
+  
+  const firstNameCompare = aFirstName.localeCompare(bFirstName, "vi");
+  if (firstNameCompare !== 0) return firstNameCompare;
+  
+  const aRest = aParts.join(" ");
+  const bRest = bParts.join(" ");
+  return aRest.localeCompare(bRest, "vi");
+};
+
 export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
@@ -36,11 +54,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const classCompare = (a.className || "").localeCompare(b.className || "", "vi");
       if (classCompare !== 0) return classCompare;
       
-      // Secondary sort by Full Name
-      return a.fullName.localeCompare(b.fullName, "vi");
+      // Secondary sort by Full Name (Vietnamese Standard)
+      return compareVietnameseNames(a.fullName, b.fullName);
     });
     setStudents(sorted);
-    alert("Đã sắp xếp danh sách học sinh theo Lớp và thứ tự ABC thành công.");
+    alert("Đã sắp xếp danh sách học sinh theo Lớp và thứ tự ABC (Tên -> Đệm -> Họ) thành công.");
   };
 
   // Classes config state
@@ -1421,8 +1439,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setImportErrors(collectedErrors);
 
       if (parsedResults.length > 0) {
-        // Sort alphabetically by full name
-        parsedResults.sort((a, b) => a.fullName.localeCompare(b.fullName, "vi"));
+        // Sort alphabetically by full name (Vietnamese Standard)
+        parsedResults.sort((a, b) => compareVietnameseNames(a.fullName, b.fullName));
         setImportPreview(parsedResults);
         let statusMsg = `Phân tích thành công ${parsedResults.length} dòng dữ liệu học sinh lớp ${importClass} (${importTerm === "hk1" ? "Học kỳ I" : importTerm === "hk2" ? "Học kỳ II" : "Cả năm"}).`;
         if (collectedErrors.length > 0) {
@@ -1702,8 +1720,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     const classCompare = (a.className || "").localeCompare(b.className || "", "vi");
     if (classCompare !== 0) return classCompare;
     
-    // Secondary sort by Full Name
-    return a.fullName.localeCompare(b.fullName, "vi");
+    // Secondary sort by Full Name (Vietnamese Standard)
+    return compareVietnameseNames(a.fullName, b.fullName);
   });
 
   const uniqueClasses = Array.from(new Set(students.map(s => s.className)));
