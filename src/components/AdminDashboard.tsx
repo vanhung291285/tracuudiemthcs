@@ -1492,16 +1492,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                   const yearScores = validScoreSubjects.map(s => s.yearAvg as number);
                   const countAbove8 = yearScores.filter(v => v >= 8.0).length;
                   const countAbove65 = yearScores.filter(v => v >= 6.5).length;
-                  const allAbove65 = yearScores.every(v => v >= 6.5);
+                  const countAbove50 = yearScores.filter(v => v >= 5.0).length;
                   const allAbove50 = yearScores.every(v => v >= 5.0);
                   const allAbove35 = yearScores.every(v => v >= 3.5);
-                  const countBelow50 = yearScores.filter(v => v < 5.0).length;
 
-                  if (nonScorePassed && allAbove65 && countAbove8 >= 6) {
+                  if (nonScorePassed && allAbove50 && countAbove8 >= 6) {
                     academicGrade = "Tốt";
-                  } else if (nonScorePassed && allAbove50 && countAbove65 >= 6) {
+                  } else if (nonScorePassed && allAbove35 && countAbove65 >= 6) {
                     academicGrade = "Khá";
-                  } else if (nonScorePassed && allAbove35 && countBelow50 <= 1) {
+                  } else if (nonScorePassed && countAbove50 >= 6 && allAbove35) {
                     academicGrade = "Đạt";
                   } else {
                     academicGrade = "Chưa đạt";
