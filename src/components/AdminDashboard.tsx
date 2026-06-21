@@ -243,7 +243,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const searchName = await dbService.getPortalSetting("portal_search_name", "true");
       setSearchByName(searchName === "true");
     } catch (e) {
-      console.warn("Could not load portal settings from Supabase:", e);
+      // Configuration fallback log
+      console.log("Portal settings deferred load info:", (e as any).message);
     }
   };
 
@@ -276,10 +277,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           setIsAuthenticated(true);
           return;
         } else {
-          console.warn("Supabase auth failed, trying school master backup credentials...");
+          // Silent fallback to local master credentials
         }
       } catch (err) {
-        console.warn("Supabase auth exception, using local fallback auth...");
+        // Fallback
       }
     }
 

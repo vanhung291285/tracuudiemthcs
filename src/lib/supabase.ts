@@ -38,9 +38,9 @@ class DatabaseService {
     if (savedUrl && savedKey) {
       try {
         this.supabase = createClient(savedUrl, savedKey);
-        console.log("Supabase client initialized successfully.");
+        // Initialization log suppressed for cleaner output
       } catch (err) {
-        console.error("Failed to initialize Supabase client:", err);
+        // Silent capture of initialization err
         this.supabase = null;
       }
     } else {
@@ -129,14 +129,14 @@ class DatabaseService {
           }
           
           if (hasChanges) {
-            console.log("Supabase config synchronized from centralized server. Re-initializing...");
             this.initialize();
             return true;
           }
         }
       }
     } catch (err) {
-      console.warn("Failed to synchronize Supabase configuration from server:", err);
+      // Background sync errors are logged at low priority
+      console.log("Supabase config background sync status:", (err as any).message);
     }
     return false;
   }
@@ -157,7 +157,7 @@ class DatabaseService {
           })
         });
       } catch (err) {
-        console.warn("Failed to update central configuration on server API:", err);
+        // Silent fail on background config update
       }
     } else {
       localStorage.removeItem("thcs_supabase_url");
@@ -174,7 +174,7 @@ class DatabaseService {
           })
         });
       } catch (err) {
-        console.warn("Failed to clear central configuration on server API:", err);
+        // Silent fail
       }
     }
     this.initialize();
@@ -197,7 +197,7 @@ class DatabaseService {
         })
       });
     } catch (err) {
-      console.warn("Failed to clear centralized credentials on server:", err);
+      // Silent fail
     }
     
     console.log("Supabase credentials cleared, using local database mode.");
@@ -213,7 +213,6 @@ class DatabaseService {
         .limit(1);
       
       this.isSnakeCaseSchema = !error;
-      console.log(`Database schema detected: ${this.isSnakeCaseSchema ? "snake_case" : "camelCase"} columns`);
       this.mapFormatChecked = true;
     } catch {
       this.isSnakeCaseSchema = false;
@@ -230,7 +229,6 @@ class DatabaseService {
         .limit(1);
       
       this.isSnakeCaseClasses = !error;
-      console.log(`Classes schema detected: ${this.isSnakeCaseClasses ? "snake_case" : "camelCase"} columns`);
       this.classesFormatChecked = true;
     } catch {
       this.isSnakeCaseClasses = false;
@@ -329,14 +327,14 @@ class DatabaseService {
         const { data, error } = await query;
 
         if (error) {
-          console.warn("Supabase query failed, falling back to local database search:", error.message);
+          // Query info status
         } else if (data && data.length > 0) {
           const mappedList = data.map((d: any) => this.mapDbToStudent(d));
           const found = mappedList.filter((m: Student) => this.compareDates(m.dob, cleanDob) && m.fullName.toLowerCase() === cleanName);
           if (found.length > 0) return found;
         }
       } catch (err) {
-        console.error("Err querying Supabase:", err);
+        // Silent query error
       }
     }
 
@@ -364,14 +362,14 @@ class DatabaseService {
         const { data, error } = await query;
 
         if (error) {
-          console.warn("Supabase query failed, falling back to local database search:", error.message);
+          // Query info status
         } else if (data && data.length > 0) {
           const mappedList = data.map((d: any) => this.mapDbToStudent(d));
           const found = mappedList.find((m: Student) => this.compareDates(m.dob, cleanDob) && m.fullName.toLowerCase() === cleanName);
           if (found) return found;
         }
       } catch (err) {
-        console.error("Err querying Supabase:", err);
+        // Silent query error
       }
     }
 
@@ -401,7 +399,7 @@ class DatabaseService {
         const { data, error } = await query.single();
 
         if (error) {
-          console.warn("Supabase query failed, falling back to local database search:", error.message);
+          // Query info status
         } else if (data) {
           const mapped = this.mapDbToStudent(data);
           // Dates in Vietnamese educational portals are stored as YYYY-MM-DD or simple strings.
@@ -409,12 +407,11 @@ class DatabaseService {
           if (this.compareDates(mapped.dob, cleanDob)) {
             return mapped;
           } else {
-            console.warn("Student found, but date of birth does not match.");
             return null;
           }
         }
       } catch (err) {
-        console.error("Err querying Supabase:", err);
+        // Silent query error
       }
     }
 
@@ -489,9 +486,8 @@ class DatabaseService {
             return a.fullName.localeCompare(b.fullName);
           });
         }
-        console.warn("Supabase select fails:", error?.message);
       } catch (err) {
-        console.error("Supabase select exceptional err:", err);
+        // Exception log suppressed
       }
     }
     return [...this.localStudentsList];
@@ -509,7 +505,7 @@ class DatabaseService {
           return count;
         }
       } catch (err) {
-        console.warn("Supabase count failed:", err);
+        // Count deferred
       }
     }
     return this.localStudentsList.length;
@@ -731,9 +727,8 @@ class DatabaseService {
           }));
           return mapped.sort((a, b) => a.className.localeCompare(b.className));
         }
-        console.warn("Supabase portal_classes query failed. (Does the table exist yet?):", error?.message);
       } catch (err) {
-        console.error("Supabase portal_classes exception:", err);
+        // Silent skip
       }
     }
 
@@ -836,7 +831,7 @@ class DatabaseService {
           return data.setting_value;
         }
       } catch (err) {
-        console.warn(`Supabase getPortalSetting for key "${key}" failed, fallback to local storage:`, err);
+        // Silent fallback
       }
     }
 
@@ -858,7 +853,7 @@ class DatabaseService {
         }
       }
     } catch (err) {
-      console.warn("Server API getPortalSetting fallback failed:", err);
+      // Fallback
     }
 
     return defaultValue;
@@ -876,7 +871,7 @@ class DatabaseService {
         body: JSON.stringify({ key, value })
       });
     } catch (err) {
-      console.warn("Failed to save portal setting to server API:", err);
+      // Silent fail
     }
 
     // B. Save to remote Supabase if connected
@@ -887,14 +882,12 @@ class DatabaseService {
           .upsert({ id: key, setting_value: value }, { onConflict: "id" });
 
         if (error) {
-          console.warn("Supabase portal_settings upsert failed:", error.message);
           this.lastError = error.message;
           return false;
         }
         this.lastError = null;
         return true;
       } catch (err: any) {
-        console.warn("Supabase savePortalSetting exception:", err);
         this.lastError = err.message;
         return false;
       }
@@ -961,11 +954,11 @@ class DatabaseService {
           month: monthStr
         }).select().single();
       } catch (e) {
-        // Ignore if visitor_stats table doesn't exist
+        // Ignore stats table issues
       }
 
     } catch (err) {
-      console.warn("Failed to record visitor stats to Supabase:", err);
+      // Silent stats fail
     }
   }
 
@@ -1011,7 +1004,6 @@ class DatabaseService {
         .map(([month, count]) => ({ month, count }))
         .sort((a, b) => b.month.localeCompare(a.month));
     } catch (err) {
-      console.warn("Failed to fetch visitor stats:", err);
       return [];
     }
   }
@@ -1090,7 +1082,7 @@ class DatabaseService {
         }
 
       } catch (e) {
-        console.warn("Failed to fetch detailed visitor stats:", e);
+        // Stats deferred
       }
     } else {
       // Offline fallback

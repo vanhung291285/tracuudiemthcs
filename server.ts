@@ -95,7 +95,7 @@ async function fetchSuoiluRSS(): Promise<any[]> {
   const targetUrl = "https://suoilu.db.edu.vn/feed/";
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    const id = setTimeout(() => controller.abort(), 10000); // Increased to 10s timeout
 
     const response = await fetch(targetUrl, {
       headers: {
@@ -108,7 +108,7 @@ async function fetchSuoiluRSS(): Promise<any[]> {
     clearTimeout(id);
 
     if (!response.ok) {
-      console.warn(`RSS Scraper received status ${response.status} from /feed/`);
+      console.log(`RSS Scraper received status ${response.status} from /feed/ - falling back to internal storage.`);
       return [];
     }
 
@@ -161,7 +161,11 @@ async function fetchSuoiluRSS(): Promise<any[]> {
     console.log(`Successfully scraped ${items.length} articles via RSS feed (/feed/)`);
     return items;
   } catch (err) {
-    console.warn("RSS feed parsing fallback failed:", err);
+    if ((err as any).name === 'AbortError') {
+      console.log("RSS scraper timed out - Suoi Lu website might be slow or offline.");
+    } else {
+      console.log("RSS feed parsing fallback info:", (err as any).message);
+    }
     return [];
   }
 }
@@ -173,7 +177,7 @@ async function fetchSuoiluNews(): Promise<any[]> {
 
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 6000); // 6s timeout
+    const id = setTimeout(() => controller.abort(), 12000); // 12s timeout for main page
 
     const response = await fetch(targetUrl, {
       headers: {
@@ -241,15 +245,18 @@ async function fetchSuoiluNews(): Promise<any[]> {
         });
       }
     } else {
-      console.warn(`Scraper received bad HTTP status from home page: ${response.status}`);
+      console.log(`Scraper received HTTP status ${response.status} from Suoi Lu home page - switching to RSS/Internal fallback.`);
     }
   } catch (error) {
-    console.warn("Direct HTML scraper failed, switching to RSS fallback:", error);
+    if ((error as any).name === 'AbortError') {
+      console.log("Main HTML scraper timed out - trying RSS fallback.");
+    } else {
+      console.log("HTML scraper info:", (error as any).message);
+    }
   }
 
   // C. Fallback to RSS/XML feed if direct HTML scraping returned 0 results
   if (candidates.length === 0) {
-    console.log("No news candidates scraped from direct HTML. Invoking RSS fallback parser...");
     candidates = await fetchSuoiluRSS();
   }
 

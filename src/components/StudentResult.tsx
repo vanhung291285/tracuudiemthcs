@@ -30,7 +30,8 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
           setAdvisorName(matched.advisorName);
         }
       } catch (err) {
-        console.warn("Failed to fetch advisor name:", err);
+        // Reduced log severity for student result metadata
+        console.log("Advisor metadata info:", (err as any).message);
       }
     };
     fetchAdvisor();
