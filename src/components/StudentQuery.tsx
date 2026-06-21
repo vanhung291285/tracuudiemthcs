@@ -539,84 +539,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
             </div>
 
-            {/* Board of Honor (Bảng Vàng) panel - Shrinked to fit precisely under Query card */}
-            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-5 md:p-6 rounded-xl shadow-[0_10px_35px_-10px_rgba(251,191,36,0.25)] relative z-10 animate-fadeIn overflow-hidden" style={{ animationDelay: '0.1s' }}>
-              {/* Corner Decorations */}
-              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
-              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
 
-              <div className="flex flex-col items-center mb-5 pt-2">
-                <div className="relative mb-2.5 scale-100">
-                   <div className="absolute -left-12 top-0 h-full flex items-center justify-center opacity-90 scale-[1.2]">
-                     <div className="relative">
-                        <Award className="w-7 h-7 text-amber-500 transform -rotate-[35deg]" />
-                        <Award className="w-3 h-3 text-amber-400 absolute -bottom-1 -right-0.5 transform rotate-[15deg]" />
-                     </div>
-                   </div>
-                   
-                   <div className="bg-white/40 px-6 py-2.5 rounded-xl border border-amber-200/50 backdrop-blur-md shadow-inner">
-                     <h3 className="text-[14px] font-black text-amber-900 uppercase tracking-[0.2em] text-center leading-none">
-                       BẢNG VÀNG
-                     </h3>
-                     <div className="text-[9px] font-black text-amber-700/60 uppercase tracking-[0.3em] text-center mt-2">
-                       VINH DANH
-                     </div>
-                   </div>
-
-                   <div className="absolute -right-12 top-0 h-full flex items-center justify-center opacity-90 scale-[1.2]">
-                     <div className="relative">
-                        <Award className="w-7 h-7 text-amber-500 transform rotate-[35deg] scale-x-[-1]" />
-                        <Award className="w-3 h-3 text-amber-400 absolute -bottom-1 -left-0.5 transform -rotate-[15deg] scale-x-[-1]" />
-                     </div>
-                   </div>
-                </div>
-                <div className="h-0.5 w-12 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full mt-2" />
-              </div>
-
-              <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar pb-2">
-                {topStudents.length > 0 ? topStudents.map((student, idx) => {
-                  let badgeStyles = "bg-sky-50 text-sky-800 border-sky-100";
-                  let label = "Học sinh Giỏi";
-                  let icon = "🎖️";
-                  let cardStyles = "bg-white/70 border-amber-100 hover:border-amber-300";
-
-                  if (student.distinction === "Học sinh Xuất sắc") {
-                    badgeStyles = "bg-amber-100 text-amber-900 border-amber-200 shadow-sm";
-                    label = "Học sinh Xuất sắc";
-                    icon = "👑"; 
-                    cardStyles = "bg-amber-50/40 border-amber-300 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.2)] hover:bg-white/80 transition-all";
-                  }
-                  
-                  return (
-                    <div
-                      key={student.id || idx}
-                      className={`p-2.5 ${cardStyles} border rounded-lg text-left shadow-sm flex items-center justify-between group animate-fadeIn transition-all duration-300 relative overflow-hidden`}
-                    >
-                      <div className="flex items-center gap-2.5 relative z-10">
-                        <div className="w-8 h-8 rounded-full bg-amber-50/50 flex items-center justify-center text-base grayscale-0 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-amber-100/50 shadow-sm">
-                          {icon}
-                        </div>
-                        <div className="space-y-0.5">
-                          <div className="font-extrabold text-amber-950 text-[11px] uppercase leading-none tracking-tight">{student.fullName}</div>
-                          <div className="text-[9px] text-amber-800/60 font-bold flex items-center gap-1">
-                            <Users className="w-3 h-3 opacity-60" />
-                            Lớp: {student.className}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 relative z-10">
-                        <span className={`text-[7px] ${badgeStyles} border px-2 py-0.5 rounded-full font-black uppercase tracking-tighter`}>{label}</span>
-                      </div>
-                    </div>
-                  );
-                }) : (
-                  <div className="col-span-full text-center py-8 text-xs text-amber-600/30 font-black uppercase tracking-[0.2em] italic flex flex-col items-center gap-4">
-                    <RefreshCw className="w-6 h-6 animate-spin opacity-20" />
-                    Đang thiết lập...
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Realtime Statistics Bento Grid (Moved here for better balance) */}
             <div className="grid grid-cols-2 gap-4 relative z-10 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
@@ -682,6 +605,85 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
           {/* RIGHT SIDE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
           <div className="lg:col-span-7 space-y-6">
+            
+            {/* Board of Honor (Bảng Vàng) panel - Shrinked to fit precisely next to Query card */}
+            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-5 md:p-6 rounded-xl shadow-[0_10px_35px_-10px_rgba(251,191,36,0.25)] relative z-10 animate-fadeIn overflow-hidden" style={{ animationDelay: '0.1s' }}>
+              {/* Corner Decorations */}
+              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
+              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
+
+              <div className="flex flex-col items-center mb-5 pt-2">
+                <div className="relative mb-2.5 scale-100">
+                   <div className="absolute -left-12 top-0 h-full flex items-center justify-center opacity-90 scale-[1.2]">
+                     <div className="relative">
+                        <Award className="w-7 h-7 text-amber-500 transform -rotate-[35deg]" />
+                        <Award className="w-3 h-3 text-amber-400 absolute -bottom-1 -right-0.5 transform rotate-[15deg]" />
+                     </div>
+                   </div>
+                   
+                   <div className="bg-white/40 px-6 py-2.5 rounded-xl border border-amber-200/50 backdrop-blur-md shadow-inner">
+                     <h3 className="text-[14px] font-black text-amber-900 uppercase tracking-[0.2em] text-center leading-none">
+                       BẢNG VÀNG
+                     </h3>
+                     <div className="text-[9px] font-black text-amber-700/60 uppercase tracking-[0.3em] text-center mt-2">
+                       VINH DANH
+                     </div>
+                   </div>
+
+                   <div className="absolute -right-12 top-0 h-full flex items-center justify-center opacity-90 scale-[1.2]">
+                     <div className="relative">
+                        <Award className="w-7 h-7 text-amber-500 transform rotate-[35deg] scale-x-[-1]" />
+                        <Award className="w-3 h-3 text-amber-400 absolute -bottom-1 -left-0.5 transform -rotate-[15deg] scale-x-[-1]" />
+                     </div>
+                   </div>
+                </div>
+                <div className="h-0.5 w-12 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full mt-2" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar pb-2">
+                {topStudents.length > 0 ? topStudents.map((student, idx) => {
+                  let badgeStyles = "bg-sky-50 text-sky-800 border-sky-100";
+                  let label = "Học sinh Giỏi";
+                  let icon = "🎖️";
+                  let cardStyles = "bg-white/70 border-amber-100 hover:border-amber-300";
+
+                  if (student.distinction === "Học sinh Xuất sắc") {
+                    badgeStyles = "bg-amber-100 text-amber-900 border-amber-200 shadow-sm";
+                    label = "Học sinh Xuất sắc";
+                    icon = "👑"; 
+                    cardStyles = "bg-amber-50/40 border-amber-300 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.2)] hover:bg-white/80 transition-all";
+                  }
+                  
+                  return (
+                    <div
+                      key={student.id || idx}
+                      className={`p-2.5 ${cardStyles} border rounded-lg text-left shadow-sm flex items-center justify-between group animate-fadeIn transition-all duration-300 relative overflow-hidden`}
+                    >
+                      <div className="flex items-center gap-2.5 relative z-10">
+                        <div className="w-8 h-8 rounded-full bg-amber-50/50 flex items-center justify-center text-base grayscale-0 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-amber-100/50 shadow-sm">
+                          {icon}
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="font-extrabold text-amber-950 text-[11px] uppercase leading-none tracking-tight">{student.fullName}</div>
+                          <div className="text-[9px] text-amber-800/60 font-bold flex items-center gap-1">
+                            <Users className="w-3 h-3 opacity-60" />
+                            Lớp: {student.className}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 relative z-10">
+                        <span className={`text-[7px] ${badgeStyles} border px-2 py-0.5 rounded-full font-black uppercase tracking-tighter`}>{label}</span>
+                      </div>
+                    </div>
+                  );
+                }) : (
+                  <div className="col-span-full text-center py-8 text-xs text-amber-600/30 font-black uppercase tracking-[0.2em] italic flex flex-col items-center gap-4">
+                    <RefreshCw className="w-6 h-6 animate-spin opacity-20" />
+                    Đang thiết lập...
+                  </div>
+                )}
+              </div>
+            </div>
             
             {/* Quick Three-Step Guideline (Moved here) */}
             <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
