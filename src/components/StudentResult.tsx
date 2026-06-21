@@ -74,12 +74,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   if (storedAcademic) {
     activeAcademicGrade = storedAcademic as any;
   } else if (scoreCount > 0) {
-    const nonScorePassed = (student.subjects || [])
-      .filter(s => !s.isEvaluatedByScore)
-      .every(s => {
+    const nonScoreSubjects = (student.subjects || []).filter(s => !s.isEvaluatedByScore);
+    const countNonPassed = nonScoreSubjects.filter(s => {
         const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
         return val === "Đạt" || !val;
-      });
+    }).length;
+    const allNonPassed = countNonPassed === nonScoreSubjects.length;
+    const mostlyNonPassed = countNonPassed >= nonScoreSubjects.length - 1;
 
     const currentScores = scoreSubjects.map(s => {
       if (term === "canam") {
@@ -92,18 +93,19 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       return typeof val === "number" ? val : null;
     }).filter(v => v !== null) as number[];
 
+    const countScores = currentScores.length;
     const countAbove9 = currentScores.filter(v => v >= 9.0).length;
     const countAbove8 = currentScores.filter(v => v >= 8.0).length;
     const countAbove65 = currentScores.filter(v => v >= 6.5).length;
     const countAbove50 = currentScores.filter(v => v >= 5.0).length;
-    const allAbove50 = currentScores.every(v => v >= 5.0);
+    const allAbove50 = countAbove50 === countScores;
     const allAbove35 = currentScores.every(v => v >= 3.5);
 
-    if (nonScorePassed && allAbove50 && countAbove8 >= 6) {
+    if (allNonPassed && allAbove50 && countAbove8 >= 6) {
       activeAcademicGrade = "Tốt";
-    } else if (nonScorePassed && allAbove35 && countAbove65 >= 6) {
+    } else if (allNonPassed && allAbove35 && countAbove65 >= 6) {
       activeAcademicGrade = "Khá";
-    } else if (nonScorePassed && countAbove50 >= 6 && allAbove35) {
+    } else if (mostlyNonPassed && (allAbove50 || (countAbove50 >= 6 && allAbove35))) {
       activeAcademicGrade = "Đạt";
     } else {
       activeAcademicGrade = "Chưa đạt";
