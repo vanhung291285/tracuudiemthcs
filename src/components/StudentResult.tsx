@@ -81,24 +81,23 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         return val === "Đạt" || !val;
       });
 
-    const allAbove65 = scoreSubjects.every(s => {
+    const currentScores = scoreSubjects.map(s => {
       const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
-      return typeof val === "number" && val >= 6.5;
-    });
-    const allAbove50 = scoreSubjects.every(s => {
-      const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
-      return typeof val === "number" && val >= 5.0;
-    });
-    const allAbove35 = scoreSubjects.every(s => {
-      const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
-      return typeof val === "number" && val >= 3.5;
-    });
+      return typeof val === "number" ? val : null;
+    }).filter(v => v !== null) as number[];
 
-    if (activeGpa >= 8.0 && nonScorePassed && allAbove65) {
+    const countAbove8 = currentScores.filter(v => v >= 8.0).length;
+    const countAbove65 = currentScores.filter(v => v >= 6.5).length;
+    const allAbove65 = currentScores.every(v => v >= 6.5);
+    const allAbove50 = currentScores.every(v => v >= 5.0);
+    const allAbove35 = currentScores.every(v => v >= 3.5);
+    const countBelow50 = currentScores.filter(v => v < 5.0).length;
+
+    if (nonScorePassed && allAbove65 && countAbove8 >= 6) {
       activeAcademicGrade = "Tốt";
-    } else if (activeGpa >= 6.5 && nonScorePassed && allAbove50) {
+    } else if (nonScorePassed && allAbove50 && countAbove65 >= 6) {
       activeAcademicGrade = "Khá";
-    } else if (activeGpa >= 5.0 && nonScorePassed && allAbove35) {
+    } else if (nonScorePassed && allAbove35 && countBelow50 <= 1) {
       activeAcademicGrade = "Đạt";
     } else {
       activeAcademicGrade = "Chưa đạt";
