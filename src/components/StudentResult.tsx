@@ -67,7 +67,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
   // Academic Classification
   let activeAcademicGrade = student.academicGrade;
-  if (scoreCount > 0) {
+  
+  // Prefer stored semester grades if available
+  const storedAcademic = term === "hk1" ? student.academicGradeHK1 : term === "hk2" ? student.academicGradeHK2 : student.academicGrade;
+  
+  if (storedAcademic) {
+    activeAcademicGrade = storedAcademic as any;
+  } else if (scoreCount > 0) {
     const nonScorePassed = (student.subjects || [])
       .filter(s => !s.isEvaluatedByScore)
       .every(s => {
@@ -100,7 +106,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   }
 
   // Behavior Grade
-  const activeBehaviorGrade = student.behaviorGrade;
+  const activeBehaviorGrade = (term === "hk1" ? student.behaviorGradeHK1 : term === "hk2" ? student.behaviorGradeHK2 : student.behaviorGrade) || student.behaviorGrade;
 
   // Designation Distinction
   const scoredCount = (student.subjects || []).filter(s => {
