@@ -114,7 +114,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen decorative-page-bg text-slate-800 flex flex-col font-sans select-none relative selection:bg-[#0055A5]/20 selection:text-[#0055A5]" id="app-root">
+    <div className="min-h-screen decorative-page-bg text-slate-800 flex flex-col font-sans select-none relative selection:bg-[#0055A5]/20 selection:text-[#0055A5] no-scrollbar" id="app-root">
       
       {/* Dynamic View rendering */}
       {view === "query" && (
