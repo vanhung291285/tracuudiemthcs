@@ -301,7 +301,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       </header>
 
       {/* Main Content Area: Side-By-Side Redesigned Portal */}
-      <main className="flex-1 max-w-6xl w-full mx-auto py-8 md:py-12 px-4">
+      <main className="flex-1 max-w-6xl w-full mx-auto pt-8 pb-4 md:pt-12 md:pb-6 px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
           
           {/* LEFT SIDE: LOOKUP TOOL & QUICK CANDIDATES (col-span-5) */}
