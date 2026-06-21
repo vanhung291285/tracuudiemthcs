@@ -801,18 +801,28 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       // Compute overall average based on Year averages to maintain correct persistent annual state
       const scoreSubjects = updatedSubjects.filter(s => s.isEvaluatedByScore);
       const totalScore = scoreSubjects.reduce((sum, s) => sum + (typeof s.yearAvg === "number" ? s.yearAvg : 0), 0);
-      const newGpa = scoreSubjects.length > 0 ? (totalScore / scoreSubjects.length) : 0.0;
+      const validScoreSubjects = scoreSubjects.filter(s => typeof s.yearAvg === "number");
+      const newGpa = validScoreSubjects.length > 0 ? (totalScore / validScoreSubjects.length) : 0.0;
 
       let academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" = student.academicGrade;
-      // Only recalculate overall year-end grade if we are in HK2 or All-Year editing mode
-      if (scoreSubjects.length > 0 && gradesTerm !== "hk1") {
+      
+      // Check if student has NO scores at all (potentially exempt/disabled)
+      const hasAnyScore = updatedSubjects.some(s => 
+        (typeof s.semester1 === "number") || (typeof s.semester2 === "number") || (typeof s.yearAvg === "number") ||
+        (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ||
+        (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ||
+        (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt")
+      );
+
+      // Only recalculate overall year-end grade if we are in HK2 or All-Year editing mode AND they have results
+      if (hasAnyScore && validScoreSubjects.length > 0 && gradesTerm !== "hk1") {
         const nonScorePassed = updatedSubjects
           .filter(s => !s.isEvaluatedByScore)
           .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
 
-        const allAbove65 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 6.5);
-        const allAbove50 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 5.0);
-        const allAbove35 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 3.5);
+        const allAbove65 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 6.5);
+        const allAbove50 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 5.0);
+        const allAbove35 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 3.5);
 
         if (newGpa >= 8.0 && nonScorePassed && allAbove65) {
           academicGrade = "Tốt";
@@ -820,6 +830,17 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           academicGrade = "Khá";
         } else if (newGpa >= 5.0 && nonScorePassed && allAbove35) {
           academicGrade = "Đạt";
+        } else {
+          academicGrade = "Chưa đạt";
+        }
+      } else if (!hasAnyScore) {
+        // Force "Chưa đạt" or just keep as is if no scores at all? 
+        // Circular 22 says if not evaluated, we shouldn't give a grade. 
+        // But for now let's set to "Chưa đạt" or a specific "Exempt" note if detected in notes.
+        if (student.notes?.toLowerCase().includes("khuyết tật") || student.notes?.toLowerCase().includes("miễn")) {
+           // We'll handle visual labeling in rendering
+        } else {
+           academicGrade = "Chưa đạt";
         }
       }
 
@@ -827,7 +848,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         ...student,
         subjects: updatedSubjects,
         academicGrade,
-        distinction: academicGrade === "Tốt" && student.behaviorGrade === "Tốt" ? "Học sinh Giỏi" : academicGrade === "Khá" && student.behaviorGrade === "Tốt" ? "Học sinh Tiêu biểu" : "Không"
+        distinction: (hasAnyScore && academicGrade === "Tốt" && (student.behaviorGrade === "Tốt" || student.behaviorGrade === "Khá")) ? "Học sinh Giỏi" : 
+                     (hasAnyScore && academicGrade === "Khá" && student.behaviorGrade === "Tốt") ? "Học sinh Tiêu biểu" : "Không"
       };
 
       try {
@@ -1307,9 +1329,17 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           const totalYearScore = validScoreSubjects.reduce((sum, s) => sum + (s.yearAvg as number), 0);
           const calculatedYearGpa = validScoreSubjects.length > 0 ? (totalYearScore / validScoreSubjects.length) : 0;
           
+          // Check if there are ANY scores at all in this row (to identify exempt/disabled/empty rows)
+          const hasAnyScoreInRow = mockSubjects.some(s => 
+            (typeof s.semester1 === "number") || (typeof s.semester2 === "number") || (typeof s.yearAvg === "number") ||
+            (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ||
+            (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ||
+            (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt")
+          );
+
           // Only auto-recalculate if the file didn't provide an explicit grade OR we are in Year-end mode
           // Added Check: Only auto-calculate Year-end summary during HK2 or CANAM import to avoid HK1 jumping
-          if ((!academicVal || importTerm === "canam") && validScoreSubjects.length > 0 && importTerm !== "hk1") {
+          if (hasAnyScoreInRow && (!academicVal || importTerm === "canam") && validScoreSubjects.length > 0 && importTerm !== "hk1") {
              const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
              // We only proceed if most subjects are filled to avoid premature grading
              if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
@@ -1331,12 +1361,16 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                   academicGrade = "Chưa đạt";
                 }
              }
+          } else if (!hasAnyScoreInRow && !academicVal) {
+             // If absolutely no scores found in row and no summary grade provided, default to lowest or existing
+             // This prevents disabled students with empty sheets from becoming "Giỏi" by accident
+             academicGrade = "Chưa đạt";
           }
 
           if (importTerm === "canam" || (!distinction || distinction === "Không")) {
-            distinction = academicGrade === "Tốt" && behaviorGrade === "Tốt" 
+            distinction = (hasAnyScoreInRow && academicGrade === "Tốt" && (behaviorGrade === "Tốt" || behaviorGrade === "Khá")) 
               ? "Học sinh Giỏi" 
-              : academicGrade === "Khá" && behaviorGrade === "Tốt" 
+              : (hasAnyScoreInRow && academicGrade === "Khá" && behaviorGrade === "Tốt")
                 ? "Học sinh Tiêu biểu" 
                 : "Không";
           }
@@ -1951,7 +1985,20 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                   {student.behaviorGrade}
                                 </span>
                               </td>
-                              <td className="px-4 py-3.5 font-semibold text-amber-700 text-[10px]">{student.distinction}</td>
+                              <td className="px-4 py-3.5 font-semibold text-amber-700 text-[10px]">
+                                {(() => {
+                                  const hasAnyScore = (student.subjects || []).some(s => 
+                                    (typeof s.semester1 === "number") || (typeof s.semester2 === "number") || (typeof s.yearAvg === "number") ||
+                                    (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ||
+                                    (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ||
+                                    (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt")
+                                  );
+                                  if (!hasAnyScore && (student.notes?.toLowerCase().includes("khuyết tật") || student.notes?.toLowerCase().includes("miễn"))) {
+                                    return <span className="bg-slate-100 text-slate-500 border border-slate-300 px-2 py-0.5 rounded-full uppercase font-black text-[8px]">Khuyết tật (Miễn xét)</span>;
+                                  }
+                                  return student.distinction;
+                                })()}
+                              </td>
                               <td className="px-4 py-3.5 text-right pr-6">
                                   <div className="flex justify-end gap-1.5">
                                     <button
