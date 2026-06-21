@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import StudentQuery from "./components/StudentQuery";
 import StudentResult from "./components/StudentResult";
 import AdminDashboard from "./components/AdminDashboard";
+import Footer from "./components/Footer";
 import { Student } from "./types";
 import { dbService } from "./lib/supabase";
 
@@ -129,7 +130,7 @@ export default function App() {
       )}
 
       {view === "result" && selectedStudent && (
-        <div className="flex-1 py-10">
+        <div className="flex-1 w-full flex flex-col pt-2 pb-6">
           <StudentResult
             student={selectedStudent}
             initialTerm={selectedTerm}
@@ -143,6 +144,8 @@ export default function App() {
           onBackToPortal={handleBackToQuery}
         />
       )}
+
+      {view !== "admin" && <Footer />}
 
     </div>
   );

@@ -5,7 +5,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Student } from "../types";
-import { FileSpreadsheet, Printer, ArrowLeft, ShieldCheck, Calendar, Award, Clock } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import dbService from "../lib/supabase";
 
 interface StudentResultProps {
@@ -175,48 +175,6 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     activeDaysAbsent = Math.floor(student.daysAbsent * 0.6);
   }
 
-  // Trigger professional print-to-PDF
-  const handlePrint = () => {
-    window.print();
-  };
-
-  // Export results to clean Unicode CSV (Excel-compatible)
-  const handleExportCSV = () => {
-    let csvContent = "\uFEFF"; // Byte Order Mark for Excel UTF-8
-    
-    // Header
-    csvContent += "CỔNG THÔNG TIN TRA CỨU ĐIỂM - KẾT QUẢ HỌC TẬP THCS\n";
-    csvContent += `Trường: ${student.school}\n`;
-    csvContent += `Lớp: ${student.className} | Năm học: ${schoolYear}\n\n`;
-    
-    // Student Info
-    csvContent += "THÔNG TIN HỌC SINH\n";
-    csvContent += `Mã HS,Họ tên,Ngày sinh,Kế quả học tập,Kết quả rèn luyện,Danh hiệu,Số ngày vắng\n`;
-    csvContent += `"${student.studentCode}","${student.fullName}","${formatDob(student.dob)}","${student.academicGrade}","${student.behaviorGrade}","${student.distinction}",${student.daysAbsent}\n\n`;
-    
-    // Grade Sheet Header
-    csvContent += "BẢNG KẾT QUẢ HỌC TẬP\n";
-    csvContent += "Môn học,Cuối kì I,Cuối kì II,Cả năm\n";
-    
-    (student.subjects || []).forEach(sub => {
-      if (sub.isEvaluatedByScore) {
-        csvContent += `"${sub.subjectName}",${sub.end1 || ""},${sub.end2 || ""},${sub.yearAvg || ""}\n`;
-      } else {
-        csvContent += `"${sub.subjectName}","${sub.semester1 || ""}","${sub.semester2 || ""}","${sub.yearAvg || ""}"\n`;
-      }
-    });
-
-    // Create download link
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `BangDiem_${student.studentCode}_${student.fullName.replace(/\s+/g, "_")}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <div className="w-full max-w-5xl mx-auto" id="student-result-container">
       {/* Main Printable report card container */}
@@ -248,14 +206,14 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         </div>
 
         {/* Outer wrapping to handle responsive scrolling if needed on very small devices, but print avoids scroll */}
-        <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366] custom-scrollbar">
+        <div className="w-full text-[#003366]">
           <table className="w-full border-collapse border-2 border-slate-700 text-[11px] sm:text-[13px] mb-2">
             <colgroup>
-              <col className="w-[35px] sm:w-[50px]" />
+              <col className="w-[35px] sm:w-[40px]" />
               <col className="w-auto" />
-              <col className="w-[45px] sm:w-[70px]" />
-              <col className="w-[45px] sm:w-[70px]" />
-              <col className="w-[45px] sm:w-[70px]" />
+              <col className="w-[50px] sm:w-[70px]" />
+              <col className="w-[50px] sm:w-[70px]" />
+              <col className="w-[55px] sm:w-[80px]" />
               <col className="w-[45px] sm:w-[80px]" />
             </colgroup>
             <tbody>
