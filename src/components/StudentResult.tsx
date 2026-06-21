@@ -225,7 +225,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         </div>
 
         {/* Outer wrapping to handle responsive scrolling if needed on very small devices, but print avoids scroll */}
-        <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366] custom-scrollbar">
+        <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366] custom-scrollbar no-scrollbar">
           <table className="w-full border-collapse border-2 border-slate-500 text-[11px] sm:text-[13px] mb-2">
             <colgroup>
               <col className="w-[30px] sm:w-[45px]" />
