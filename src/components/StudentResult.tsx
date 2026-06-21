@@ -234,10 +234,12 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         <div className="w-full overflow-x-auto overflow-y-hidden text-[#003366] custom-scrollbar no-scrollbar">
           <table className="w-full border-collapse border-2 border-slate-500 text-[11px] sm:text-[13px] mb-2">
             <colgroup>
-              <col className="w-[35px] sm:w-[50px]" />
+              <col className="w-[30px] sm:w-[45px]" />
               <col className="w-auto" />
-              <col className="w-[80px] sm:w-[120px]" />
-              <col className="w-[60px] sm:w-[100px]" />
+              <col className="w-[40px] sm:w-[60px]" />
+              <col className="w-[40px] sm:w-[60px]" />
+              <col className="w-[50px] sm:w-[70px]" />
+              <col className="w-[45px] sm:w-[80px]" />
             </colgroup>
             <tbody>
               {/* Info row 1 */}
@@ -245,7 +247,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 <td className="p-2 border border-slate-400 font-bold whitespace-nowrap text-right pr-6 sm:pr-12 bg-[#f0f9ff]" colSpan={2}>
                   Mã HS :
                 </td>
-                <td className="p-2 border border-slate-400 font-bold text-left px-4 text-[#0055A5]" colSpan={2}>
+                <td className="p-2 border border-slate-400 font-bold text-left px-4 text-[#0055A5]" colSpan={4}>
                   {student.studentCode}
                 </td>
               </tr>
@@ -254,7 +256,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 <td className="p-2 border border-slate-400 font-bold whitespace-nowrap text-right pr-6 sm:pr-12 bg-[#f8fafc]" colSpan={2}>
                   Họ và tên:
                 </td>
-                <td className="p-2 border border-slate-400 font-black text-left px-4 text-[#E53935] text-[12px] sm:text-[14px]" colSpan={1}>
+                <td className="p-2 border border-slate-400 font-black text-left px-4 text-[#E53935] text-[12px] sm:text-[14px]" colSpan={3}>
                   {student.fullName}
                 </td>
                 <td className="p-2 border border-slate-400 font-bold text-center bg-[#f0f9ff]" colSpan={1}>
@@ -268,31 +270,31 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               <tr className="font-bold text-center bg-[#0055A5] text-white">
                 <td className="p-1.5 sm:p-2 border border-blue-900">TT</td>
                 <td className="p-1.5 sm:p-2 border border-blue-900">Môn học</td>
-                <td className="p-1.5 sm:p-2 border border-blue-900 whitespace-nowrap">
-                  {term === "hk1" ? "Điểm Kỳ I" : term === "hk2" ? "Điểm Kỳ II" : "Điểm Cả Năm"}
-                </td>
+                <td className="p-1.5 sm:p-2 border border-blue-900 whitespace-nowrap text-[10px] sm:text-[12px]">Kỳ I</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900 whitespace-nowrap text-[10px] sm:text-[12px]">Kỳ II</td>
+                <td className="p-1.5 sm:p-2 border border-blue-900 whitespace-nowrap text-[10px] sm:text-[12px]">Cả Năm</td>
                 <td className="p-1.5 sm:p-2 border border-blue-900">Ghi chú</td>
               </tr>
               
               {/* Subjects */}
               {(student.subjects || []).map((sub, index) => {
-                const valToDisplay = term === "hk1" 
-                  ? (sub.isEvaluatedByScore 
-                      ? (typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : (typeof sub.end1 === "number" ? sub.end1.toFixed(1).replace(".", ",") : "")) 
-                      : sub.semester1 || "")
-                  : term === "hk2"
-                  ? (sub.isEvaluatedByScore 
-                      ? (typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : (typeof sub.end2 === "number" ? sub.end2.toFixed(1).replace(".", ",") : "")) 
-                      : sub.semester2 || "")
-                  : (sub.isEvaluatedByScore
-                      ? (typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "")
-                      : sub.yearAvg || "");
+                const valHk1 = sub.isEvaluatedByScore 
+                  ? (typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : (typeof sub.end1 === "number" ? sub.end1.toFixed(1).replace(".", ",") : "")) 
+                  : sub.semester1 || "";
+                const valHk2 = sub.isEvaluatedByScore 
+                  ? (typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : (typeof sub.end2 === "number" ? sub.end2.toFixed(1).replace(".", ",") : "")) 
+                  : sub.semester2 || "";
+                const valCaNam = sub.isEvaluatedByScore
+                  ? (typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "")
+                  : sub.yearAvg || "";
 
                 return (
                  <tr key={index} className="text-center even:bg-sky-50 hover:bg-sky-100 transition-colors text-[11px] sm:text-[14px]">
                      <td className="p-1 sm:p-2 border border-slate-400 font-medium text-slate-500">{index + 1}</td>
                      <td className="p-1 sm:p-2 border border-slate-400 text-left px-1.5 sm:px-4 font-semibold tracking-tight text-[11px] sm:text-[14px]">{sub.subjectName}</td>
-                     <td className="p-1 sm:p-2 border border-slate-400 font-black text-[#E53935] whitespace-nowrap">{valToDisplay}</td>
+                     <td className="p-1 sm:p-2 border border-slate-400 font-bold whitespace-nowrap">{valHk1}</td>
+                     <td className="p-1 sm:p-2 border border-slate-400 font-bold whitespace-nowrap">{valHk2}</td>
+                     <td className="p-1 sm:p-2 border border-slate-400 font-black text-[#E53935] whitespace-nowrap">{valCaNam}</td>
                      <td className="p-1 sm:p-2 border border-slate-400"></td>
                  </tr>
                 );
@@ -303,7 +305,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 <td className="py-2 px-1 border-2 border-slate-500 font-black text-[#0055A5] whitespace-nowrap text-center text-[11px] sm:text-[15px] uppercase italic" colSpan={2} rowSpan={2}>
                   <div className="flex flex-col items-center gap-1">
                     <span className="print-only">
-                      {term === "hk1" ? "Kết quả HK I:" : term === "hk2" ? "Kết quả HK II:" : "Kết quả CN:"}
+                      {term === "hk1" ? "Tổng kết HK I:" : term === "hk2" ? "Tổng kết HK II:" : "Tổng kết Cả Năm:"}
                     </span>
                     <div className="no-print flex flex-col gap-1 w-full px-1">
                       {(["hk1", "hk2", "canam"] as const).map((t) => (
@@ -316,18 +318,18 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                               : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
                           }`}
                         >
-                          {t === "hk1" ? "Xem Kỳ I" : t === "hk2" ? "Xem Kỳ II" : "Hiện Cả Năm"}
+                          {t === "hk1" ? "Xem HK I" : t === "hk2" ? "Xem HK II" : "Xem Cả Năm"}
                         </button>
                       ))}
                     </div>
                   </div>
                 </td>
-                <td className="p-1.5 sm:p-2 border-2 border-slate-500 text-center whitespace-normal font-bold text-xs sm:text-base" colSpan={2}>
+                <td className="p-1.5 sm:p-2 border-2 border-slate-500 text-center whitespace-normal font-bold text-xs sm:text-base" colSpan={4}>
                   Vắng: <span className="text-[#E53935]">{activeDaysAbsent}</span> (p), <span className="text-[#E53935]">0</span> (k), <span className="text-[#E53935]">0</span>(bt)
                 </td>
               </tr>
               <tr className="bg-[#f0f9ff] text-[11px] sm:text-[13px]">
-                <td className="p-1.5 sm:p-3 border-2 border-slate-500 text-center whitespace-normal font-black text-[14px] sm:text-[18px]" colSpan={2}>
+                <td className="p-1.5 sm:p-3 border-2 border-slate-500 text-center whitespace-normal font-black text-[14px] sm:text-[18px]" colSpan={4}>
                   {isExempt ? (
                     <span className="text-[#E53935] uppercase">
                       Học sinh Khuyết tật không đánh giá thuộc đối tượng miễn
