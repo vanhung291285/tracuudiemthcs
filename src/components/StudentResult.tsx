@@ -82,7 +82,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       });
 
     const currentScores = scoreSubjects.map(s => {
-      const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
+      if (term === "canam") {
+        if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
+          return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
+        }
+        return typeof s.yearAvg === "number" ? s.yearAvg : null;
+      }
+      const val = term === "hk1" ? s.semester1 : s.semester2;
       return typeof val === "number" ? val : null;
     }).filter(v => v !== null) as number[];
 
@@ -284,7 +290,9 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                   ? (typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : (typeof sub.end2 === "number" ? sub.end2.toFixed(1).replace(".", ",") : "")) 
                   : sub.semester2 || "";
                 const valCaNam = sub.isEvaluatedByScore
-                  ? (typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "")
+                  ? (typeof sub.semester1 === "number" && typeof sub.semester2 === "number"
+                    ? ((sub.semester2 * 2 + sub.semester1) / 3).toFixed(1).replace(".", ",")
+                    : (typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : ""))
                   : sub.yearAvg || "";
 
                 return (
