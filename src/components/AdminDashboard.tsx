@@ -713,11 +713,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
     const preparedSubjects = (formStudent.subjects || []).map(sub => {
       if (sub.isEvaluatedByScore) {
+        const s1 = (sub.semester1 !== "" && sub.semester1 !== undefined) ? parseFloat(String(sub.semester1)) : null;
+        const s2 = (sub.semester2 !== "" && sub.semester2 !== undefined) ? parseFloat(String(sub.semester2)) : null;
+        let yAvg = (sub.yearAvg !== "" && sub.yearAvg !== undefined) ? parseFloat(String(sub.yearAvg)) : "";
+        
+        if (s1 !== null && s2 !== null && !isNaN(s1) && !isNaN(s2)) {
+          yAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
+        }
+
         return {
           ...sub,
-          semester1: sub.semester1 === "" || sub.semester1 === undefined ? "" : (parseFloat(String(sub.semester1)) || 0),
-          semester2: sub.semester2 === "" || sub.semester2 === undefined ? "" : (parseFloat(String(sub.semester2)) || 0),
-          yearAvg: sub.yearAvg === "" || sub.yearAvg === undefined ? "" : (parseFloat(String(sub.yearAvg)) || 0),
+          semester1: s1 === null || isNaN(s1) ? "" : s1,
+          semester2: s2 === null || isNaN(s2) ? "" : s2,
+          yearAvg: yAvg !== "" && !isNaN(Number(yAvg)) ? Number(yAvg) : yAvg,
         };
       }
       return sub;
@@ -774,63 +782,46 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const saveEditedGrade = async (student: Student) => {
     if (editingStudentCode && editingSubjectId) {
       const updatedSubjects = student.subjects.map(sub => {
+        let updatedSub = { ...sub };
         if (sub.subjectId === editingSubjectId) {
           if (sub.isEvaluatedByScore) {
-            const numVal = parseFloat(tempGradeValue);
+            const numVal = parseFloat(tempGradeValue.replace(",", "."));
             if (isNaN(numVal) || numVal < 0 || numVal > 10) {
               alert("Điểm số phải chạy từ 0 đến 10.");
               return sub;
             }
-            
-            const updatedSub = { ...sub };
-            if (gradesTerm === "hk1") {
-              updatedSub.semester1 = numVal;
-            } else if (gradesTerm === "hk2") {
-              updatedSub.semester2 = numVal;
-            } else {
-              updatedSub.yearAvg = numVal;
-            }
-
-            // Recalculate yearAvg ONLY if both semester1 and semester2 are available
-            const s1 = typeof updatedSub.semester1 === "number" ? updatedSub.semester1 : null;
-            const s2 = typeof updatedSub.semester2 === "number" ? updatedSub.semester2 : null;
-            if (s1 !== null && s2 !== null) {
-              updatedSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
-            }
-            // No auto-fill yearAvg with only one semester
-
-            return updatedSub;
+            if (gradesTerm === "hk1") updatedSub.semester1 = numVal;
+            else if (gradesTerm === "hk2") updatedSub.semester2 = numVal;
+            else updatedSub.yearAvg = numVal;
           } else {
             let cleanVal = "";
             const t = tempGradeValue.trim().toLowerCase();
-            if (t === "đạt" || t === "dat" || t === "đ" || t === "d") {
-              cleanVal = "Đạt";
-            } else if (t === "chưa đạt" || t === "cd" || t.includes("chưa")) {
-              cleanVal = "Chưa đạt";
-            }
+            if (t === "đạt" || t === "dat" || t === "đ" || t === "d") cleanVal = "Đạt";
+            else if (t === "chưa đạt" || t === "cd" || t.includes("chưa")) cleanVal = "Chưa đạt";
             
-            const updatedSub = { ...sub };
-            if (gradesTerm === "hk1") {
-              updatedSub.semester1 = cleanVal;
-            } else if (gradesTerm === "hk2") {
-              updatedSub.semester2 = cleanVal;
-            } else {
-              updatedSub.yearAvg = cleanVal;
-            }
-
-            // Recalculate yearAvg for comment
-            const s1 = updatedSub.semester1;
-            const s2 = updatedSub.semester2;
-            if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
-              updatedSub.yearAvg = "Chưa đạt";
-            } else if (s1 === "Đạt" && s2 === "Đạt") {
-              updatedSub.yearAvg = "Đạt";
-            }
-
-            return updatedSub;
+            if (gradesTerm === "hk1") updatedSub.semester1 = cleanVal;
+            else if (gradesTerm === "hk2") updatedSub.semester2 = cleanVal;
+            else updatedSub.yearAvg = cleanVal;
           }
         }
-        return sub;
+
+        // Re-calculate / Verify Annual Average for ALL subjects of this student whenever any grade is saved
+        if (updatedSub.isEvaluatedByScore) {
+          const s1 = typeof updatedSub.semester1 === "number" ? updatedSub.semester1 : null;
+          const s2 = typeof updatedSub.semester2 === "number" ? updatedSub.semester2 : null;
+          if (s1 !== null && s2 !== null) {
+            updatedSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
+          }
+        } else {
+          const s1 = updatedSub.semester1;
+          const s2 = updatedSub.semester2;
+          if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
+            updatedSub.yearAvg = "Chưa đạt";
+          } else if (s1 === "Đạt" && s2 === "Đạt") {
+            updatedSub.yearAvg = "Đạt";
+          }
+        }
+        return updatedSub;
       });
 
       // Compute overall average based on Year averages to maintain correct persistent annual state
@@ -2325,8 +2316,20 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                               {/* Score based subjects column rendering */}
                               {["toan", "ly_dia", "khtn", "tin", "van", "anh", "gdcd", "cong_nghe"].map(subjId => {
                                 const sub = getSubjectVal(subjId);
-                                const v = sub ? (gradesTerm === "hk1" ? sub.semester1 : gradesTerm === "hk2" ? sub.semester2 : sub.yearAvg) : "-";
-                                const valToDisplay = v !== undefined && v !== null ? v : "-";
+                                let v: string | number = "-";
+                                if (sub) {
+                                  if (gradesTerm === "hk1") v = sub.semester1 ?? "-";
+                                  else if (gradesTerm === "hk2") v = sub.semester2 ?? "-";
+                                  else {
+                                    // canam
+                                    if (sub.isEvaluatedByScore && typeof sub.semester1 === "number" && typeof sub.semester2 === "number") {
+                                      v = parseFloat(((sub.semester2 * 2 + sub.semester1) / 3).toFixed(1));
+                                    } else {
+                                      v = sub.yearAvg ?? "-";
+                                    }
+                                  }
+                                }
+                                const valToDisplay = v !== undefined && v !== null && v !== "" ? v : "-";
                                 const isEditing = editingStudentCode === student.studentCode && editingSubjectId === subjId;
                                 
                                 return (
