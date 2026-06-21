@@ -9,7 +9,7 @@ import dbService from "../lib/supabase";
 import * as XLSX from "xlsx";
 import { 
   Users, Edit, Trash2, Plus, Upload, BarChart3, Database, LogOut, Check, X,
-  RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet, UserX
+  RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet, UserX, SortAsc
 } from "lucide-react";
 
 interface AdminDashboardProps {
@@ -29,6 +29,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedGrade, setSelectedGrade] = useState("all");
+
+  const handleSortStudentsABC = () => {
+    const sorted = [...students].sort((a, b) => {
+      // Primary sort by Class Name
+      const classCompare = (a.className || "").localeCompare(b.className || "", "vi");
+      if (classCompare !== 0) return classCompare;
+      
+      // Secondary sort by Full Name
+      return a.fullName.localeCompare(b.fullName, "vi");
+    });
+    setStudents(sorted);
+    alert("Đã sắp xếp danh sách học sinh theo Lớp và thứ tự ABC thành công.");
+  };
 
   // Classes config state
   const [classes, setClasses] = useState<SchoolClass[]>(() => {
@@ -1684,7 +1697,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     const matchesGrade = selectedGrade === "all" || student.gradeLevel === selectedGrade;
 
     return matchesSearch && matchesClass && matchesGrade;
-  }).sort((a, b) => a.fullName.localeCompare(b.fullName, "vi"));
+  }).sort((a, b) => {
+    // Primary sort by Class Name
+    const classCompare = (a.className || "").localeCompare(b.className || "", "vi");
+    if (classCompare !== 0) return classCompare;
+    
+    // Secondary sort by Full Name
+    return a.fullName.localeCompare(b.fullName, "vi");
+  });
 
   const uniqueClasses = Array.from(new Set(students.map(s => s.className)));
 
@@ -1938,6 +1958,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       <UserX className="w-4 h-4" /> Xóa toàn bộ học sinh lớp {selectedClass}
                     </button>
                   )}
+
+                  <button
+                    onClick={handleSortStudentsABC}
+                    className="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    <SortAsc className="w-4 h-4" /> Sắp xếp ABC
+                  </button>
                 </div>
 
                 {/* Filter and Search Bar */}
