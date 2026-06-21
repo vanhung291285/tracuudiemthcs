@@ -994,10 +994,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           }
         });
 
-        const academicIdx = headerParts.findIndex(p => p.includes("kết quả học tập") || p.includes("học lực") || p.includes("loại học tập") || p.includes("kq học tập") || p.includes("kqht") || p === "học tập" || p.includes("h.tập"));
+        const academicIdx = headerParts.findIndex(p => 
+          p.includes("kết quả học tập") || p.includes("học lực") || p.includes("loại học tập") || 
+          p.includes("kq học tập") || p.includes("kqht") || p === "học tập" || p.includes("h.tập") ||
+          p.includes("xếp loại") || p.includes("xloại")
+        );
         if (academicIdx !== -1) academicCol = academicIdx;
 
-        const behaviorIdx = headerParts.findIndex(p => p.includes("kết quả rèn luyện") || p.includes("hạnh kiểm") || p.includes("loại rèn luyện") || p.includes("kq rèn luyện") || p.includes("kqrl") || p === "rèn luyện" || p.includes("r.luyện"));
+        const behaviorIdx = headerParts.findIndex(p => 
+          p.includes("kết quả rèn luyện") || p.includes("hạnh kiểm") || p.includes("loại rèn luyện") || 
+          p.includes("kq rèn luyện") || p.includes("kqrl") || p === "rèn luyện" || p.includes("r.luyện") ||
+          p.includes("đạo đức") || p.includes("hạnh kiểm")
+        );
         if (behaviorIdx !== -1) behaviorCol = behaviorIdx;
 
         const summerIdx = headerParts.findIndex(p => p.includes("sau hè") || p.includes("hè") || p.includes("sau he"));
@@ -1151,8 +1159,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           const parseAcademic = (val: string): "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "" => {
             const clean = val?.trim()?.toLowerCase() || "";
             if (!clean || clean === "-" || clean === "—" || clean === "_") return "";
-            if (clean.includes("tốt") || clean === "t") return "Tốt";
+            if (clean.includes("tốt") || clean.includes("giỏi") || clean === "t" || clean === "g") return "Tốt";
             if (clean.includes("khá") || clean === "k") return "Khá";
+            if (clean.includes("trung bình") || clean === "tb" || clean.includes("đạt")) {
+               if (clean.includes("chưa đạt")) return "Chưa đạt";
+               return "Đạt";
+            }
             if (clean.includes("chưa đạt") || clean === "cd" || clean === "cđ" || clean.includes("chưa")) return "Chưa đạt";
             if (clean.includes("đạt") || clean === "đ" || clean === "d") return "Đạt";
             // Check for explicit "Chưa" or failing indicators if no other match
@@ -1165,6 +1177,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             if (!clean || clean === "-" || clean === "—" || clean === "_") return "";
             if (clean.includes("tốt") || clean === "t") return "Tốt";
             if (clean.includes("khá") || clean === "k") return "Khá";
+            if (clean.includes("trung bình") || clean === "tb" || clean.includes("đạt")) {
+               if (clean.includes("chưa đạt")) return "Chưa đạt";
+               return "Đạt";
+            }
             if (clean.includes("chưa đạt") || clean === "cd" || clean === "cđ" || clean.includes("chưa")) return "Chưa đạt";
             if (clean.includes("đạt") || clean === "đ" || clean === "d") return "Đạt";
             return "";
@@ -1318,40 +1334,40 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           }
 
           if (importTerm === "hk1") {
-            const ac = academicCol < parts.length ? parseAcademic(parts[academicCol]) : "";
+            const ac = (academicCol !== -1 && academicCol < parts.length) ? parseAcademic(parts[academicCol]) : "";
             if (ac) academicGrade = ac;
             
-            const be = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : "";
+            const be = (behaviorCol !== -1 && behaviorCol < parts.length) ? parseBehavior(parts[behaviorCol]) : "";
             if (be) behaviorGrade = be;
             
-            daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
-            daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
-            notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel HK1") : notes;
+            daysAbsent = (absentPCol !== -1 && absentPCol < parts.length) ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
+            daysAbsentUnexcused = (absentKCol !== -1 && absentKCol < parts.length) ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            notes = (notesCol !== -1 && notesCol < parts.length) ? (parts[notesCol]?.trim() || "Nhập từ Excel HK1") : notes;
           } else if (importTerm === "hk2") {
-            const ac = academicCol < parts.length ? parseAcademic(parts[academicCol]) : "";
+            const ac = (academicCol !== -1 && academicCol < parts.length) ? parseAcademic(parts[academicCol]) : "";
             if (ac) academicGrade = ac;
             
-            const be = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : "";
+            const be = (behaviorCol !== -1 && behaviorCol < parts.length) ? parseBehavior(parts[behaviorCol]) : "";
             if (be) behaviorGrade = be;
             
-            daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
-            daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
-            notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel HK2") : notes;
+            daysAbsent = (absentPCol !== -1 && absentPCol < parts.length) ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
+            daysAbsentUnexcused = (absentKCol !== -1 && absentKCol < parts.length) ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            notes = (notesCol !== -1 && notesCol < parts.length) ? (parts[notesCol]?.trim() || "Nhập từ Excel HK2") : notes;
           } else if (importTerm === "canam") {
-            const ac = academicCol < parts.length ? parseAcademic(parts[academicCol]) : "";
+            const ac = (academicCol !== -1 && academicCol < parts.length) ? parseAcademic(parts[academicCol]) : "";
             if (ac) academicGrade = ac;
             
-            const be = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : "";
+            const be = (behaviorCol !== -1 && behaviorCol < parts.length) ? parseBehavior(parts[behaviorCol]) : "";
             if (be) behaviorGrade = be;
             
             behaviorGradeSummer = (behaviorSummerCol !== -1 && behaviorSummerCol < parts.length) ? (parseBehavior(parts[behaviorSummerCol]) as any || behaviorGradeSummer) : behaviorGradeSummer;
-            daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
-            daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            daysAbsent = (absentPCol !== -1 && absentPCol < parts.length) ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
+            daysAbsentUnexcused = (absentKCol !== -1 && absentKCol < parts.length) ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
             
             const di = (distinctionCol !== -1 && distinctionCol < parts.length) ? parseDistinction(parts[distinctionCol]) : "";
             if (di) distinction = di;
             
-            notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel Cả năm") : notes;
+            notes = (notesCol !== -1 && notesCol < parts.length) ? (parts[notesCol]?.trim() || "Nhập từ Excel Cả năm") : notes;
           }
 
           // Finalizing overall summary if scores were updated but summary columns were empty
@@ -1406,13 +1422,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
             const rawDistinctionVal = (distinctionCol !== -1 && distinctionCol < parts.length) ? (parts[distinctionCol] || "") : "";
             if (!rawDistinctionVal.trim() && (!distinction || distinction === "Không")) {
-              distinction = (academicGrade === "Tốt" && (behaviorGrade === "Tốt" || behaviorGrade === "Khá")) 
-                ? "Học sinh Xuất sắc" 
-                : (academicGrade === "Tốt" || academicGrade === "Khá") && behaviorGrade === "Tốt"
-                  ? "Học sinh Giỏi" 
-                  : (academicGrade === "Khá" && behaviorGrade === "Khá")
-                    ? "Học sinh Tiêu biểu"
-                    : "Không";
+              const num9Plus = mockSubjects.filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number" && (s.yearAvg as number) >= 9.0).length;
+
+              if (academicGrade === "Tốt" && behaviorGrade === "Tốt") {
+                distinction = num9Plus >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
+              } else if (academicGrade === "Khá" && behaviorGrade === "Tốt") {
+                distinction = "Học sinh Tiêu biểu";
+              } else {
+                distinction = "Không";
+              }
             }
           }
 
