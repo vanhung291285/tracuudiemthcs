@@ -92,18 +92,18 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       return typeof val === "number" ? val : null;
     }).filter(v => v !== null) as number[];
 
+    const countAbove9 = currentScores.filter(v => v >= 9.0).length;
     const countAbove8 = currentScores.filter(v => v >= 8.0).length;
     const countAbove65 = currentScores.filter(v => v >= 6.5).length;
-    const allAbove65 = currentScores.every(v => v >= 6.5);
+    const countAbove50 = currentScores.filter(v => v >= 5.0).length;
     const allAbove50 = currentScores.every(v => v >= 5.0);
     const allAbove35 = currentScores.every(v => v >= 3.5);
-    const countBelow50 = currentScores.filter(v => v < 5.0).length;
 
-    if (nonScorePassed && allAbove65 && countAbove8 >= 6) {
+    if (nonScorePassed && allAbove50 && countAbove8 >= 6) {
       activeAcademicGrade = "Tốt";
-    } else if (nonScorePassed && allAbove50 && countAbove65 >= 6) {
+    } else if (nonScorePassed && allAbove35 && countAbove65 >= 6) {
       activeAcademicGrade = "Khá";
-    } else if (nonScorePassed && allAbove35 && countBelow50 <= 1) {
+    } else if (nonScorePassed && countAbove50 >= 6 && allAbove35) {
       activeAcademicGrade = "Đạt";
     } else {
       activeAcademicGrade = "Chưa đạt";
@@ -131,7 +131,14 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   } else if (isExempt) {
     activeDistinction = "KHÔNG";
   } else if (term === "canam") {
-    activeDistinction = student.distinction && student.distinction !== "Không" ? student.distinction.toUpperCase() : "KHÔNG";
+    let d = student.distinction && student.distinction !== "Không" ? student.distinction : "KHÔNG";
+    // Correction: If calculated grade doesn't support the current distinction, downgrade it for visual consistency
+    if (activeAcademicGrade === "Khá" && (d === "Học sinh Giỏi" || d === "Học sinh Xuất sắc")) {
+      d = "Học sinh Tiêu biểu";
+    } else if ((activeAcademicGrade === "Đạt" || activeAcademicGrade === "Chưa đạt") && d !== "KHÔNG") {
+      d = "KHÔNG";
+    }
+    activeDistinction = d.toUpperCase();
   } else {
     if (activeAcademicGrade === "Tốt" && activeBehaviorGrade === "Tốt") {
       activeDistinction = "HỌC SINH GIỎI";
