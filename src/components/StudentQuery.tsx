@@ -55,6 +55,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const [topStudents, setTopStudents] = useState<Student[]>([]);
   const [multipleMatches, setMultipleMatches] = useState<Student[]>([]);
+  const [studentCount, setStudentCount] = useState<number>(0);
   
   // Visitor statistics state
   const [visitorOverview, setVisitorOverview] = useState({ online: 0, today: 0, thisMonth: 0, total: 0 });
@@ -70,6 +71,15 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         }
       } catch (err) {
         console.warn("Failed to load visitor stats:", err);
+      }
+    };
+
+    const fetchStudentCount = async () => {
+      try {
+        const count = await dbService.getStudentCount();
+        if (active) setStudentCount(count);
+      } catch (err) {
+        console.warn("Failed to fetch student count:", err);
       }
     };
     
@@ -114,6 +124,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     fetchNews();
     fetchTopStudents();
     loadVisitorStats();
+    fetchStudentCount();
     dbService.recordVisit();
     return () => {
       active = false;
@@ -571,7 +582,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   </div>
                 </div>
                 <div>
-                  <span className="text-2xl font-black text-[#0055A5] tracking-tight block">18,450+</span>
+                  <span className="text-2xl font-black text-[#0055A5] tracking-tight block">{studentCount.toLocaleString()}+</span>
                   <span className="text-[10px] font-bold text-slate-500 leading-tight">Hồ sơ học bạ điện tử trực tuyến</span>
                 </div>
               </div>
