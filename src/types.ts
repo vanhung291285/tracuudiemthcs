@@ -31,8 +31,13 @@ export interface Student {
   academicYear: string; // e.g. "2025-2026"
   
   // Overall results
-  academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt"; // Kết quả học tập
+  academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt"; // Kết quả học tập (Final/Year)
+  academicGradeHK1?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | ""; 
+  academicGradeHK2?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "";
+  
   behaviorGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt"; // Kết quả rèn luyện
+  behaviorGradeHK1?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "";
+  behaviorGradeHK2?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "";
   behaviorGradeSummer?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "Không"; // KQRL sau hè
   daysAbsent: number; // Buổi nghỉ
   daysAbsentUnexcused: number; // Trong đó không phép
