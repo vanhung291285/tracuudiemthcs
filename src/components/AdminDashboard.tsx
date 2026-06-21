@@ -1300,8 +1300,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           let distinction: any = existing?.distinction || "Không";
           let notes = existing?.notes || "";
 
-          const academicVal = academicCol < parts.length ? parts[academicCol] : "";
-          const behaviorVal = behaviorCol < parts.length ? parts[behaviorCol] : "";
+          const academicVal = (academicCol !== -1 && academicCol < parts.length) ? (parts[academicCol] || "") : "";
+          const behaviorVal = (behaviorCol !== -1 && behaviorCol < parts.length) ? (parts[behaviorCol] || "") : "";
 
           if (academicVal) {
             const cleanAc = academicVal.trim().toLowerCase();
@@ -1378,9 +1378,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                // Stay as "Không"
             }
           } else {
-            // Only auto-recalculate if the file didn't provide an explicit grade OR we are in Year-end mode
-            // Added Check: Only auto-calculate Year-end summary during HK2 or CANAM import to avoid HK1 jumping
-            if ((!academicVal || importTerm === "canam") && validScoreSubjects.length > 0 && importTerm !== "hk1") {
+            // Only auto-recalculate if the file didn't provide an explicit grade
+            // Trust the Excel file if academicVal is present
+            if (!academicVal.trim() && validScoreSubjects.length > 0 && importTerm !== "hk1") {
                const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
                // We only proceed if most subjects are filled to avoid premature grading
                if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
@@ -1404,12 +1404,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                }
             }
 
-            if (importTerm === "canam" || (!distinction || distinction === "Không")) {
+            const rawDistinctionVal = (distinctionCol !== -1 && distinctionCol < parts.length) ? (parts[distinctionCol] || "") : "";
+            if (!rawDistinctionVal.trim() && (!distinction || distinction === "Không")) {
               distinction = (academicGrade === "Tốt" && (behaviorGrade === "Tốt" || behaviorGrade === "Khá")) 
-                ? "Học sinh Giỏi" 
-                : (academicGrade === "Khá" && behaviorGrade === "Tốt")
-                  ? "Học sinh Tiêu biểu" 
-                  : "Không";
+                ? "Học sinh Xuất sắc" 
+                : (academicGrade === "Tốt" || academicGrade === "Khá") && behaviorGrade === "Tốt"
+                  ? "Học sinh Giỏi" 
+                  : (academicGrade === "Khá" && behaviorGrade === "Khá")
+                    ? "Học sinh Tiêu biểu"
+                    : "Không";
             }
           }
 
