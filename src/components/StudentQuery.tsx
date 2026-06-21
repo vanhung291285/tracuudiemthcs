@@ -70,7 +70,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           setVisitorOverview(overview);
         }
       } catch (err) {
-        console.warn("Failed to load visitor stats:", err);
+        // Silent skip visitor stats if failed (often just table not created yet)
       }
     };
 
@@ -79,7 +79,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         const count = await dbService.getStudentCount();
         if (active) setStudentCount(count);
       } catch (err) {
-        console.warn("Failed to fetch student count:", err);
+        // Silent skip
       }
     };
     
@@ -93,7 +93,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           setNewsSource(result.source === "scraped" ? "suoilu.db.edu.vn (Trực tuyến)" : "Hệ thống");
         }
       } catch (err) {
-        console.error("Error loading automatic bulletin feed:", err);
+        // Reduced news loading log severity
+        console.log("Automatic news feed loading deferred:", (err as any).message);
       } finally {
         if (active) setNewsLoading(false);
       }
@@ -598,39 +599,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
             </div>
 
-            {/* Redesigned Visitor Statistics Section (Moved and Condensed) */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200 shadow-lg overflow-hidden relative z-10 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
-              <div className="bg-[#2E7D32]/90 px-4 py-3 flex items-center justify-between">
-                <h3 className="text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2">
-                  <RefreshCw className="w-3.5 h-3.5" /> THỐNG KÊ TRUY CẬP
-                </h3>
-                <div className="flex items-center gap-1">
-                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                   <span className="text-[9px] text-emerald-100 font-bold uppercase tracking-tighter">Live</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 divide-x divide-slate-100">
-                <div className="p-3 text-center">
-                  <div className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Online</div>
-                  <div className="text-lg font-black text-[#2E7D32]">{visitorOverview.online}</div>
-                </div>
-                <div className="p-3 text-center">
-                  <div className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Hôm nay</div>
-                  <div className="text-lg font-black text-slate-800">{visitorOverview.today.toLocaleString()}</div>
-                </div>
-              </div>
-              <div className="bg-slate-50/50 p-2.5 border-t border-slate-100 flex items-center justify-center gap-6">
-                 <div className="flex items-center gap-1.5">
-                   <span className="text-[8px] font-black text-slate-400 uppercase">Tháng:</span>
-                   <span className="text-[11px] font-black text-slate-700">{visitorOverview.thisMonth.toLocaleString()}</span>
-                 </div>
-                 <div className="flex items-center gap-1.5">
-                   <span className="text-[8px] font-black text-slate-400 uppercase">Tổng:</span>
-                   <span className="text-[11px] font-black text-slate-700">{visitorOverview.total.toLocaleString()}</span>
-                 </div>
-              </div>
-            </div>
           </div>
 
           {/* RIGHT SIDE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
@@ -879,16 +847,54 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       </main>
 
       {/* Footer Vietnamese Government Portal Layout */}
-      <footer className="bg-slate-100 border-t border-slate-200 py-6 text-center text-xs text-slate-500 text-slate-600 font-medium font-serif">
-        <div className="max-w-6xl mx-auto px-4 space-y-2">
-          <p className="font-bold text-slate-700 uppercase">
-            {footerTitle}
-          </p>
-          <p className="max-w-2xl mx-auto leading-relaxed text-[11px] text-slate-400">
-            {footerDesc}
-          </p>
-          <div className="flex justify-center gap-4 text-[10px] text-slate-400 pt-2 border-t border-slate-200 max-w-sm mx-auto">
-            <span>{footerCopy}</span>
+      <footer className="bg-white border-t border-slate-200 pt-8 pb-10 text-center no-print">
+        <div className="max-w-6xl mx-auto px-4">
+          
+          {/* Visitor Statistics in Footer */}
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mb-8 bg-slate-50 py-4 px-6 rounded-2xl border border-slate-100 shadow-sm max-w-4xl mx-auto">
+            <div className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-emerald-600" />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Thống kê:</span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Đang online:</span>
+              <span className="text-sm font-black text-emerald-700">{visitorOverview.online}</span>
+            </div>
+
+            <div className="h-4 w-px bg-slate-200 hidden md:block" />
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Hôm nay:</span>
+              <span className="text-sm font-black text-slate-800">{visitorOverview.today.toLocaleString()}</span>
+            </div>
+
+            <div className="h-4 w-px bg-slate-200 hidden md:block" />
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Tháng này:</span>
+              <span className="text-sm font-black text-slate-800">{visitorOverview.thisMonth.toLocaleString()}</span>
+            </div>
+
+            <div className="h-4 w-px bg-slate-200 hidden md:block" />
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase">Tổng lượt xem:</span>
+              <span className="text-sm font-black text-slate-800">{visitorOverview.total.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="space-y-3 font-serif">
+            <p className="font-bold text-slate-800 uppercase text-xs md:text-sm tracking-wide">
+              {footerTitle}
+            </p>
+            <p className="max-w-3xl mx-auto leading-relaxed text-[10px] md:text-[11px] text-slate-500 px-4">
+              {footerDesc}
+            </p>
+            <div className="flex flex-col items-center gap-2 pt-4 border-t border-slate-100 max-w-sm mx-auto">
+              <span className="text-[10px] font-bold text-slate-400 italic font-sans">{footerCopy}</span>
+            </div>
           </div>
         </div>
       </footer>
