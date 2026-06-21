@@ -163,8 +163,6 @@ async function fetchSuoiluRSS(): Promise<any[]> {
   } catch (err) {
     if ((err as any).name === 'AbortError') {
       console.log("RSS scraper timed out - Suoi Lu website might be slow or offline.");
-    } else {
-      console.log("RSS feed parsing fallback info:", (err as any).message);
     }
     return [];
   }
@@ -250,8 +248,6 @@ async function fetchSuoiluNews(): Promise<any[]> {
   } catch (error) {
     if ((error as any).name === 'AbortError') {
       console.log("Main HTML scraper timed out - trying RSS fallback.");
-    } else {
-      console.log("HTML scraper info:", (error as any).message);
     }
   }
 
