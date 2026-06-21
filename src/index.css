@@ -16,6 +16,7 @@ body {
   font-family: "Times New Roman", "Times", "Georgia", serif;
   background-color: #f0f9ff;
   color: #1E293B;
+  overflow-x: hidden;
 }
 
 /* Decorative background for homepage */
@@ -27,6 +28,15 @@ body {
     radial-gradient(circle at 100% 100%, rgba(229, 57, 53, 0.05) 0%, transparent 50%);
   position: relative;
   overflow-x: hidden;
+}
+
+/* Apply no-scrollbar to common scroll containers */
+html, body, .decorative-page-bg, #app-root {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar, .decorative-page-bg::-webkit-scrollbar, #app-root::-webkit-scrollbar {
+  display: none;
 }
 
 .decorative-page-bg::before {
@@ -127,4 +137,13 @@ body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+}
+
+/* Custom scrollbar utility to hide it while keeping scrollability */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
