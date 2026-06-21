@@ -102,15 +102,30 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     const fetchTopStudents = async () => {
       try {
         const all = await dbService.getAllStudents();
-        const targetStudents = all.filter(s => 
-          s.distinction === "Học sinh Xuất sắc" || 
-          s.distinction === "Học sinh Giỏi"
-        );
+        const targetStudents = all.filter(s => {
+          // Robust score check: counts subjects with actual numeric or valid string evaluations
+          const scoredCount = (s.subjects || []).filter(sub => {
+            const hasS1 = (typeof sub.semester1 === "number") || (sub.semester1 === "Đạt" || sub.semester1 === "Chưa đạt");
+            const hasS2 = (typeof sub.semester2 === "number") || (sub.semester2 === "Đạt" || sub.semester2 === "Chưa đạt");
+            const hasAvg = (typeof sub.yearAvg === "number") || (sub.yearAvg === "Đạt" || sub.yearAvg === "Chưa đạt");
+            return hasS1 || hasS2 || hasAvg;
+          }).length;
+          
+          const isExempt = scoredCount === 0 && (s.notes?.toLowerCase().includes("khuyết tật") || s.notes?.toLowerCase().includes("miễn"));
+          const hasNoScoresAtAll = scoredCount === 0;
+
+          if (isExempt || hasNoScoresAtAll) return false;
+
+          return s.distinction === "Học sinh Xuất sắc" || 
+                 s.distinction === "Học sinh Giỏi" ||
+                 s.distinction === "Học sinh Tiêu biểu";
+        });
         
         targetStudents.sort((a, b) => {
-          const rankA = a.distinction === "Học sinh Xuất sắc" ? 1 : 2;
-          const rankB = b.distinction === "Học sinh Xuất sắc" ? 1 : 2;
-          return rankA - rankB;
+          const rankA = a.distinction === "Học sinh Xuất sắc" ? 1 : a.distinction === "Học sinh Giỏi" ? 2 : 3;
+          const rankB = b.distinction === "Học sinh Xuất sắc" ? 1 : b.distinction === "Học sinh Giỏi" ? 2 : 3;
+          if (rankA !== rankB) return rankA - rankB;
+          return a.fullName.localeCompare(b.fullName, "vi");
         });
 
         if (active) {
