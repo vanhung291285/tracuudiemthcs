@@ -539,83 +539,96 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Board of Honor (Bảng Vàng) panel */}
-            <div className="w-full bg-[#FFF9C4]/40 border-2 border-amber-400 text-slate-900 p-5 rounded-xl shadow-lg relative z-10 animate-fadeIn overflow-hidden" style={{ animationDelay: '0.1s' }}>
-              {/* Laurel Wreath / Golden Board Decorations */}
-              <div className="absolute -top-6 -right-6 w-24 h-24 text-amber-500/10 pointer-events-none transform rotate-12">
-                <Award className="w-full h-full" />
-              </div>
-              <div className="absolute -bottom-6 -left-6 w-20 h-20 text-amber-500/10 pointer-events-none transform -rotate-12">
-                <Award className="w-full h-full" />
-              </div>
+            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-6 rounded-2xl shadow-[0_10px_30px_-15px_rgba(251,191,36,0.3)] relative z-10 animate-fadeIn overflow-hidden" style={{ animationDelay: '0.1s' }}>
+              {/* Corner Ornaments */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl" />
+              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl" />
 
-              <div className="flex flex-col items-center mb-4 pt-1">
-                <div className="relative mb-2">
-                   <div className="absolute -left-8 top-1/2 -translate-y-1/2 flex items-center">
-                     <Award className="w-6 h-6 text-amber-500 transform scale-x-[-1]" />
+              <div className="flex flex-col items-center mb-6 pt-2">
+                <div className="relative mb-3">
+                   {/* Laurel Wreath Simulation using Icons */}
+                   <div className="absolute -left-12 top-0 h-full flex items-center justify-center opacity-80 scale-125">
+                     <div className="relative">
+                        <Award className="w-8 h-8 text-amber-500 transform -rotate-[30deg]" />
+                        <Award className="w-5 h-5 text-amber-400 absolute -bottom-1 -right-1 transform rotate-[15deg]" />
+                     </div>
                    </div>
-                   <h3 className="text-sm font-black text-amber-800 uppercase tracking-widest text-center px-2">
-                     BẢNG VÀNG VINH DANH
-                   </h3>
-                   <div className="absolute -right-8 top-1/2 -translate-y-1/2 flex items-center">
-                     <Award className="w-6 h-6 text-amber-500" />
+                   
+                   <div className="bg-amber-100/50 px-6 py-2 rounded-lg border border-amber-200/50 backdrop-blur-sm">
+                     <h3 className="text-[15px] font-black text-amber-900 uppercase tracking-[0.2em] text-center leading-none">
+                       BẢNG VÀNG
+                     </h3>
+                     <div className="text-[9px] font-black text-amber-700/60 uppercase tracking-[0.3em] text-center mt-1.5">
+                       VINH DANH
+                     </div>
+                   </div>
+
+                   <div className="absolute -right-12 top-0 h-full flex items-center justify-center opacity-80 scale-125">
+                     <div className="relative">
+                        <Award className="w-8 h-8 text-amber-500 transform rotate-[30deg] scale-x-[-1]" />
+                        <Award className="w-5 h-5 text-amber-400 absolute -bottom-1 -left-1 transform -rotate-[15deg] scale-x-[-1]" />
+                     </div>
                    </div>
                 </div>
-                <div className="h-0.5 w-16 bg-amber-400 rounded-full" />
+                <div className="h-0.5 w-12 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full" />
               </div>
 
-              <p className="mb-4 leading-relaxed text-amber-900/70 font-black uppercase text-[9px] tracking-widest text-center">
-                Tôn vinh học sinh có thành tích Giỏi & Xuất sắc
+              <p className="mb-5 leading-relaxed text-amber-800/60 font-black uppercase text-[10px] tracking-widest text-center px-4">
+                Tôn vinh gương mặt tiêu biểu có thành tích học tập xuất sắc
               </p>
               
-              <div className="space-y-2.5 max-h-[350px] overflow-y-auto pr-1 no-scrollbar pb-2">
+              <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1 no-scrollbar pb-2">
                 {topStudents.length > 0 ? topStudents.map((student, idx) => {
                   let badgeColors = "bg-blue-50 text-blue-800 border-blue-200";
-                  let bgHover = "hover:bg-amber-100/50";
+                  let bgHover = "hover:bg-[#FFFDE7]";
                   let label = "Học sinh Giỏi";
-                  let rowBorder = "border-amber-200";
                   let icon = "🎖️";
+                  let borderColor = "border-amber-200/60";
 
                   if (student.distinction === "Học sinh Xuất sắc") {
-                    badgeColors = "bg-amber-100 text-amber-800 border-amber-300";
+                    badgeColors = "bg-amber-100 text-amber-900 border-amber-300 shadow-sm";
                     label = "Học sinh Xuất sắc";
-                    icon = "👑";
+                    icon = "👑"; 
+                    borderColor = "border-amber-300";
                   }
                   
                   return (
                     <div
                       key={student.id || idx}
-                      className={`w-full p-3.5 bg-white/70 ${bgHover} transition border-2 ${rowBorder} rounded-lg text-left shadow-sm flex justify-between items-center group animate-fadeIn`}
+                      className={`w-full p-4 bg-white/60 ${bgHover} transition border ${borderColor} rounded-xl text-left shadow-sm flex justify-between items-center group animate-fadeIn`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="text-lg grayscale-0 group-hover:scale-110 transition-transform">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-xl grayscale-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-amber-100">
                           {icon}
                         </div>
                         <div>
-                          <div className="font-black text-amber-950 text-[13px] uppercase leading-none">{student.fullName}</div>
-                          <div className="text-[10px] text-amber-800/60 font-bold mt-1.5 flex items-center gap-1.5">
-                            <Users className="w-3 h-3" />
+                          <div className="font-extrabold text-amber-950 text-[14px] uppercase leading-tight tracking-tight">{student.fullName}</div>
+                          <div className="text-[10px] text-amber-800/50 font-bold mt-1.5 flex items-center gap-1.5">
+                            <Users className="w-3 h-3 opacity-70" />
                             Lớp: {student.className}
                           </div>
                         </div>
                       </div>
-                      <span className={`text-[8px] ${badgeColors} border px-2.5 py-1 rounded-full font-black uppercase tracking-tighter`}>{label}</span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`text-[8px] ${badgeColors} border px-3 py-1 rounded-full font-black uppercase tracking-tight`}>{label}</span>
+                      </div>
                     </div>
                   );
                 }) : (
-                  <div className="text-center py-8 text-xs text-amber-600/50 font-black uppercase tracking-widest italic flex flex-col items-center gap-2">
-                    <RefreshCw className="w-5 h-5 animate-spin opacity-40" />
+                  <div className="text-center py-10 text-xs text-amber-600/40 font-black uppercase tracking-widest italic flex flex-col items-center gap-3">
+                    <RefreshCw className="w-6 h-6 animate-spin opacity-30" />
                     Đang nạp bảng vàng...
                   </div>
                 )}
               </div>
 
-              <div className="mt-4 pt-3 border-t border-amber-200 text-center">
-                 <div className="inline-flex items-center justify-center gap-1.5 text-[9px] font-black text-amber-600 uppercase tracking-tight italic">
-                   Ghi nhận thành quả học tập vượt trội
+              <div className="mt-5 pt-4 border-t border-amber-200/50 text-center">
+                 <div className="inline-flex items-center justify-center gap-2 text-[10px] font-black text-amber-700/50 uppercase tracking-wider italic">
+                   <Zap className="w-3.5 h-3.5" />
+                   Ghi nhận nỗ lực không ngừng nghỉ
                  </div>
               </div>
             </div>
-
           </div>
 
           {/* RIGHT SIDE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
