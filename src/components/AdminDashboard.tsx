@@ -1337,42 +1337,49 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt")
           );
 
-          // Only auto-recalculate if the file didn't provide an explicit grade OR we are in Year-end mode
-          // Added Check: Only auto-calculate Year-end summary during HK2 or CANAM import to avoid HK1 jumping
-          if (hasAnyScoreInRow && (!academicVal || importTerm === "canam") && validScoreSubjects.length > 0 && importTerm !== "hk1") {
-             const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
-             // We only proceed if most subjects are filled to avoid premature grading
-             if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
-                const nonScorePassed = mockSubjects
-                  .filter(s => !s.isEvaluatedByScore)
-                  .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
+          // Special handling for students without scores (Exempt/Disabled)
+          if (!hasAnyScoreInRow) {
+            academicGrade = "Chưa đạt"; // Default to lowest grade if no scores
+            distinction = "Không";
+            
+            // If they are explicitly mentioned as exempt in notes, we can keep it as is but ensure no high honors
+            if (notes.toLowerCase().includes("khuyết tật") || notes.toLowerCase().includes("miễn")) {
+               // Stay as "Không"
+            }
+          } else {
+            // Only auto-recalculate if the file didn't provide an explicit grade OR we are in Year-end mode
+            // Added Check: Only auto-calculate Year-end summary during HK2 or CANAM import to avoid HK1 jumping
+            if ((!academicVal || importTerm === "canam") && validScoreSubjects.length > 0 && importTerm !== "hk1") {
+               const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
+               // We only proceed if most subjects are filled to avoid premature grading
+               if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
+                  const nonScorePassed = mockSubjects
+                    .filter(s => !s.isEvaluatedByScore)
+                    .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
 
-                const allAbove65 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 6.5);
-                const allAbove50 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 5.0);
-                const allAbove35 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 3.5);
+                  const allAbove65 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 6.5);
+                  const allAbove50 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 5.0);
+                  const allAbove35 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 3.5);
 
-                if (calculatedYearGpa >= 8.0 && nonScorePassed && allAbove65) {
-                  academicGrade = "Tốt";
-                } else if (calculatedYearGpa >= 6.5 && nonScorePassed && allAbove50) {
-                  academicGrade = "Khá";
-                } else if (calculatedYearGpa >= 5.0 && nonScorePassed && allAbove35) {
-                  academicGrade = "Đạt";
-                } else {
-                  academicGrade = "Chưa đạt";
-                }
-             }
-          } else if (!hasAnyScoreInRow && !academicVal) {
-             // If absolutely no scores found in row and no summary grade provided, default to lowest or existing
-             // This prevents disabled students with empty sheets from becoming "Giỏi" by accident
-             academicGrade = "Chưa đạt";
-          }
+                  if (calculatedYearGpa >= 8.0 && nonScorePassed && allAbove65) {
+                    academicGrade = "Tốt";
+                  } else if (calculatedYearGpa >= 6.5 && nonScorePassed && allAbove50) {
+                    academicGrade = "Khá";
+                  } else if (calculatedYearGpa >= 5.0 && nonScorePassed && allAbove35) {
+                    academicGrade = "Đạt";
+                  } else {
+                    academicGrade = "Chưa đạt";
+                  }
+               }
+            }
 
-          if (importTerm === "canam" || (!distinction || distinction === "Không")) {
-            distinction = (hasAnyScoreInRow && academicGrade === "Tốt" && (behaviorGrade === "Tốt" || behaviorGrade === "Khá")) 
-              ? "Học sinh Giỏi" 
-              : (hasAnyScoreInRow && academicGrade === "Khá" && behaviorGrade === "Tốt")
-                ? "Học sinh Tiêu biểu" 
-                : "Không";
+            if (importTerm === "canam" || (!distinction || distinction === "Không")) {
+              distinction = (academicGrade === "Tốt" && (behaviorGrade === "Tốt" || behaviorGrade === "Khá")) 
+                ? "Học sinh Giỏi" 
+                : (academicGrade === "Khá" && behaviorGrade === "Tốt")
+                  ? "Học sinh Tiêu biểu" 
+                  : "Không";
+            }
           }
 
           parsedResults.push({
@@ -1684,9 +1691,29 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const goodBehaviorCount = students.filter(s => s.behaviorGrade === "Tốt").length;
   const badBehaviorCount = students.filter(s => s.behaviorGrade === "Chưa đạt").length;
   
-  const gotExcellentTitle = students.filter(s => s.distinction === "Học sinh Xuất sắc").length;
-  const gotGoodTitle = students.filter(s => s.distinction === "Học sinh Giỏi").length;
-  const gotNoneTitle = students.filter(s => s.distinction === "Không").length;
+  const gotExcellentTitle = students.filter(s => {
+    const scoredCount = (s.subjects || []).filter(sub => {
+      const hasS1 = (typeof sub.semester1 === "number") || (sub.semester1 === "Đạt" || sub.semester1 === "Chưa đạt");
+      const hasS2 = (typeof sub.semester2 === "number") || (sub.semester2 === "Đạt" || sub.semester2 === "Chưa đạt");
+      const hasAvg = (typeof sub.yearAvg === "number") || (sub.yearAvg === "Đạt" || sub.yearAvg === "Chưa đạt");
+      return hasS1 || hasS2 || hasAvg;
+    }).length;
+    if (scoredCount === 0) return false;
+    return s.distinction === "Học sinh Xuất sắc";
+  }).length;
+  
+  const gotGoodTitle = students.filter(s => {
+    const scoredCount = (s.subjects || []).filter(sub => {
+      const hasS1 = (typeof sub.semester1 === "number") || (sub.semester1 === "Đạt" || sub.semester1 === "Chưa đạt");
+      const hasS2 = (typeof sub.semester2 === "number") || (sub.semester2 === "Đạt" || sub.semester2 === "Chưa đạt");
+      const hasAvg = (typeof sub.yearAvg === "number") || (sub.yearAvg === "Đạt" || sub.yearAvg === "Chưa đạt");
+      return hasS1 || hasS2 || hasAvg;
+    }).length;
+    if (scoredCount === 0) return false;
+    return s.distinction === "Học sinh Giỏi" || s.distinction === "Học sinh Tiêu biểu";
+  }).length;
+  
+  const gotNoneTitle = students.length - gotExcellentTitle - gotGoodTitle;
 
   const academicTốtCount = students.filter(s => s.academicGrade === "Tốt").length;
   const academicKháCount = students.filter(s => s.academicGrade === "Khá").length;
