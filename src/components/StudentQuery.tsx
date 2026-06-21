@@ -308,7 +308,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           <div className="lg:col-span-5 space-y-6">
             
             {/* Core Query Card */}
-            <div id="card-query" className="w-full glass-card rounded-xl shadow-xl border border-white/50 overflow-hidden transition-all hover:shadow-2xl relative z-10 animate-fadeIn">
+            <div id="card-query" className="w-full glass-card rounded-xl shadow-xl border border-white/50 overflow-hidden transition-all hover:shadow-2xl relative z-10">
               <div className="h-2 bg-[#0055A5] shadow-sm" />
               
               <div className="p-6 md:p-8">
@@ -511,7 +511,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
 
             {/* Realtime Statistics Bento Grid (Moved here for better balance) */}
-            <div className="grid grid-cols-2 gap-4 relative z-10 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+            <div className="grid grid-cols-2 gap-4 relative z-10">
               
               {/* Stat 1 */}
               <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
@@ -576,7 +576,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           <div className="lg:col-span-7 space-y-6">
             
             {/* Board of Honor (Bảng Vàng) panel - Shrinked to fit precisely next to Query card */}
-            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-5 md:p-6 rounded-xl shadow-[0_10px_35px_-10px_rgba(251,191,36,0.25)] relative z-10 animate-fadeIn overflow-hidden" style={{ animationDelay: '0.1s' }}>
+            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-5 md:p-6 rounded-xl shadow-[0_10px_35px_-10px_rgba(251,191,36,0.25)] relative z-10 overflow-hidden">
               {/* Corner Decorations */}
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
               <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
@@ -626,7 +626,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   return (
                     <div
                       key={student.id || idx}
-                      className={`p-2.5 ${cardStyles} border rounded-lg text-left shadow-sm flex items-center justify-between group animate-fadeIn transition-all duration-300 relative overflow-hidden`}
+                      className={`p-2.5 ${cardStyles} border rounded-lg text-left shadow-sm flex items-center justify-between group transition-all duration-300 relative overflow-hidden`}
                     >
                       <div className="flex items-center gap-2.5 relative z-10">
                         <div className="w-8 h-8 rounded-full bg-amber-50/50 flex items-center justify-center text-base grayscale-0 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-amber-100/50 shadow-sm">
@@ -655,7 +655,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
             
             {/* Quick Three-Step Guideline (Moved here) */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
               <div className="flex items-center gap-1.5 border-b pb-2.5 border-slate-100">
                 <LayoutDashboard className="w-4.5 h-4.5 text-[#0055A5]" />
                 <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
@@ -691,7 +691,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Official Bulletin / Notifications */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
