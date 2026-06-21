@@ -738,17 +738,22 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
     const scoreSubjects = preparedSubjects.filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number");
     if (scoreSubjects.length > 0) {
-        const nonScorePassed = preparedSubjects.filter(s => !s.isEvaluatedByScore).every(s => s.yearAvg === "Đạt" || !s.yearAvg);
+        const nonScoreSubjects = preparedSubjects.filter(s => !s.isEvaluatedByScore);
+        const countNonPassed = nonScoreSubjects.filter(s => s.yearAvg === "Đạt" || !s.yearAvg).length;
+        const allNonPassed = countNonPassed === nonScoreSubjects.length;
+        const mostlyNonPassed = countNonPassed >= nonScoreSubjects.length - 1;
+
+        const countScores = scoreSubjects.length;
         const yearScores = scoreSubjects.map(s => s.yearAvg as number);
         const countAbove8 = yearScores.filter(v => v >= 8.0).length;
         const countAbove65 = yearScores.filter(v => v >= 6.5).length;
         const countAbove50 = yearScores.filter(v => v >= 5.0).length;
-        const allAbove50 = yearScores.every(v => v >= 5.0);
+        const allAbove50 = countAbove50 === countScores;
         const allAbove35 = yearScores.every(v => v >= 3.5);
 
-        if (nonScorePassed && allAbove50 && countAbove8 >= 6) academicGrade = "Tốt";
-        else if (nonScorePassed && allAbove35 && countAbove65 >= 6) academicGrade = "Khá";
-        else if (nonScorePassed && countAbove50 >= 6 && allAbove35) academicGrade = "Đạt";
+        if (allNonPassed && allAbove50 && countAbove8 >= 6) academicGrade = "Tốt";
+        else if (allNonPassed && allAbove35 && countAbove65 >= 6) academicGrade = "Khá";
+        else if (mostlyNonPassed && (allAbove50 || (countAbove50 >= 6 && allAbove35))) academicGrade = "Đạt";
         else academicGrade = "Chưa đạt";
 
         if (academicGrade === "Tốt" && behaviorGrade === "Tốt") {
@@ -1485,22 +1490,24 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
                // We only proceed if most subjects are filled to avoid premature grading
                if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
-                  const nonScorePassed = mockSubjects
-                    .filter(s => !s.isEvaluatedByScore)
-                    .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
+                  const nonScoreSubjects = mockSubjects.filter(s => !s.isEvaluatedByScore);
+                  const countNonPassed = nonScoreSubjects.filter(sub => sub.yearAvg === "Đạt" || !sub.yearAvg).length;
+                  const allNonPassed = countNonPassed === nonScoreSubjects.length;
+                  const mostlyNonPassed = countNonPassed >= nonScoreSubjects.length - 1;
 
+                  const countScores = validScoreSubjects.length;
                   const yearScores = validScoreSubjects.map(s => s.yearAvg as number);
                   const countAbove8 = yearScores.filter(v => v >= 8.0).length;
                   const countAbove65 = yearScores.filter(v => v >= 6.5).length;
                   const countAbove50 = yearScores.filter(v => v >= 5.0).length;
-                  const allAbove50 = yearScores.every(v => v >= 5.0);
+                  const allAbove50 = countAbove50 === countScores;
                   const allAbove35 = yearScores.every(v => v >= 3.5);
 
-                  if (nonScorePassed && allAbove50 && countAbove8 >= 6) {
+                  if (allNonPassed && allAbove50 && countAbove8 >= 6) {
                     academicGrade = "Tốt";
-                  } else if (nonScorePassed && allAbove35 && countAbove65 >= 6) {
+                  } else if (allNonPassed && allAbove35 && countAbove65 >= 6) {
                     academicGrade = "Khá";
-                  } else if (nonScorePassed && countAbove50 >= 6 && allAbove35) {
+                  } else if (mostlyNonPassed && (allAbove50 || (countAbove50 >= 6 && allAbove35))) {
                     academicGrade = "Đạt";
                   } else {
                     academicGrade = "Chưa đạt";
@@ -1519,9 +1526,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               } else {
                 distinction = "Không";
               }
-            } else if (academicGrade === "Khá" && distinction === "Học sinh Giỏi") {
+            } else if (academicGrade === "Khá" && (distinction === "Học sinh Giỏi" || distinction === "Học sinh Xuất sắc")) {
               // Forced correction for existing inconsistent data during import/update
               distinction = "Học sinh Tiêu biểu";
+            } else if ((academicGrade === "Đạt" || academicGrade === "Chưa đạt") && distinction !== "Không") {
+              distinction = "Không";
             }
           }
 
