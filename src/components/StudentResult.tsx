@@ -103,18 +103,22 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   const activeBehaviorGrade = student.behaviorGrade;
 
   // Designation Distinction
-  const hasAnyScoreOverall = (student.subjects || []).some(s => 
-    (typeof s.semester1 === "number") || (typeof s.semester2 === "number") || (typeof s.yearAvg === "number") ||
-    (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ||
-    (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ||
-    (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt")
-  );
+  const scoredCount = (student.subjects || []).filter(s => {
+    const hasS1 = (typeof s.semester1 === "number") || (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt");
+    const hasS2 = (typeof s.semester2 === "number") || (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt");
+    const hasAvg = (typeof s.yearAvg === "number") || (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt");
+    return hasS1 || hasS2 || hasAvg;
+  }).length;
 
-  const isExempt = !hasAnyScoreOverall && (student.notes?.toLowerCase().includes("khuyết tật") || student.notes?.toLowerCase().includes("miễn"));
+  const hasAnyScoreOverall = scoredCount > 0;
+
+  const isExempt = !hasAnyScoreOverall;
 
   let activeDistinction = "KHÔNG";
-  if (isExempt) {
+  if (isExempt && (student.notes?.toLowerCase().includes("khuyết tật") || student.notes?.toLowerCase().includes("miễn"))) {
     activeDistinction = "ĐỐI TƯỢNG MIỄN ĐÁNH GIÁ";
+  } else if (isExempt) {
+    activeDistinction = "KHÔNG";
   } else if (term === "canam") {
     activeDistinction = student.distinction && student.distinction !== "Không" ? student.distinction.toUpperCase() : "KHÔNG";
   } else {
