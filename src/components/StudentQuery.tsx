@@ -267,7 +267,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   };
 
   return (
-    <div className="w-full flex-1 flex flex-col justify-between bg-sky-50/60" id="student-query-root">
+    <div className="w-full flex-1 flex flex-col relative" id="student-query-root">
       
       {/* Dynamic Background subtle grid for texture */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.05] no-print" 
