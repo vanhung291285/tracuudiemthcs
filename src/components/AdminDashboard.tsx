@@ -756,16 +756,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               updatedSub.yearAvg = numVal;
             }
 
-            // Recalculate yearAvg if both semester1 and semester2 are available
+            // Recalculate yearAvg ONLY if both semester1 and semester2 are available
             const s1 = typeof updatedSub.semester1 === "number" ? updatedSub.semester1 : null;
             const s2 = typeof updatedSub.semester2 === "number" ? updatedSub.semester2 : null;
             if (s1 !== null && s2 !== null) {
               updatedSub.yearAvg = parseFloat(((s1 + s2) / 2).toFixed(1));
-            } else if (s1 !== null) {
-              updatedSub.yearAvg = s1;
-            } else if (s2 !== null) {
-              updatedSub.yearAvg = s2;
             }
+            // No auto-fill yearAvg with only one semester
 
             return updatedSub;
           } else {
@@ -791,7 +788,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             const s2 = updatedSub.semester2;
             if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
               updatedSub.yearAvg = "Chưa đạt";
-            } else if (s1 === "Đạt" || s2 === "Đạt") {
+            } else if (s1 === "Đạt" && s2 === "Đạt") {
               updatedSub.yearAvg = "Đạt";
             }
 
@@ -806,8 +803,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const totalScore = scoreSubjects.reduce((sum, s) => sum + (typeof s.yearAvg === "number" ? s.yearAvg : 0), 0);
       const newGpa = scoreSubjects.length > 0 ? (totalScore / scoreSubjects.length) : 0.0;
 
-      let academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" = "Chưa đạt";
-      if (scoreSubjects.length > 0) {
+      let academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" = student.academicGrade;
+      // Only recalculate overall year-end grade if we are in HK2 or All-Year editing mode
+      if (scoreSubjects.length > 0 && gradesTerm !== "hk1") {
         const nonScorePassed = updatedSubjects
           .filter(s => !s.isEvaluatedByScore)
           .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
@@ -1214,7 +1212,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               }
             }
 
-            // Auto-calculate yearAvg if semesters are newly populated or merged
+            // Auto-calculate yearAvg ONLY if both semesters are available
             if (def.isEvaluatedByScore) {
               const s1 = typeof targetSub.semester1 === "number" ? targetSub.semester1 : null;
               const s2 = typeof targetSub.semester2 === "number" ? targetSub.semester2 : null;
@@ -1222,11 +1220,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               if (importTerm !== "canam") {
                 if (s1 !== null && s2 !== null) {
                   targetSub.yearAvg = parseFloat(((s1 + s2) / 2).toFixed(1));
-                } else if (s1 !== null) {
-                  targetSub.yearAvg = s1;
-                } else if (s2 !== null) {
-                  targetSub.yearAvg = s2;
                 }
+                // No auto-fill yearAvg with only one semester to prevent "jumping" scores
               }
             } else {
                const s1 = targetSub.semester1;
@@ -1234,7 +1229,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                if (importTerm !== "canam") {
                  if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
                    targetSub.yearAvg = "Chưa đạt";
-                 } else if (s1 === "Đạt" || s2 === "Đạt") {
+                 } else if (s1 === "Đạt" && s2 === "Đạt") {
                    targetSub.yearAvg = "Đạt";
                  }
                }
@@ -1313,7 +1308,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           const calculatedYearGpa = validScoreSubjects.length > 0 ? (totalYearScore / validScoreSubjects.length) : 0;
           
           // Only auto-recalculate if the file didn't provide an explicit grade OR we are in Year-end mode
-          if ((!academicVal || importTerm === "canam") && validScoreSubjects.length > 0) {
+          // Added Check: Only auto-calculate Year-end summary during HK2 or CANAM import to avoid HK1 jumping
+          if ((!academicVal || importTerm === "canam") && validScoreSubjects.length > 0 && importTerm !== "hk1") {
              const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
              // We only proceed if most subjects are filled to avoid premature grading
              if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
