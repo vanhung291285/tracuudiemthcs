@@ -219,37 +219,22 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
   return (
     <div className="w-full max-w-5xl mx-auto" id="student-result-container">
-      {/* Top Controls Bar */}
-      <div className="flex items-center justify-between p-2 no-print w-full relative">
-        <div className="flex justify-start">
-          <button
-            onClick={onBack}
-            id="btn-back-query"
-            className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 border border-slate-300 rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition cursor-pointer shadow-sm shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Term switcher moved to table summary for cleaner 'original image' look */}
-
-        <div className="flex items-center justify-end">
-          <button
-            onClick={handlePrint}
-            id="btn-print-pdf"
-            className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-[#E53935] hover:bg-[#C62828] text-white rounded-lg transition cursor-pointer shadow-sm shrink-0"
-          >
-            <Printer className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
       {/* Main Printable report card container */}
       <div
         ref={printAreaRef}
         id="print-card-area"
-        className="bg-white px-3 py-3 sm:px-5 sm:py-5 text-black font-serif w-full max-w-3xl mx-auto border sm:shadow-2xl print:shadow-none print:border-none"
+        className="bg-white px-3 py-3 sm:px-5 sm:py-5 text-black font-serif w-full max-w-3xl mx-auto border sm:shadow-2xl print:shadow-none print:border-none relative"
       >
+        {/* Integrated Back Button */}
+        <button
+          onClick={onBack}
+          id="btn-back-query-integrated"
+          className="absolute top-3 right-3 sm:top-5 sm:right-5 no-print flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 border border-slate-200 rounded-md text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-[#003366] transition cursor-pointer shrink-0 z-10 shadow-sm"
+          title="Quay lại"
+        >
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+        </button>
+
         {/* Document Header */}
         <div className="mb-3 text-[#003366]">
           <div className="uppercase font-bold text-[10px] sm:text-xs leading-none whitespace-nowrap">ỦY BAN NHÂN DÂN XÃ XA DUNG</div>
