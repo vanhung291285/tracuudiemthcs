@@ -538,107 +538,11 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
             </div>
 
-            {/* Board of Honor (Bảng Vàng) panel */}
-            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-6 rounded-2xl shadow-[0_10px_30px_-15px_rgba(251,191,36,0.3)] relative z-10 animate-fadeIn overflow-hidden" style={{ animationDelay: '0.1s' }}>
-              {/* Corner Ornaments */}
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl" />
-              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl" />
-
-              <div className="flex flex-col items-center mb-6 pt-2">
-                <div className="relative mb-3">
-                   {/* Laurel Wreath Simulation using Icons */}
-                   <div className="absolute -left-12 top-0 h-full flex items-center justify-center opacity-80 scale-125">
-                     <div className="relative">
-                        <Award className="w-8 h-8 text-amber-500 transform -rotate-[30deg]" />
-                        <Award className="w-5 h-5 text-amber-400 absolute -bottom-1 -right-1 transform rotate-[15deg]" />
-                     </div>
-                   </div>
-                   
-                   <div className="bg-amber-100/50 px-6 py-2 rounded-lg border border-amber-200/50 backdrop-blur-sm">
-                     <h3 className="text-[15px] font-black text-amber-900 uppercase tracking-[0.2em] text-center leading-none">
-                       BẢNG VÀNG
-                     </h3>
-                     <div className="text-[9px] font-black text-amber-700/60 uppercase tracking-[0.3em] text-center mt-1.5">
-                       VINH DANH
-                     </div>
-                   </div>
-
-                   <div className="absolute -right-12 top-0 h-full flex items-center justify-center opacity-80 scale-125">
-                     <div className="relative">
-                        <Award className="w-8 h-8 text-amber-500 transform rotate-[30deg] scale-x-[-1]" />
-                        <Award className="w-5 h-5 text-amber-400 absolute -bottom-1 -left-1 transform -rotate-[15deg] scale-x-[-1]" />
-                     </div>
-                   </div>
-                </div>
-                <div className="h-0.5 w-12 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full" />
-              </div>
-
-              <p className="mb-5 leading-relaxed text-amber-800/60 font-black uppercase text-[10px] tracking-widest text-center px-4">
-                Tôn vinh gương mặt tiêu biểu có thành tích học tập xuất sắc
-              </p>
-              
-              <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1 no-scrollbar pb-2">
-                {topStudents.length > 0 ? topStudents.map((student, idx) => {
-                  let badgeColors = "bg-blue-50 text-blue-800 border-blue-200";
-                  let bgHover = "hover:bg-[#FFFDE7]";
-                  let label = "Học sinh Giỏi";
-                  let icon = "🎖️";
-                  let borderColor = "border-amber-200/60";
-
-                  if (student.distinction === "Học sinh Xuất sắc") {
-                    badgeColors = "bg-amber-100 text-amber-900 border-amber-300 shadow-sm";
-                    label = "Học sinh Xuất sắc";
-                    icon = "👑"; 
-                    borderColor = "border-amber-300";
-                  }
-                  
-                  return (
-                    <div
-                      key={student.id || idx}
-                      className={`w-full p-4 bg-white/60 ${bgHover} transition border ${borderColor} rounded-xl text-left shadow-sm flex justify-between items-center group animate-fadeIn`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-xl grayscale-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 border border-amber-100">
-                          {icon}
-                        </div>
-                        <div>
-                          <div className="font-extrabold text-amber-950 text-[14px] uppercase leading-tight tracking-tight">{student.fullName}</div>
-                          <div className="text-[10px] text-amber-800/50 font-bold mt-1.5 flex items-center gap-1.5">
-                            <Users className="w-3 h-3 opacity-70" />
-                            Lớp: {student.className}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className={`text-[8px] ${badgeColors} border px-3 py-1 rounded-full font-black uppercase tracking-tight`}>{label}</span>
-                      </div>
-                    </div>
-                  );
-                }) : (
-                  <div className="text-center py-10 text-xs text-amber-600/40 font-black uppercase tracking-widest italic flex flex-col items-center gap-3">
-                    <RefreshCw className="w-6 h-6 animate-spin opacity-30" />
-                    Đang nạp bảng vàng...
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-5 pt-4 border-t border-amber-200/50 text-center">
-                 <div className="inline-flex items-center justify-center gap-2 text-[10px] font-black text-amber-700/50 uppercase tracking-wider italic">
-                   <Zap className="w-3.5 h-3.5" />
-                   Ghi nhận nỗ lực không ngừng nghỉ
-                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT SIDE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
-          <div className="lg:col-span-7 space-y-6">
-            
-            {/* Realtime Statistics Bento Grid */}
-            <div className="grid grid-cols-2 gap-4 relative z-10">
+            {/* Realtime Statistics Bento Grid (Moved here for better balance) */}
+            <div className="grid grid-cols-2 gap-4 relative z-10 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
               
               {/* Stat 1 */}
-              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">HỌC SINH SỐ HÓA</span>
                   <div className="w-7 h-7 rounded-md bg-[#0055A5]/10 flex items-center justify-center">
@@ -647,12 +551,12 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 </div>
                 <div>
                   <span className="text-2xl font-black text-[#0055A5] tracking-tight block">{studentCount.toLocaleString()}+</span>
-                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Hồ sơ học bạ điện tử trực tuyến</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Hồ sơ học bạ điện tử</span>
                 </div>
               </div>
 
               {/* Stat 2 */}
-              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition animate-fadeIn" style={{ animationDelay: '0.25s' }}>
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TRƯỜNG LIÊN KẾT</span>
                   <div className="w-7 h-7 rounded-md bg-emerald-50 flex items-center justify-center border border-emerald-100">
@@ -661,12 +565,12 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 </div>
                 <div>
                   <span className="text-2xl font-black text-slate-800 tracking-tight block">48 Trường</span>
-                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Đồng bộ dữ liệu điểm THCS</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Đồng bộ dữ liệu điểm</span>
                 </div>
               </div>
 
               {/* Stat 3 */}
-              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">XÁC MINH SỐ</span>
                   <div className="w-7 h-7 rounded-md bg-amber-50 flex items-center justify-center border border-amber-100">
@@ -675,28 +579,155 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 </div>
                 <div>
                   <span className="text-2xl font-black text-[#E53935] tracking-tight block">100%</span>
-                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Đối chiếu QR và chữ ký số gốc</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Chữ ký số gốc</span>
                 </div>
               </div>
 
               {/* Stat 4 */}
-              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition animate-fadeIn" style={{ animationDelay: '0.35s' }}>
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TỐC ĐỘ PHẢN HỒI</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TỐC ĐỘ</span>
                   <div className="w-7 h-7 rounded-md bg-purple-50 flex items-center justify-center border border-purple-100">
                     <Clock className="w-4 h-4 text-purple-600" />
                   </div>
                 </div>
                 <div>
                   <span className="text-2xl font-black text-slate-800 tracking-tight block">&lt; 0.3s</span>
-                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Kết xuất bảng điểm tức thời</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Kết xuất tức thời</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Redesigned Visitor Statistics Section (Moved and Condensed) */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200 shadow-lg overflow-hidden relative z-10 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+              <div className="bg-[#2E7D32]/90 px-4 py-3 flex items-center justify-between">
+                <h3 className="text-white font-black text-[11px] uppercase tracking-widest flex items-center gap-2">
+                  <RefreshCw className="w-3.5 h-3.5" /> THỐNG KÊ TRUY CẬP
+                </h3>
+                <div className="flex items-center gap-1">
+                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                   <span className="text-[9px] text-emerald-100 font-bold uppercase tracking-tighter">Live</span>
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 divide-x divide-slate-100">
+                <div className="p-3 text-center">
+                  <div className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Online</div>
+                  <div className="text-lg font-black text-[#2E7D32]">{visitorOverview.online}</div>
+                </div>
+                <div className="p-3 text-center">
+                  <div className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">Hôm nay</div>
+                  <div className="text-lg font-black text-slate-800">{visitorOverview.today.toLocaleString()}</div>
+                </div>
+              </div>
+              <div className="bg-slate-50/50 p-2.5 border-t border-slate-100 flex items-center justify-center gap-6">
+                 <div className="flex items-center gap-1.5">
+                   <span className="text-[8px] font-black text-slate-400 uppercase">Tháng:</span>
+                   <span className="text-[11px] font-black text-slate-700">{visitorOverview.thisMonth.toLocaleString()}</span>
+                 </div>
+                 <div className="flex items-center gap-1.5">
+                   <span className="text-[8px] font-black text-slate-400 uppercase">Tổng:</span>
+                   <span className="text-[11px] font-black text-slate-700">{visitorOverview.total.toLocaleString()}</span>
+                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            {/* Board of Honor (Bảng Vàng) panel - Moved to top of right column for maximum prominence */}
+            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-6 rounded-2xl shadow-[0_10px_35px_-10px_rgba(251,191,36,0.25)] relative z-10 animate-fadeIn overflow-hidden">
+              {/* Corner Decorations */}
+              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
+              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
+
+              <div className="flex flex-col items-center mb-6 pt-3">
+                <div className="relative mb-3 scale-110">
+                   <div className="absolute -left-14 top-0 h-full flex items-center justify-center opacity-90 scale-[1.3]">
+                     <div className="relative">
+                        <Award className="w-8 h-8 text-amber-500 transform -rotate-[35deg]" />
+                        <Award className="w-4 h-4 text-amber-400 absolute -bottom-1 -right-0.5 transform rotate-[15deg]" />
+                     </div>
+                   </div>
+                   
+                   <div className="bg-white/40 px-8 py-2.5 rounded-xl border border-amber-200/50 backdrop-blur-md shadow-inner">
+                     <h3 className="text-[16px] font-black text-amber-900 uppercase tracking-[0.25em] text-center leading-none">
+                       BẢNG VÀNG
+                     </h3>
+                     <div className="text-[10px] font-black text-amber-700/60 uppercase tracking-[0.4em] text-center mt-2">
+                       VINH DANH
+                     </div>
+                   </div>
+
+                   <div className="absolute -right-14 top-0 h-full flex items-center justify-center opacity-90 scale-[1.3]">
+                     <div className="relative">
+                        <Award className="w-8 h-8 text-amber-500 transform rotate-[35deg] scale-x-[-1]" />
+                        <Award className="w-4 h-4 text-amber-400 absolute -bottom-1 -left-0.5 transform -rotate-[15deg] scale-x-[-1]" />
+                     </div>
+                   </div>
+                </div>
+                <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full mt-2" />
+              </div>
+
+              <p className="mb-6 leading-relaxed text-amber-800/70 font-black uppercase text-[11px] tracking-[0.15em] text-center px-4">
+                Tôn vinh nỗ lực bền bỉ và thành tích học tập vượt trội
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[420px] overflow-y-auto pr-1 no-scrollbar pb-3">
+                {topStudents.length > 0 ? topStudents.map((student, idx) => {
+                  let badgeStyles = "bg-sky-50 text-sky-800 border-sky-100";
+                  let label = "Học sinh Giỏi";
+                  let icon = "🎖️";
+                  let cardStyles = "bg-white/70 border-amber-100 hover:border-amber-300";
+
+                  if (student.distinction === "Học sinh Xuất sắc") {
+                    badgeStyles = "bg-amber-100 text-amber-900 border-amber-200 shadow-sm";
+                    label = "Học sinh Xuất sắc";
+                    icon = "👑"; 
+                    cardStyles = "bg-amber-50/40 border-amber-300 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.2)] hover:bg-white/80 transition-all";
+                  }
+                  
+                  return (
+                    <div
+                      key={student.id || idx}
+                      className={`p-4 ${cardStyles} border rounded-2xl text-left shadow-sm flex items-center justify-between group animate-fadeIn transition-all duration-300 relative overflow-hidden`}
+                    >
+                      <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-11 h-11 rounded-full bg-amber-50/50 flex items-center justify-center text-xl grayscale-0 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-amber-100/50 shadow-sm">
+                          {icon}
+                        </div>
+                        <div className="space-y-1">
+                          <div className="font-extrabold text-amber-950 text-[13px] uppercase leading-none tracking-tight">{student.fullName}</div>
+                          <div className="text-[10px] text-amber-800/60 font-bold flex items-center gap-1.5">
+                            <Users className="w-3 h-3 opacity-60" />
+                            Lớp: {student.className}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 relative z-10">
+                        <span className={`text-[8px] ${badgeStyles} border px-2.5 py-1 rounded-full font-black uppercase tracking-tighter`}>{label}</span>
+                      </div>
+                    </div>
+                  );
+                }) : (
+                  <div className="col-span-full text-center py-12 text-xs text-amber-600/30 font-black uppercase tracking-[0.2em] italic flex flex-col items-center gap-4">
+                    <RefreshCw className="w-8 h-8 animate-spin opacity-20" />
+                    Đang khởi tạo bảng vàng...
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-amber-200/40 text-center">
+                 <div className="inline-flex items-center justify-center gap-2.5 text-[10px] font-black text-amber-700/40 uppercase tracking-[0.2em] italic">
+                   <Zap className="w-4 h-4" />
+                   Gương mặt tiêu biểu Suối Lư
+                 </div>
+              </div>
             </div>
 
-            {/* Quick Three-Step Guideline */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.4s' }}>
+            {/* Quick Three-Step Guideline (Moved here) */}
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center gap-1.5 border-b pb-2.5 border-slate-100">
                 <LayoutDashboard className="w-4.5 h-4.5 text-[#0055A5]" />
                 <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
@@ -732,7 +763,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Official Bulletin / Notifications */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.45s' }}>
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -843,60 +874,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
             </div>
 
-            {/* Redesigned Visitor Statistics Section - Correct Aggregation Hierarchy */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-md overflow-hidden relative z-10 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
-              {/* Header: Dark Green with Title */}
-              <div className="bg-[#2E7D32] px-4 py-3.5 flex items-center gap-2">
-                <div className="bg-white rounded-full p-0.5 flex items-center justify-center">
-                   <ChevronRight className="w-3.5 h-3.5 text-[#2E7D32] rotate-[-45deg] stroke-[4]" />
-                </div>
-                <h3 className="text-white font-black text-[13px] uppercase tracking-wider">
-                  THỐNG KÊ TRUY CẬP
-                </h3>
-              </div>
-
-              {/* Statistical Rows: Each row derived from daily records */}
-              <div className="p-0 text-[13px] text-slate-700 font-semibold">
-                {/* 1. Real-time online sessions */}
-                <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Zap className="w-5 h-5 text-slate-800" fill="currentColor" />
-                    <span>Đang truy cập</span>
-                  </div>
-                  <span className="font-extrabold text-slate-900">{visitorOverview.online}</span>
-                </div>
-
-                {/* 2. Today: Sum of unique visits since 00:00 */}
-                <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Filter className="w-5 h-5 text-slate-800" fill="currentColor" />
-                    <span>Hôm nay</span>
-                  </div>
-                  <span className="font-extrabold text-slate-900">{visitorOverview.today.toLocaleString()}</span>
-                </div>
-
-                {/* 3. This Month: Total aggregation of all daily counts this month */}
-                <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <CalendarDays className="w-5 h-5 text-slate-800" />
-                    <span>Tháng hiện tại</span>
-                  </div>
-                  <span className="font-extrabold text-slate-900">{visitorOverview.thisMonth.toLocaleString()}</span>
-                </div>
-
-                {/* 4. Total: Historical sum of all monthly aggregations */}
-                <div className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <BarChartHorizontal className="w-5 h-5 text-slate-800 stroke-[3]" />
-                    <span>Tổng lượt truy cập</span>
-                  </div>
-                  <span className="font-extrabold text-slate-900">{visitorOverview.total.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-
           </div>
-
         </div>
       </main>
 
