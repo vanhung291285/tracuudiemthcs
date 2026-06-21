@@ -650,7 +650,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         gradeLevel: "9",
         academicYear: "2025-2026",
         academicGrade: "Khá",
+        academicGradeHK1: "",
+        academicGradeHK2: "",
         behaviorGrade: "Tốt",
+        behaviorGradeHK1: "",
+        behaviorGradeHK2: "",
         behaviorGradeSummer: "Không",
         daysAbsent: 0,
         daysAbsentUnexcused: 0,
@@ -836,7 +840,36 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const newGpa = validScoreSubjects.length > 0 ? (totalScore / validScoreSubjects.length) : 0.0;
 
       let academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" = student.academicGrade;
+      let academicGradeHK1 = student.academicGradeHK1;
+      let academicGradeHK2 = student.academicGradeHK2;
       
+      const calculateTermGrade = (term: "hk1" | "hk2") => {
+        const termSubjects = updatedSubjects.filter(s => s.isEvaluatedByScore);
+        const termScores = termSubjects.map(s => term === "hk1" ? s.semester1 : s.semester2).filter(v => typeof v === "number") as number[];
+        
+        if (termScores.length === 0) return "";
+        
+        const avg = termScores.reduce((a, b) => a + b, 0) / termScores.length;
+        const nonScorePassed = updatedSubjects.filter(s => !s.isEvaluatedByScore).every(s => (term === "hk1" ? s.semester1 : s.semester2) === "Đạt" || !(term === "hk1" ? s.semester1 : s.semester2));
+        
+        const allAbove65 = termScores.every(v => v >= 6.5);
+        const allAbove50 = termScores.every(v => v >= 5.0);
+        const allAbove35 = termScores.every(v => v >= 3.5);
+
+        if (avg >= 8.0 && nonScorePassed && allAbove65) return "Tốt";
+        if (avg >= 6.5 && nonScorePassed && allAbove50) return "Khá";
+        if (avg >= 5.0 && nonScorePassed && allAbove35) return "Đạt";
+        return "Chưa đạt";
+      };
+
+      if (gradesTerm === "hk1") {
+        const newHK1 = calculateTermGrade("hk1");
+        if (newHK1) academicGradeHK1 = newHK1 as any;
+      } else if (gradesTerm === "hk2") {
+        const newHK2 = calculateTermGrade("hk2");
+        if (newHK2) academicGradeHK2 = newHK2 as any;
+      }
+
       // Check if student has NO scores at all (potentially exempt/disabled)
       const hasAnyScore = updatedSubjects.some(s => 
         (typeof s.semester1 === "number") || (typeof s.semester2 === "number") || (typeof s.yearAvg === "number") ||
@@ -879,6 +912,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         ...student,
         subjects: updatedSubjects,
         academicGrade,
+        academicGradeHK1,
+        academicGradeHK2,
         distinction: (hasAnyScore && academicGrade === "Tốt" && (student.behaviorGrade === "Tốt" || student.behaviorGrade === "Khá")) ? "Học sinh Giỏi" : 
                      (hasAnyScore && academicGrade === "Khá" && student.behaviorGrade === "Tốt") ? "Học sinh Tiêu biểu" : "Không"
       };
@@ -1309,7 +1344,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
           // Overall attributes depending on selected Term
           let academicGrade: any = existing?.academicGrade || "Tốt";
+          let academicGradeHK1: any = existing?.academicGradeHK1 || "";
+          let academicGradeHK2: any = existing?.academicGradeHK2 || "";
+          
           let behaviorGrade: any = existing?.behaviorGrade || "Tốt";
+          let behaviorGradeHK1: any = existing?.behaviorGradeHK1 || "";
+          let behaviorGradeHK2: any = existing?.behaviorGradeHK2 || "";
+          
           let behaviorGradeSummer: any = existing?.behaviorGradeSummer || "Không";
           let daysAbsent = existing?.daysAbsent || 0;
           let daysAbsentUnexcused = existing?.daysAbsentUnexcused || 0;
@@ -1335,20 +1376,34 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
           if (importTerm === "hk1") {
             const ac = (academicCol !== -1 && academicCol < parts.length) ? parseAcademic(parts[academicCol]) : "";
-            if (ac) academicGrade = ac;
+            if (ac) {
+              academicGradeHK1 = ac;
+              // If only editing HK1, we might not want to overwrite academicGrade, 
+              // but for backward compatibility we keep it.
+              academicGrade = ac;
+            }
             
             const be = (behaviorCol !== -1 && behaviorCol < parts.length) ? parseBehavior(parts[behaviorCol]) : "";
-            if (be) behaviorGrade = be;
+            if (be) {
+              behaviorGradeHK1 = be;
+              behaviorGrade = be;
+            }
             
             daysAbsent = (absentPCol !== -1 && absentPCol < parts.length) ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
             daysAbsentUnexcused = (absentKCol !== -1 && absentKCol < parts.length) ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
             notes = (notesCol !== -1 && notesCol < parts.length) ? (parts[notesCol]?.trim() || "Nhập từ Excel HK1") : notes;
           } else if (importTerm === "hk2") {
             const ac = (academicCol !== -1 && academicCol < parts.length) ? parseAcademic(parts[academicCol]) : "";
-            if (ac) academicGrade = ac;
+            if (ac) {
+              academicGradeHK2 = ac;
+              academicGrade = ac;
+            }
             
             const be = (behaviorCol !== -1 && behaviorCol < parts.length) ? parseBehavior(parts[behaviorCol]) : "";
-            if (be) behaviorGrade = be;
+            if (be) {
+              behaviorGradeHK2 = be;
+              behaviorGrade = be;
+            }
             
             daysAbsent = (absentPCol !== -1 && absentPCol < parts.length) ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
             daysAbsentUnexcused = (absentKCol !== -1 && absentKCol < parts.length) ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
@@ -1445,7 +1500,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             gradeLevel: gradeLvl as any,
             academicYear: existing?.academicYear || "2025-2026",
             academicGrade,
+            academicGradeHK1,
+            academicGradeHK2,
             behaviorGrade,
+            behaviorGradeHK1,
+            behaviorGradeHK2,
             behaviorGradeSummer,
             daysAbsent,
             daysAbsentUnexcused,
