@@ -489,6 +489,24 @@ class DatabaseService {
     return [...this.localStudentsList];
   }
 
+  // Get total count of students
+  public async getStudentCount(): Promise<number> {
+    if (this.supabase) {
+      try {
+        const { count, error } = await this.supabase
+          .from("students")
+          .select("*", { count: "exact", head: true });
+        
+        if (!error && count !== null) {
+          return count;
+        }
+      } catch (err) {
+        console.warn("Supabase count failed:", err);
+      }
+    }
+    return this.localStudentsList.length;
+  }
+
   // Create or Update student
   public async upsertStudent(student: Student): Promise<boolean> {
     // 1. Update in local memory immediately
