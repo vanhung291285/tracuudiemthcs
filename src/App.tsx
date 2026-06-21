@@ -100,38 +100,41 @@ export default function App() {
 
   // Switch dynamically between pages
   return (
-    <div className="min-h-screen decorative-page-bg text-slate-800 flex flex-col font-sans select-none relative selection:bg-[#0055A5]/20 selection:text-[#0055A5]" id="app-root">
+    <div className="min-h-full flex flex-col decorative-page-bg text-slate-800 font-sans select-none relative selection:bg-[#0055A5]/20 selection:text-[#0055A5]" id="app-root">
       
-      {/* Dynamic View rendering */}
-      {view === "query" && (
-        <StudentQuery
-          onQueryResult={(student, term) => {
-            setSelectedStudent(student);
-            setSelectedTerm(term);
-            setViewWithUrl("result");
-          }}
-          onNavigateToAdmin={() => setViewWithUrl("admin")}
-        />
-      )}
-
-      {view === "result" && selectedStudent && (
-        <div className="flex-1 w-full flex flex-col pt-2 pb-6">
-          <StudentResult
-            student={selectedStudent}
-            initialTerm={selectedTerm}
-            onBack={handleBackToQuery}
+      {/* View Container that grows to fill space */}
+      <div className="flex-1 flex flex-col w-full relative">
+        {view === "query" && (
+          <StudentQuery
+            onQueryResult={(student, term) => {
+              setSelectedStudent(student);
+              setSelectedTerm(term);
+              setViewWithUrl("result");
+            }}
+            onNavigateToAdmin={() => setViewWithUrl("admin")}
           />
-        </div>
-      )}
+        )}
 
-      {view === "admin" && (
-        <AdminDashboard
-          onBackToPortal={handleBackToQuery}
-        />
-      )}
+        {view === "result" && selectedStudent && (
+          <div className="flex-1 w-full flex flex-col pt-2 pb-6">
+            <StudentResult
+              student={selectedStudent}
+              initialTerm={selectedTerm}
+              onBack={handleBackToQuery}
+            />
+          </div>
+        )}
+
+        {view === "admin" && (
+          <div className="flex-1">
+            <AdminDashboard
+              onBackToPortal={handleBackToQuery}
+            />
+          </div>
+        )}
+      </div>
 
       {view !== "admin" && <Footer />}
-
     </div>
   );
 }
