@@ -103,8 +103,19 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   const activeBehaviorGrade = student.behaviorGrade;
 
   // Designation Distinction
+  const hasAnyScoreOverall = (student.subjects || []).some(s => 
+    (typeof s.semester1 === "number") || (typeof s.semester2 === "number") || (typeof s.yearAvg === "number") ||
+    (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ||
+    (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ||
+    (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt")
+  );
+
+  const isExempt = !hasAnyScoreOverall && (student.notes?.toLowerCase().includes("khuyết tật") || student.notes?.toLowerCase().includes("miễn"));
+
   let activeDistinction = "KHÔNG";
-  if (term === "canam") {
+  if (isExempt) {
+    activeDistinction = "ĐỐI TƯỢNG MIỄN ĐÁNH GIÁ";
+  } else if (term === "canam") {
     activeDistinction = student.distinction && student.distinction !== "Không" ? student.distinction.toUpperCase() : "KHÔNG";
   } else {
     if (activeAcademicGrade === "Tốt" && activeBehaviorGrade === "Tốt") {
@@ -312,9 +323,17 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               </tr>
               <tr className="bg-[#f0f9ff] text-[11px] sm:text-[13px]">
                 <td className="p-1.5 sm:p-3 border-2 border-slate-500 text-center whitespace-normal font-black text-[14px] sm:text-[18px]" colSpan={5}>
-                  KQHT: <span className="text-[#E53935]">{activeAcademicGrade?.toUpperCase() || "KHÁ"}
-                  </span> <span className="mx-2 sm:mx-3 text-slate-300">|</span> KQRL: <span className="text-[#0055A5]">{activeBehaviorGrade?.toUpperCase() || "TỐT"}
-                  </span> <span className="mx-1 sm:mx-2 text-slate-300">|</span> <span className="whitespace-nowrap">Danh hiệu: <span className="text-[#E53935] underline decoration-double decoration-2 underline-offset-2">({activeDistinction})</span></span>
+                  {isExempt ? (
+                    <span className="text-[#E53935] uppercase">
+                      Học sinh Khuyết tật không đánh giá thuộc đối tượng miễn
+                    </span>
+                  ) : (
+                    <>
+                      KQHT: <span className="text-[#E53935]">{activeAcademicGrade?.toUpperCase() || "KHÁ"}
+                      </span> <span className="mx-2 sm:mx-3 text-slate-300">|</span> KQRL: <span className="text-[#0055A5]">{activeBehaviorGrade?.toUpperCase() || "TỐT"}
+                      </span> <span className="mx-1 sm:mx-2 text-slate-300">|</span> <span className="whitespace-nowrap">Danh hiệu: <span className="text-[#E53935] underline decoration-double decoration-2 underline-offset-2">({activeDistinction})</span></span>
+                    </>
+                  )}
                 </td>
               </tr>
             </tbody>
