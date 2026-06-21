@@ -548,7 +548,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 Danh sách học sinh giỏi và xuất sắc:
               </p>
               
-              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1 no-scrollbar">
                 {topStudents.length > 0 ? topStudents.map((student, idx) => {
                   // Determine distinction color styling
                   let badgeColors = "bg-slate-100 text-slate-800 border-slate-200";
