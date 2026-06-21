@@ -847,7 +847,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     }
   };
 
-  // Modularized parsing engine for both copy-paste and physical .xlsx file upload
+  // Modularized parsing engine for both copy-paste and physical (.xlsx, .xls) file upload
   const parseDataAndPreview = (textToParse: string) => {
     if (!textToParse.trim()) {
       setImportStatus("Mời nhập/dán dữ liệu hoặc chọn tệp Excel trước.");
@@ -1506,7 +1506,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     }
   };
 
-  // Upload and parse physical binary .xlsx file directly
+  // Upload and parse physical binary (.xlsx, .xls) files directly
   const handleUploadXlsx = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -2431,7 +2431,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                             : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
                         }`}
                       >
-                        📁 Tải Tệp Excel .xlsx
+                        📁 Tải Tệp Excel (.xlsx, .xls)
                       </button>
                     </div>
 
@@ -2528,7 +2528,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                             BƯỚC 2: TẢI LÊN TỆP SỔ ĐIỂM ĐÃ HOÀN THIỆN
                           </h4>
                           <p className="text-[11px] text-slate-500 font-medium">
-                            Chọn tệp dữ liệu dạng <strong>.xlsx</strong> bạn vừa điền để hệ thống cập nhật tự động toàn bộ lớp.
+                            Chọn tệp dữ liệu dạng <strong>Excel</strong> (.xlsx hoặc .xls) bạn vừa điền để hệ thống cập nhật tự động toàn bộ lớp.
                           </p>
                           
                           <label 
@@ -2537,11 +2537,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                           >
                             <FileSpreadsheet className="w-12 h-12 text-blue-500 mb-2 animate-bounce" />
                             <span className="text-xs font-black text-slate-800">Nhấp để mở tệp hoặc kéo thả file Excel vào đây</span>
-                            <span className="text-[10px] text-slate-400 mt-1.5">Hỗ trợ duy nhất tệp Excel .xlsx thuộc Học tịch lớp {importClass}</span>
+                            <span className="text-[10px] text-slate-400 mt-1.5">Hỗ trợ định dạng tệp Excel (.xlsx, .xls) thuộc Học tịch lớp {importClass}</span>
                             <input
                               type="file"
                               id="xlsx-file-upload"
-                              accept=".xlsx"
+                              accept=".xlsx, .xls"
                               onChange={handleUploadXlsx}
                               className="hidden"
                             />
