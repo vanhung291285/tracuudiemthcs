@@ -855,6 +855,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       return;
     }
 
+    // Safety check: ensure students list is loaded if we've been authenticated
+    // This prevents overwriting existing data with partial rows due to failed merging
+    if (isAuthenticated && students.length === 0) {
+       loadStudents(); // Trigger a background refresh
+       setImportStatus("Hệ thống đang tải lại danh sách học sinh từ máy chủ. Vui lòng đợi trong giây lát rồi thử lại để đảm bảo việc ghép điểm không bị lỗi.");
+       return;
+    }
+
     try {
       const lines = textToParse.split("\n");
       const parsedResults: Student[] = [];
@@ -1089,32 +1097,36 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             return "";
           };
 
-          const parseAcademic = (val: string): "Tốt" | "Khá" | "Đạt" | "Chưa đạt" => {
+          const parseAcademic = (val: string): "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "" => {
             const clean = val?.trim()?.toLowerCase() || "";
+            if (!clean || clean === "-" || clean === "—" || clean === "_") return "";
             if (clean.includes("tốt") || clean === "t") return "Tốt";
             if (clean.includes("khá") || clean === "k") return "Khá";
             if (clean.includes("chưa đạt") || clean === "cd" || clean === "cđ" || clean.includes("chưa")) return "Chưa đạt";
             if (clean.includes("đạt") || clean === "đ" || clean === "d") return "Đạt";
-            // Check for explicit "Chưa" or failing indicating indicators if no other match and it's not a common positive word
-            if (clean.length > 0 && clean !== "-" && (clean.includes("yếu") || clean.includes("kém"))) return "Chưa đạt";
-            return "Tốt";
+            // Check for explicit "Chưa" or failing indicators if no other match
+            if (clean.length > 0 && (clean.includes("yếu") || clean.includes("kém"))) return "Chưa đạt";
+            return "";
           };
 
-          const parseBehavior = (val: string): "Tốt" | "Khá" | "Đạt" | "Chưa đạt" => {
+          const parseBehavior = (val: string): "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "" => {
             const clean = val?.trim()?.toLowerCase() || "";
+            if (!clean || clean === "-" || clean === "—" || clean === "_") return "";
             if (clean.includes("tốt") || clean === "t") return "Tốt";
             if (clean.includes("khá") || clean === "k") return "Khá";
             if (clean.includes("chưa đạt") || clean === "cd" || clean === "cđ" || clean.includes("chưa")) return "Chưa đạt";
             if (clean.includes("đạt") || clean === "đ" || clean === "d") return "Đạt";
-            return "Tốt";
+            return "";
           };
 
-          const parseDistinction = (val: string): "Học sinh Xuất sắc" | "Học sinh Giỏi" | "Học sinh Tiêu biểu" | "Không" => {
+          const parseDistinction = (val: string): "Học sinh Xuất sắc" | "Học sinh Giỏi" | "Học sinh Tiêu biểu" | "Không" | "" => {
             const clean = val?.trim()?.toLowerCase() || "";
+            if (!clean || clean === "-" || clean === "—" || clean === "_") return "";
             if (clean.includes("xuất sắc") || clean.includes("xs")) return "Học sinh Xuất sắc";
             if (clean.includes("giỏi") || clean.includes("g")) return "Học sinh Giỏi";
             if (clean.includes("tiêu biểu") || clean.includes("tb")) return "Học sinh Tiêu biểu";
-            return "Không";
+            if (clean.includes("không") || clean === "k") return "Không";
+            return "";
           };
 
           // ROBUST ROSTER SHIFT PROTECTION:
@@ -1258,43 +1270,60 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           }
 
           if (importTerm === "hk1") {
-            academicGrade = academicCol < parts.length ? parseAcademic(parts[academicCol]) : academicGrade;
-            behaviorGrade = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : behaviorGrade;
+            const ac = academicCol < parts.length ? parseAcademic(parts[academicCol]) : "";
+            if (ac) academicGrade = ac;
+            
+            const be = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : "";
+            if (be) behaviorGrade = be;
+            
             daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
             daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
             notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel HK1") : notes;
           } else if (importTerm === "hk2") {
-            academicGrade = academicCol < parts.length ? parseAcademic(parts[academicCol]) : academicGrade;
-            behaviorGrade = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : behaviorGrade;
+            const ac = academicCol < parts.length ? parseAcademic(parts[academicCol]) : "";
+            if (ac) academicGrade = ac;
+            
+            const be = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : "";
+            if (be) behaviorGrade = be;
+            
             daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
             daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
             notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel HK2") : notes;
           } else if (importTerm === "canam") {
-            academicGrade = academicCol < parts.length ? parseAcademic(parts[academicCol]) : academicGrade;
-            behaviorGrade = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : behaviorGrade;
-            behaviorGradeSummer = (behaviorSummerCol !== -1 && behaviorSummerCol < parts.length) ? (parseBehavior(parts[behaviorSummerCol]) as any) : behaviorGradeSummer;
+            const ac = academicCol < parts.length ? parseAcademic(parts[academicCol]) : "";
+            if (ac) academicGrade = ac;
+            
+            const be = behaviorCol < parts.length ? parseBehavior(parts[behaviorCol]) : "";
+            if (be) behaviorGrade = be;
+            
+            behaviorGradeSummer = (behaviorSummerCol !== -1 && behaviorSummerCol < parts.length) ? (parseBehavior(parts[behaviorSummerCol]) as any || behaviorGradeSummer) : behaviorGradeSummer;
             daysAbsent = absentPCol < parts.length ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
             daysAbsentUnexcused = absentKCol < parts.length ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
-            distinction = (distinctionCol !== -1 && distinctionCol < parts.length) ? parseDistinction(parts[distinctionCol]) : distinction;
+            
+            const di = (distinctionCol !== -1 && distinctionCol < parts.length) ? parseDistinction(parts[distinctionCol]) : "";
+            if (di) distinction = di;
+            
             notes = notesCol < parts.length ? (parts[notesCol]?.trim() || "Nhập từ Excel Cả năm") : notes;
           }
 
           // Finalizing overall summary if scores were updated but summary columns were empty
           // This ensures that importing sem2 scores updates the yearly result if not explicitly provided
-          const scoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
-          const totalYearScore = scoreSubjects.reduce((sum, s) => sum + (typeof s.yearAvg === "number" ? s.yearAvg : 0), 0);
-          const calculatedYearGpa = scoreSubjects.length > 0 ? (totalYearScore / scoreSubjects.length) : 0;
+          const validScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number");
+          const totalYearScore = validScoreSubjects.reduce((sum, s) => sum + (s.yearAvg as number), 0);
+          const calculatedYearGpa = validScoreSubjects.length > 0 ? (totalYearScore / validScoreSubjects.length) : 0;
           
           // Only auto-recalculate if the file didn't provide an explicit grade OR we are in Year-end mode
-          if (!academicVal || importTerm === "canam") {
-             if (scoreSubjects.length > 0) {
+          if ((!academicVal || importTerm === "canam") && validScoreSubjects.length > 0) {
+             const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
+             // We only proceed if most subjects are filled to avoid premature grading
+             if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
                 const nonScorePassed = mockSubjects
                   .filter(s => !s.isEvaluatedByScore)
                   .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
 
-                const allAbove65 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 6.5);
-                const allAbove50 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 5.0);
-                const allAbove35 = scoreSubjects.every(sub => typeof sub.yearAvg === "number" && sub.yearAvg >= 3.5);
+                const allAbove65 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 6.5);
+                const allAbove50 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 5.0);
+                const allAbove35 = validScoreSubjects.every(sub => (sub.yearAvg as number) >= 3.5);
 
                 if (calculatedYearGpa >= 8.0 && nonScorePassed && allAbove65) {
                   academicGrade = "Tốt";
