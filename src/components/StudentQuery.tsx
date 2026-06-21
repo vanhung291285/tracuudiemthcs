@@ -642,7 +642,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 Tôn vinh nỗ lực bền bỉ và thành tích học tập vượt trội
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[420px] overflow-y-auto pr-1 no-scrollbar pb-3">
+              <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar pb-2">
                 {topStudents.length > 0 ? topStudents.map((student, idx) => {
                   let badgeStyles = "bg-sky-50 text-sky-800 border-sky-100";
                   let label = "Học sinh Giỏi";
@@ -659,22 +659,22 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   return (
                     <div
                       key={student.id || idx}
-                      className={`p-4 ${cardStyles} border rounded-2xl text-left shadow-sm flex items-center justify-between group animate-fadeIn transition-all duration-300 relative overflow-hidden`}
+                      className={`p-2.5 ${cardStyles} border rounded-lg text-left shadow-sm flex items-center justify-between group animate-fadeIn transition-all duration-300 relative overflow-hidden`}
                     >
-                      <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-11 h-11 rounded-full bg-amber-50/50 flex items-center justify-center text-xl grayscale-0 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-amber-100/50 shadow-sm">
+                      <div className="flex items-center gap-2.5 relative z-10">
+                        <div className="w-8 h-8 rounded-full bg-amber-50/50 flex items-center justify-center text-base grayscale-0 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-amber-100/50 shadow-sm">
                           {icon}
                         </div>
-                        <div className="space-y-1">
-                          <div className="font-extrabold text-amber-950 text-[13px] uppercase leading-none tracking-tight">{student.fullName}</div>
-                          <div className="text-[10px] text-amber-800/60 font-bold flex items-center gap-1.5">
+                        <div className="space-y-0.5">
+                          <div className="font-extrabold text-amber-950 text-[11px] uppercase leading-none tracking-tight">{student.fullName}</div>
+                          <div className="text-[9px] text-amber-800/60 font-bold flex items-center gap-1">
                             <Users className="w-3 h-3 opacity-60" />
                             Lớp: {student.className}
                           </div>
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1 relative z-10">
-                        <span className={`text-[8px] ${badgeStyles} border px-2.5 py-1 rounded-full font-black uppercase tracking-tighter`}>{label}</span>
+                        <span className={`text-[7px] ${badgeStyles} border px-2 py-0.5 rounded-full font-black uppercase tracking-tighter`}>{label}</span>
                       </div>
                     </div>
                   );
