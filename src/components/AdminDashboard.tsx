@@ -1408,6 +1408,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setImportErrors(collectedErrors);
 
       if (parsedResults.length > 0) {
+        // Sort alphabetically by full name
+        parsedResults.sort((a, b) => a.fullName.localeCompare(b.fullName, "vi"));
         setImportPreview(parsedResults);
         let statusMsg = `Phân tích thành công ${parsedResults.length} dòng dữ liệu học sinh lớp ${importClass} (${importTerm === "hk1" ? "Học kỳ I" : importTerm === "hk2" ? "Học kỳ II" : "Cả năm"}).`;
         if (collectedErrors.length > 0) {
@@ -1682,7 +1684,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     const matchesGrade = selectedGrade === "all" || student.gradeLevel === selectedGrade;
 
     return matchesSearch && matchesClass && matchesGrade;
-  });
+  }).sort((a, b) => a.fullName.localeCompare(b.fullName, "vi"));
 
   const uniqueClasses = Array.from(new Set(students.map(s => s.className)));
 
