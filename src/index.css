@@ -12,10 +12,19 @@
 }
 
 /* Base style resets */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: "Times New Roman", "Times", "Georgia", serif;
   background-color: #f0f9ff;
   color: #1E293B;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Decorative background for homepage */
@@ -45,6 +54,12 @@ body {
 /* Apply sleek custom scrollbar instead of hiding it */
 html, body, .decorative-page-bg, #app-root {
   text-rendering: optimizeLegibility;
+}
+
+#root > div {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .decorative-page-bg::before {
