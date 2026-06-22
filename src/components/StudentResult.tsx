@@ -231,11 +231,12 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 <td className="p-2 border border-slate-500 font-bold whitespace-nowrap text-right pr-6 sm:pr-12 bg-white" colSpan={2}>
                   Họ và tên:
                 </td>
-                <td className="p-2 border border-slate-500 font-black text-left px-4 text-[#B71C1C] text-[13px] sm:text-[16px]" colSpan={3}>
+                <td className="p-2 border border-slate-500 font-black text-left px-4 text-[#B71C1C] text-[13px] sm:text-[18px]" colSpan={3}>
                   {student.fullName}
                 </td>
-                <td className="p-2 border border-slate-500 font-bold text-center bg-slate-50" colSpan={1}>
-                  Lớp: <span className="text-[#003366]">{student.className}</span>
+                <td className="p-2 border border-slate-500 font-black text-center bg-slate-50" colSpan={1}>
+                  <div className="text-[9px] uppercase text-slate-400 font-bold leading-none mb-1">LỚP</div>
+                  <div className="text-[#003366] text-sm sm:text-lg tracking-tighter">{student.className}</div>
                 </td>
               </tr>
 
