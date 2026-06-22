@@ -374,7 +374,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 <h2 className="text-base font-black text-[#0055A5] uppercase text-center mb-1.5 tracking-tight">
                   TRA CỨU KẾT QUẢ HỌC TẬP
                 </h2>
-                <p className="text-xs text-slate-500 text-center mb-6 font-semibold">
+                <p className="text-xs text-slate-700 text-center mb-6 font-medium">
                   Vui lòng điền thông tin định danh học sinh bên dưới để truy xuất học bạ điện tử gốc.
                 </p>
 
@@ -386,10 +386,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       <button
                         type="button"
                         onClick={() => setSearchMode("name")}
-                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
+                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-bold tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
                           searchMode === "name"
-                            ? "bg-[#0055A5] text-white shadow-md"
-                            : "text-slate-500 hover:text-slate-700"
+                            ? "bg-[#0055A5] text-white shadow-md text-shadow-sm font-semibold"
+                            : "text-slate-800 hover:text-slate-900"
                         }`}
                       >
                         TRA CỨU HỌ VÀ TÊN
@@ -397,10 +397,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       <button
                         type="button"
                         onClick={() => setSearchMode("cccd")}
-                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
+                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-bold tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
                           searchMode === "cccd"
-                            ? "bg-[#0055A5] text-white shadow-md"
-                            : "text-slate-500 hover:text-slate-700"
+                            ? "bg-[#0055A5] text-white shadow-md text-shadow-sm font-semibold"
+                            : "text-slate-800 hover:text-slate-900"
                         }`}
                       >
                         TRA CỨU QUA CCCD
@@ -411,7 +411,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   {/* Student Identity Input */}
                   {searchMode === "cccd" && searchByCccd ? (
                     <div>
-                      <label htmlFor="student-code" className="block text-[10px] font-black text-slate-500 uppercase mb-1 tracking-wider flex items-center gap-1.5">
+                      <label htmlFor="student-code" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-[#0055A5]" /> Số Căn cước công dân (12 số) <span className="text-[#E53935]">*</span>
                       </label>
                       <input
@@ -420,13 +420,13 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         value={studentCode}
                         onChange={(e) => setStudentCode(e.target.value)}
                         placeholder="Nhập đủ 12 số CCCD học sinh (Ví dụ: 037206123456)"
-                        className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-[13px] placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
                         autoComplete="off"
                       />
                     </div>
                   ) : searchByName ? (
                     <div>
-                      <label htmlFor="student-name" className="block text-[10px] font-black text-slate-500 uppercase mb-1 tracking-wider flex items-center gap-1.5">
+                      <label htmlFor="student-name" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
                         <User className="w-3.5 h-3.5 text-[#0055A5]" /> Họ và Tên học sinh <span className="text-[#E53935]">*</span>
                       </label>
                       <input
@@ -435,7 +435,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder="Nhập tên học sinh (Ví dụ: Vũ Văn Hùng)"
-                        className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-[13px] placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
                         autoComplete="off"
                       />
                     </div>
@@ -443,7 +443,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                   {/* Date of Birth Input */}
                   <div>
-                    <label htmlFor="date-of-birth" className="block text-[10px] font-black text-slate-500 uppercase mb-1 tracking-wider flex items-center gap-1.5">
+                    <label htmlFor="date-of-birth" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-[#0055A5]" /> Ngày sinh học sinh <span className="text-[#E53935]">*</span>
                     </label>
                     <input
@@ -452,17 +452,17 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       value={dob}
                       onChange={(e) => setDob(e.target.value)}
                       placeholder="Nhập định dạng: DD/MM/YYYY (Ví dụ: 15/05/2011)"
-                      className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-[13px] placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
                       autoComplete="off"
                     />
-                    <p className="text-[10px] text-slate-400 mt-1 pl-1 font-semibold italic">
+                    <p className="text-[11px] text-slate-500 mt-1.5 pl-1 font-medium italic">
                       Thông tin phải trùng khớp tuyệt đối với sổ bộ bản sao gốc.
                     </p>
                   </div>
 
                   {/* Academic Term Selector tabs */}
                   <div className="space-y-2 mt-2">
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-900 uppercase tracking-widest flex items-center gap-1.5 mt-2 mb-1.5">
                       <Clock className="w-3.5 h-3.5 text-[#0055A5]" /> KỲ HỌC TẬP TRA CỨU <span className="text-[#E53935]">*</span>
                     </label>
                     <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
