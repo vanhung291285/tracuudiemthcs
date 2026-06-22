@@ -704,35 +704,38 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 </div>
               </div>
               
-              <div className="flex gap-3 overflow-x-auto pb-1 custom-scrollbar snap-x">
+              <div className="flex flex-col gap-2 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
                 {recentActivities.length > 0 ? (
                   recentActivities.map((activity) => (
                     <div 
                       key={activity.id} 
-                      className="flex-shrink-0 w-44 bg-white/40 backdrop-blur-sm p-3 rounded-lg border border-white/60 snap-start hover:border-emerald-200 transition-colors group"
+                      className="w-full bg-white/40 backdrop-blur-sm p-3 rounded-lg border border-white/60 hover:border-emerald-200 transition-colors group flex items-center justify-between gap-4"
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-xs group-hover:bg-emerald-200 transition-colors">
-                          <User className="w-3.5 h-3.5 text-emerald-600" />
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs group-hover:bg-emerald-200 transition-colors shrink-0">
+                          <User className="w-4 h-4 text-emerald-600" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-[10px] font-black text-slate-800 truncate leading-none mb-1">
+                          <div className="text-[11px] font-black text-slate-800 truncate leading-none mb-1">
                             {toDisplayCase(activity.studentName)}
                           </div>
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
                             <div className="text-[9px] font-bold text-emerald-600">
                               Lớp {activity.className}
                             </div>
                             {activity.count && activity.count > 1 && (
-                              <div className="bg-emerald-100 text-emerald-700 text-[8px] font-black px-1 py-0.5 rounded-full border border-emerald-200">
+                              <div className="bg-emerald-50/80 text-emerald-700 text-[8px] font-black px-1.5 py-0.5 rounded-full border border-emerald-200/50">
                                 {activity.count} lần
                               </div>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex justify-end text-[8px] font-mono font-bold text-slate-400">
-                        {new Date(activity.queriedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex flex-col items-end shrink-0 gap-1">
+                        <div className="text-[9px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                          {new Date(activity.queriedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div className="text-[7px] font-black text-slate-300 uppercase tracking-tighter">Vừa tra cứu</div>
                       </div>
                     </div>
                   ))
