@@ -43,8 +43,8 @@ export default function Footer() {
           <p className="max-w-3xl mx-auto leading-relaxed text-[10px] md:text-[11px] text-slate-100/80 px-4">
             {footerDesc}
           </p>
-          <div className="flex flex-col items-center gap-2 pt-5 border-t border-white/80 max-w-md mx-auto">
-            <span className="text-[10px] font-bold text-slate-100 italic font-sans">{footerCopy}</span>
+          <div className="flex flex-col items-center gap-2 pt-6 border-t-[1.5px] border-white/90 max-w-lg mx-auto">
+            <span className="text-[10px] font-black text-white/90 italic font-sans tracking-wide">{footerCopy}</span>
           </div>
         </div>
       </div>
