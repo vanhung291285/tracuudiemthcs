@@ -29,12 +29,30 @@ body {
 
 /* Decorative background for homepage */
 .decorative-page-bg {
-  background-color: #f0f9ff;
+  background-color: #d0e1fd; /* Lighter sky blue matching the image */
   background-image: 
-    url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230055a5' fill-opacity='0.03'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
-    radial-gradient(circle at 0% 0%, rgba(0, 85, 165, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, rgba(229, 57, 53, 0.05) 0%, transparent 50%);
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M20 20h10v10H20V20zm5 2v6h6V22h-6zM50 10l5 5h-10l5-5zM70 30h10v2H70v-2zm0 4h10v2H70v-2zm0 4h10v2H70v-2zM15 60l5-5 5 5-5 5-5-5zM80 70c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10 10 4.477 10 10zm-2 0c0-4.418-3.582-8-8-8s-8 3.582-8 8 3.582 8 8 8 8-3.582 8-8z' /%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.4) 0%, transparent 60%),
+    radial-gradient(circle at 0% 100%, rgba(255, 255, 255, 0.3) 0%, transparent 60%);
+  background-attachment: fixed;
   position: relative;
+}
+
+/* Sharp black text for form clarity */
+.font-sharp-black {
+  color: #000000 !important;
+  font-weight: 700;
+}
+
+.input-sharp {
+  border-color: #cbd5e1 !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+.input-sharp::placeholder {
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -166,7 +184,159 @@ html, body, .decorative-page-bg, #app-root {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+
+/* Open Book Effect */
+.open-book-container {
+  position: relative;
+  background: white;
+  border-radius: 1.25rem;
+  box-shadow: 
+    0 15px 40px -10px rgba(0, 0, 0, 0.12),
+    0 5px 10px -2px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  perspective: 1500px;
+  margin-bottom: 2rem;
+}
+
+/* Stacked pages effect at the bottom - refined for mobile */
+.open-book-container::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 3%;
+  right: 3%;
+  height: 8px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 0 0 1rem 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  z-index: -1;
+}
+
+.open-book-container::before {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 6%;
+  right: 6%;
+  height: 8px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 0 0 1rem 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  z-index: -2;
+}
+
+@media (min-width: 1024px) {
+  .open-book-container {
+    flex-direction: row;
+    border-radius: 1.5rem;
+    background: #fdfdfd;
+    margin-bottom: 0;
+  }
+  
+  .open-book-container::after { bottom: -6px; left: 2%; right: 2%; height: 10px; }
+  .open-book-container::before { bottom: -12px; left: 4%; right: 4%; height: 10px; }
+
+  .book-spine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(41.666667%);
+    width: 24px; /* Wider spine for better shadow transition */
+    transform: translateX(-50%);
+    background: linear-gradient(to right, 
+      rgba(0,0,0,0.05) 0%, 
+      rgba(0,0,0,0.15) 45%, 
+      rgba(0,0,0,0.2) 50%, 
+      rgba(0,0,0,0.15) 55%, 
+      rgba(0,0,0,0.05) 100%
+    );
+    z-index: 20;
+    pointer-events: none;
+  }
+}
+
+.book-page {
+  position: relative;
+  transition: transform 0.3s ease;
+  background: #ffffff;
+}
+
+/* Page break shadow for mobile stacking */
+.book-page-left {
+  border-bottom: 2px solid rgba(0,0,0,0.05);
+}
+
+@media (min-width: 1024px) {
+  .book-page-left {
+    border-bottom: none;
+    /* Enhanced inner curve towards the spine and outer lift */
+    background: linear-gradient(to right, 
+      #ffffff 0%, 
+      #fefefe 80%, 
+      #f2f2f2 92%, 
+      #dcdcdc 100%
+    );
+    border-radius: 1.5rem 0 0 1.5rem;
+    box-shadow: 
+      inset 20px 0 35px -15px rgba(0,0,0,0.03),
+      inset -5px 0 10px rgba(0,0,0,0.05); /* Shadow near spine */
+  }
+  
+  .book-page-right {
+    /* Enhanced inner curve towards the spine and outer lift */
+    background: linear-gradient(to left, 
+      #ffffff 0%, 
+      #fefefe 80%, 
+      #f2f2f2 92%, 
+      #dcdcdc 100%
+    );
+    border-radius: 0 1.5rem 1.5rem 0;
+    box-shadow: 
+      inset -20px 0 35px -15px rgba(0,0,0,0.03),
+      inset 5px 0 10px rgba(0,0,0,0.05); /* Shadow near spine */
+  }
+}
+
+.page-decoration-corner {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+  opacity: 0.2;
+}
+
+.page-decoration-top-right { top: 0; right: 0; border-top: 3px solid #0055A5; border-right: 3px solid #0055A5; border-radius: 0 1.5rem 0 0; }
+.page-decoration-bottom-left { bottom: 0; left: 0; border-bottom: 3px solid #0055A5; border-left: 3px solid #0055A5; border-radius: 0 0 0 1.5rem; }
+
+/* Custom Scrollbar for Book */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0,85,165,0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,85,165,0.4);
+}
+
+@keyframes swing {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(15deg); }
+  40% { transform: rotate(-10deg); }
+  60% { transform: rotate(5deg); }
+  80% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.animate-swing {
+  animation: swing 3s ease-in-out infinite;
 }
