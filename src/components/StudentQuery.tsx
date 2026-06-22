@@ -281,293 +281,530 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
          </svg>
       </div>
       
-      {/* Main Content Area: Redesigned as an Open Book */}
-      <main className="flex-1 max-w-6xl w-full mx-auto pt-8 pb-12 md:pt-12 md:pb-16 px-4">
-        
-        {/* New Integrated Title Section above the book */}
-        <div className="mb-8 md:mb-10 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-          <h1 className="text-lg md:text-2xl font-black text-[#E53935] leading-tight tracking-tighter uppercase mb-2">
-            {headerMain}
-          </h1>
-          
-          <div className="inline-flex items-center gap-2 bg-[#0055A5]/10 border border-[#0055A5]/20 text-[#0055A5] px-4 py-1 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest mb-3 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E53935] animate-pulse" />
-            {schoolYear}
+      {/* Top Banner Navigation Header */}
+      <header className="w-full bg-[#0055A5] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
+        <div className="max-w-6xl mx-auto space-y-1.5">
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] md:text-xs uppercase tracking-[0.15em] font-bold text-slate-100/90 leading-none">
+              {headerTop}
+            </span>
+            <h1 className="text-base md:text-xl font-black mt-1 leading-tight tracking-wide uppercase text-white">
+              {headerMain}
+            </h1>
           </div>
-
-          <p className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-[0.2em] max-w-lg mx-auto">
-            {headerTop}
-          </p>
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <div className="h-px w-8 md:w-12 bg-slate-200"></div>
-            <div className="w-2 h-2 rounded-full border border-slate-300"></div>
-            <div className="h-px w-8 md:w-12 bg-slate-200"></div>
+          <div className="inline-block bg-[#E53935] px-3 py-0.5 rounded font-black text-[9px] md:text-xs uppercase tracking-wider text-white shadow-sm">
+            {schoolYear}
           </div>
         </div>
 
-        <div className="open-book-container relative">
-          {/* Visual Book Spine for Desktop */}
-          <div className="book-spine hidden lg:block" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 w-full">
+      </header>
+
+      {/* Main Content Area: Side-By-Side Redesigned Portal */}
+      <main className="flex-1 max-w-6xl w-full mx-auto pt-8 pb-4 md:pt-12 md:pb-6 px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
+          
+          {/* LEFT SIDE: LOOKUP TOOL & QUICK CANDIDATES (col-span-5) */}
+          <div className="lg:col-span-5 space-y-6">
             
-            {/* LEFT PAGE: LOOKUP TOOL & QUICK CANDIDATES (col-span-5) */}
-            <div className="lg:col-span-5 book-page book-page-left p-5 sm:p-8 md:p-10 z-10">
+            {/* Core Query Card */}
+            <div id="card-query" className="w-full glass-card rounded-xl shadow-xl border border-white/50 overflow-hidden transition-all hover:shadow-2xl relative z-10">
+              <div className="h-2 bg-[#0055A5] shadow-sm" />
               
-              {/* Corner Decorations */}
-              <div className="page-decoration-corner page-decoration-bottom-left hidden md:block" />
+              <div className="p-6 md:p-8">
+                <h2 className="text-base font-black text-[#0055A5] uppercase text-center mb-1.5 tracking-tight">
+                  TRA CỨU KẾT QUẢ HỌC TẬP
+                </h2>
+                <p className="text-xs text-slate-500 text-center mb-6 font-semibold">
+                  Vui lòng điền thông tin định danh học sinh bên dưới để truy xuất học bạ điện tử gốc.
+                </p>
 
-              <div className="space-y-6 md:space-y-8">
-                {/* Core Query Inner Section */}
-                <div id="card-query" className="w-full relative">
-                  <div className="text-center mb-5 md:mb-6">
-                    <div className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-sky-50 mb-2 md:mb-3 border border-sky-100 shadow-inner">
-                      <GraduationCap className="w-5 h-5 md:w-6 md:h-6 text-[#0055A5]" />
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  
+                  {/* Search Mode Toggles (only show if both are enabled) */}
+                  {searchByCccd && searchByName && (
+                    <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 mb-5 relative">
+                      <button
+                        type="button"
+                        onClick={() => setSearchMode("name")}
+                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
+                          searchMode === "name"
+                            ? "bg-[#0055A5] text-white shadow-md"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        TRA CỨU HỌ VÀ TÊN
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSearchMode("cccd")}
+                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
+                          searchMode === "cccd"
+                            ? "bg-[#0055A5] text-white shadow-md"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        TRA CỨU QUA CCCD
+                      </button>
                     </div>
-                    <h2 className="text-sm md:text-base font-black text-[#0055A5] uppercase tracking-tight">
-                      CỬA SỔ TRA CỨU HỌC TẬP
-                    </h2>
-                    <p className="text-[10px] md:text-[11px] text-slate-500 font-bold mt-1 italic uppercase tracking-wider">
-                      "Khai tri thức - Mở tương lai"
-                    </p>
-                  </div>
+                  )}
 
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Search Mode Toggles */}
-                    {searchByCccd && searchByName && (
-                      <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200 mb-6 shadow-inner">
-                        <button
-                          type="button"
-                          onClick={() => setSearchMode("name")}
-                          className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-lg transition-all duration-300 cursor-pointer text-center z-10 ${
-                            searchMode === "name"
-                              ? "bg-[#0055A5] text-white shadow-lg ring-1 ring-[#0055A5]/20"
-                              : "text-slate-400 hover:text-slate-600"
-                          }`}
-                        >
-                          TRA CỨU HỌ VÀ TÊN
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSearchMode("cccd")}
-                          className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-lg transition-all duration-300 cursor-pointer text-center z-10 ${
-                            searchMode === "cccd"
-                              ? "bg-[#0055A5] text-white shadow-lg ring-1 ring-[#0055A5]/20"
-                              : "text-slate-400 hover:text-slate-600"
-                          }`}
-                        >
-                          TRA CỨU QUA CCCD
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Student Identity Input */}
-                    {searchMode === "cccd" && searchByCccd ? (
-                      <div className="space-y-2">
-                        <label htmlFor="student-code" className="block text-[11px] font-black font-sharp-black uppercase tracking-wider flex items-center gap-1.5 ml-1 mb-1.5">
-                          <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#0055A5]" /> Số CCCD học sinh <span className="text-[#E53935]">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id="student-code"
-                          value={studentCode}
-                          onChange={(e) => setStudentCode(e.target.value)}
-                          placeholder="Nhập 12 số định danh..."
-                          className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 md:px-4 md:py-3 text-sm input-sharp focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:border-transparent transition shadow-sm"
-                          autoComplete="off"
-                        />
-                      </div>
-                    ) : searchByName ? (
-                      <div className="space-y-1.5">
-                        <label htmlFor="student-name" className="block text-[11px] font-black font-sharp-black uppercase tracking-wider flex items-center gap-1.5 ml-1 mb-1.5">
-                          <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#0055A5]" /> Họ và Tên đầy đủ <span className="text-[#E53935]">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id="student-name"
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="Ví dụ: Nguyễn Văn An..."
-                          className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 md:px-4 md:py-3 text-sm input-sharp focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:border-transparent transition shadow-sm"
-                          autoComplete="off"
-                        />
-                      </div>
-                    ) : null}
-
-                    {/* Date of Birth Input */}
-                    <div className="space-y-1.5">
-                      <label htmlFor="date-of-birth" className="block text-[11px] font-black font-sharp-black uppercase tracking-wider flex items-center gap-1.5 ml-1 mb-1.5">
-                        <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#0055A5]" /> Ngày sinh học sinh <span className="text-[#E53935]">*</span>
+                  {/* Student Identity Input */}
+                  {searchMode === "cccd" && searchByCccd ? (
+                    <div>
+                      <label htmlFor="student-code" className="block text-[10px] font-black text-slate-500 uppercase mb-1 tracking-wider flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-[#0055A5]" /> Số Căn cước công dân (12 số) <span className="text-[#E53935]">*</span>
                       </label>
                       <input
                         type="text"
-                        id="date-of-birth"
-                        value={dob}
-                        onChange={(e) => setDob(e.target.value)}
-                        placeholder="Định dạng: DD/MM/YYYY"
-                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 md:px-4 md:py-3 text-sm input-sharp focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:border-transparent transition shadow-sm"
+                        id="student-code"
+                        value={studentCode}
+                        onChange={(e) => setStudentCode(e.target.value)}
+                        placeholder="Nhập đủ 12 số CCCD học sinh (Ví dụ: 037206123456)"
+                        className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
                         autoComplete="off"
                       />
                     </div>
-
-                    {/* Academic Term Selector */}
-                    <div className="space-y-1.5 pt-2">
-                      <label className="block text-[11px] font-black font-sharp-black uppercase tracking-wider flex items-center gap-1.5 ml-1 mb-1.5">
-                        <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#0055A5]" /> CHỌN HỌC KỲ TRA CỨU <span className="text-[#E53935]">*</span>
+                  ) : searchByName ? (
+                    <div>
+                      <label htmlFor="student-name" className="block text-[10px] font-black text-slate-500 uppercase mb-1 tracking-wider flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-[#0055A5]" /> Họ và Tên học sinh <span className="text-[#E53935]">*</span>
                       </label>
-                      <div className="grid grid-cols-3 gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                        {((["hk1", "hk2", "canam"] as const)).map((t) => (
+                      <input
+                        type="text"
+                        id="student-name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Nhập tên học sinh (Ví dụ: Vũ Văn Hùng)"
+                        className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
+                        autoComplete="off"
+                      />
+                    </div>
+                  ) : null}
+
+                  {/* Date of Birth Input */}
+                  <div>
+                    <label htmlFor="date-of-birth" className="block text-[10px] font-black text-slate-500 uppercase mb-1 tracking-wider flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#0055A5]" /> Ngày sinh học sinh <span className="text-[#E53935]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="date-of-birth"
+                      value={dob}
+                      onChange={(e) => setDob(e.target.value)}
+                      placeholder="Nhập định dạng: DD/MM/YYYY (Ví dụ: 15/05/2011)"
+                      className="w-full bg-slate-50 border border-slate-300 rounded px-3 py-2.5 text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
+                      autoComplete="off"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1 pl-1 font-semibold italic">
+                      Thông tin phải trùng khớp tuyệt đối với sổ bộ bản sao gốc.
+                    </p>
+                  </div>
+
+                  {/* Academic Term Selector tabs */}
+                  <div className="space-y-2 mt-2">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-[#0055A5]" /> KỲ HỌC TẬP TRA CỨU <span className="text-[#E53935]">*</span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTerm("hk1")}
+                        className={`py-2 text-[11px] font-bold rounded-md transition duration-200 cursor-pointer text-center ${
+                          selectedTerm === "hk1"
+                            ? "bg-[#0055A5] text-white shadow"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                        }`}
+                      >
+                        Học kỳ I
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTerm("hk2")}
+                        className={`py-2 text-[11px] font-bold rounded-md transition duration-200 cursor-pointer text-center ${
+                          selectedTerm === "hk2"
+                            ? "bg-[#0055A5] text-white shadow"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                        }`}
+                      >
+                        Học kỳ II
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTerm("canam")}
+                        className={`py-2 text-[11px] font-bold rounded-md transition duration-200 cursor-pointer text-center ${
+                          selectedTerm === "canam"
+                            ? "bg-[#0055A5] text-white shadow"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                        }`}
+                      >
+                        Cả Năm
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Error messages display */}
+                  {error && (
+                    <div className="p-3.5 bg-rose-50 border-l-4 border-[#E53935] text-rose-800 rounded text-xs leading-relaxed font-bold">
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Multiple Matches handling */}
+                  {multipleMatches.length > 0 && (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-sm">
+                      <p className="font-bold text-orange-900 mb-3">
+                        Tìm thấy {multipleMatches.length} học sinh trùng khớp. Vui lòng chọn học sinh thuộc lớp của bạn:
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {multipleMatches.map((student, idx) => (
                           <button
-                            key={t}
+                            key={student.studentCode || idx}
                             type="button"
-                            onClick={() => setSelectedTerm(t)}
-                            className={`py-2 text-[10px] sm:text-[11px] font-black uppercase rounded-lg transition-all duration-300 cursor-pointer text-center ${
-                              selectedTerm === t
-                                ? "bg-[#0055A5] text-white shadow-md"
-                                : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                            }`}
+                            onClick={() => handleSelectMatch(student)}
+                            className="bg-white border border-orange-200 hover:border-orange-400 hover:shadow-sm p-3 rounded text-left transition-all cursor-pointer flex justify-between items-center"
                           >
-                            {t === "hk1" ? "Kỳ I" : t === "hk2" ? "Kỳ II" : "Cả Năm"}
+                            <div>
+                              <div className="font-black text-slate-800 uppercase text-sm">{student.fullName}</div>
+                              <div className="text-xs text-slate-500 font-medium mt-0.5">Sinh ngày: <span className="text-slate-800 font-bold">{student.dob}</span> | Số CCCD: <span className="font-mono text-slate-600">{student.studentCode}</span></div>
+                            </div>
+                            <div className="bg-[#0055A5] text-white px-3 py-1 rounded font-bold text-xs uppercase shadow-sm">
+                              Lớp {student.className}
+                            </div>
                           </button>
                         ))}
                       </div>
                     </div>
+                  )}
 
-                    {error && (
-                      <div className="p-3 bg-rose-50 border border-rose-100 text-rose-700 rounded-lg text-[11px] font-bold shadow-sm leading-relaxed">
-                        {error}
-                      </div>
+                  {/* Search Submit button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    id="btn-search-student"
+                    className="w-full bg-[#E53935] hover:bg-red-700 text-white font-black py-3 px-6 rounded uppercase text-sm transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Đang đối chiếu...
+                      </span>
+                    ) : (
+                      <>
+                        <Search className="w-4 h-4 stroke-[3]" />
+                        TRA CỨU KẾT QUẢ
+                      </>
                     )}
+                  </button>
+                </form>
 
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-full bg-[#E53935] hover:bg-red-700 text-white font-black py-4 px-6 rounded-xl uppercase text-sm transition-all duration-300 shadow-lg hover:shadow-red-500/30 flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 mt-4"
-                    >
-                      {isLoading ? (
-                         <RefreshCw className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <>
-                          <Search className="w-5 h-5 stroke-[2.5]" />
-                          TRA CỨU KẾT QUẢ
-                        </>
-                      )}
-                    </button>
-                  </form>
+                <div className="mt-6 pt-5 border-t border-slate-200 flex items-start gap-2 text-slate-500 text-xs text-justify">
+                  <HelpCircle className="w-4 h-4 text-[#0055A5] shrink-0 mt-0.5" />
+                  <div className="leading-normal font-medium">
+                    Hệ thống tích hợp Cơ sở dữ liệu quốc gia về học tập bậc THCS. Điểm số được bảo vệ bằng hạ tầng chữ ký số và xác thực QR Code tức thời.
+                  </div>
                 </div>
 
-                {/* Statistics Box */}
-                <div className="grid grid-cols-2 gap-3 pt-4">
-                  <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
-                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mb-1">HỌC SINH SỐ HÓA</div>
-                    <div className="text-lg font-black text-[#0055A5]">{studentCount.toLocaleString()}+</div>
+              </div>
+            </div>
+
+
+
+            {/* Realtime Statistics Bento Grid (Moved here for better balance) */}
+            <div className="grid grid-cols-2 gap-4 relative z-10">
+              
+              {/* Stat 1 */}
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">HỌC SINH SỐ HÓA</span>
+                  <div className="w-7 h-7 rounded-md bg-[#0055A5]/10 flex items-center justify-center">
+                    <User className="w-4 h-4 text-[#0055A5]" />
                   </div>
-                  <div className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
-                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mb-1">KẾT XUẤT</div>
-                    <div className="text-lg font-black text-[#E53935]">0.1 GIÂY</div>
+                </div>
+                <div>
+                  <span className="text-2xl font-black text-[#0055A5] tracking-tight block">{studentCount.toLocaleString()}+</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Hồ sơ học bạ điện tử</span>
+                </div>
+              </div>
+
+              {/* Stat 2 */}
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TRƯỜNG LIÊN KẾT</span>
+                  <div className="w-7 h-7 rounded-md bg-emerald-50 flex items-center justify-center border border-emerald-100">
+                    <GraduationCap className="w-4 h-4 text-emerald-600" />
                   </div>
+                </div>
+                <div>
+                  <span className="text-2xl font-black text-slate-800 tracking-tight block">48 Trường</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Đồng bộ dữ liệu điểm</span>
+                </div>
+              </div>
+
+              {/* Stat 3 */}
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">XÁC MINH SỐ</span>
+                  <div className="w-7 h-7 rounded-md bg-amber-50 flex items-center justify-center border border-amber-100">
+                    <ShieldCheck className="w-4 h-4 text-amber-600" />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-2xl font-black text-[#E53935] tracking-tight block">100%</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Chữ ký số gốc</span>
+                </div>
+              </div>
+
+              {/* Stat 4 */}
+              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TỐC ĐỘ</span>
+                  <div className="w-7 h-7 rounded-md bg-purple-50 flex items-center justify-center border border-purple-100">
+                    <Clock className="w-4 h-4 text-purple-600" />
+                  </div>
+                </div>
+                <div>
+                  <span className="text-2xl font-black text-slate-800 tracking-tight block">&lt; 0.3s</span>
+                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Kết xuất tức thời</span>
                 </div>
               </div>
             </div>
 
-            {/* RIGHT PAGE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
-            <div className="lg:col-span-7 book-page book-page-right p-5 sm:p-8 md:p-10 flex flex-col gap-6 md:gap-8">
-              
-              <div className="page-decoration-corner page-decoration-top-right hidden md:block" />
+          </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 border-b-2 border-amber-400 pb-2 mb-3 md:mb-4">
-                  <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center border border-amber-200">
-                    <Award className="w-6 h-6 text-amber-500 animate-bounce" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-amber-900 uppercase tracking-widest leading-none">
-                      BẢNG VÀNG DANH DỰ
-                    </h3>
-                    <span className="text-[10px] font-bold text-amber-700/60 uppercase tracking-widest mt-1 block">TƯNG BỪNG KHEN THƯỞNG</span>
-                  </div>
+          {/* RIGHT SIDE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            {/* Board of Honor (Bảng Vàng) panel - Shrinked to fit precisely next to Query card */}
+            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-5 md:p-6 rounded-xl shadow-[0_10px_35px_-10px_rgba(251,191,36,0.25)] relative z-10 overflow-hidden">
+              {/* Corner Decorations */}
+              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
+              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
+
+              <div className="flex flex-col items-center mb-5 pt-2">
+                <div className="relative mb-2.5 scale-100">
+                   <div className="absolute -left-12 top-0 h-full flex items-center justify-center opacity-90 scale-[1.2]">
+                     <div className="relative">
+                        <Award className="w-7 h-7 text-amber-500 transform -rotate-[35deg]" />
+                        <Award className="w-3 h-3 text-amber-400 absolute -bottom-1 -right-0.5 transform rotate-[15deg]" />
+                     </div>
+                   </div>
+                   
+                   <div className="bg-white/40 px-6 py-2.5 rounded-xl border border-amber-200/50 backdrop-blur-md shadow-inner">
+                     <h3 className="text-[14px] font-black text-amber-900 uppercase tracking-[0.2em] text-center leading-none">
+                       BẢNG VÀNG
+                     </h3>
+                     <div className="text-[9px] font-black text-amber-700/60 uppercase tracking-[0.3em] text-center mt-2">
+                       VINH DANH
+                     </div>
+                   </div>
+
+                   <div className="absolute -right-12 top-0 h-full flex items-center justify-center opacity-90 scale-[1.2]">
+                     <div className="relative">
+                        <Award className="w-7 h-7 text-amber-500 transform rotate-[35deg] scale-x-[-1]" />
+                        <Award className="w-3 h-3 text-amber-400 absolute -bottom-1 -left-0.5 transform -rotate-[15deg] scale-x-[-1]" />
+                     </div>
+                   </div>
                 </div>
+                <div className="h-0.5 w-12 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full mt-2" />
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
-                  {topStudents.length > 0 ? topStudents.slice(0, 10).map((student, idx) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                {topStudents.length > 0 ? topStudents.map((student, idx) => {
+                  let badgeStyles = "bg-sky-50 text-sky-800 border-sky-100";
+                  let label = "Học sinh Giỏi";
+                  let icon = "🎖️";
+                  let cardStyles = "bg-white/70 border-amber-100 hover:border-amber-300";
+
+                  if (student.distinction === "Học sinh Xuất sắc") {
+                    badgeStyles = "bg-amber-100 text-amber-900 border-amber-200 shadow-sm";
+                    label = "Học sinh Xuất sắc";
+                    icon = "👑"; 
+                    cardStyles = "bg-amber-50/40 border-amber-300 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.2)] hover:bg-white/80 transition-all";
+                  }
+                  
+                  return (
                     <div
                       key={student.id || idx}
-                      className={`p-3 bg-white border border-amber-100 rounded-xl flex items-center justify-between group hover:border-amber-400 transition-all duration-300 shadow-sm hover:shadow-md`}
+                      className={`p-2.5 ${cardStyles} border rounded-lg text-left shadow-sm flex items-center justify-between group transition-all duration-300 relative overflow-hidden`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-sm border border-amber-100 group-hover:scale-110 transition-transform">
-                          {student.distinction === "Học sinh Xuất sắc" ? "👑" : "🎖️"}
+                      <div className="flex items-center gap-2.5 relative z-10">
+                        <div className="w-8 h-8 rounded-full bg-amber-50/50 flex items-center justify-center text-base grayscale-0 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-amber-100/50 shadow-sm">
+                          {icon}
                         </div>
                         <div className="space-y-0.5">
-                          <div className="font-black text-slate-800 text-[11px] uppercase tracking-tight line-clamp-1">{student.fullName}</div>
-                          <div className="text-[9px] text-slate-400 font-bold uppercase">
+                          <div className="font-extrabold text-amber-950 text-[11px] uppercase leading-none tracking-tight">{student.fullName}</div>
+                          <div className="text-[9px] text-amber-800/60 font-bold flex items-center gap-1">
+                            <Users className="w-3 h-3 opacity-60" />
                             Lớp: {student.className}
                           </div>
                         </div>
                       </div>
+                      <div className="flex flex-col items-end gap-1 relative z-10">
+                        <span className={`text-[7px] ${badgeStyles} border px-2 py-0.5 rounded-full font-black uppercase tracking-tighter`}>{label}</span>
+                      </div>
                     </div>
-                  )) : (
-                    <div className="col-span-full py-10 text-center">
-                      <RefreshCw className="w-6 h-6 animate-spin mx-auto text-amber-200" />
-                    </div>
-                  )}
+                  );
+                }) : (
+                  <div className="col-span-full text-center py-8 text-xs text-amber-600/30 font-black uppercase tracking-[0.2em] italic flex flex-col items-center gap-4">
+                    <RefreshCw className="w-6 h-6 animate-spin opacity-20" />
+                    Đang thiết lập...
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Quick Three-Step Guideline (Moved here) */}
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
+              <div className="flex items-center gap-1.5 border-b pb-3.5 border-slate-100 mb-5 text-[#0055A5]">
+                <LayoutDashboard className="w-4.5 h-4.5" />
+                <h3 className="text-xs font-black uppercase tracking-wider">
+                  HƯỚNG DẪN TRA CỨU KẾT QUẢ
+                </h3>
+              </div>
+              
+              <div className="flex flex-col gap-5">
+                {/* Step 1 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">1</div>
+                  <div className="space-y-1">
+                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP THÔNG TIN</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ tên học sinh hoặc nhập số căn cước công dân (CCCD).</p>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">2</div>
+                  <div className="space-y-1">
+                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP NGÀY SINH</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Điền chính xác ngày sinh (Ví dụ: 15/05/2011) như trong khai sinh.</p>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E53935] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
+                  <div className="space-y-1">
+                    <h4 className="text-[13px] font-black uppercase text-[#E53935] tracking-tight">TRA CỨU KẾT QUẢ</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để xem chi tiết kết quả học tập và kết quả rèn luyện của các em</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Official Bulletin / Notifications */}
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <Bell className="w-5 h-5 text-[#E53935] shrink-0" />
+                    <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wide leading-none">
+                      BẢN TIN MỚI NHẤT CỦA NHÀ TRƯỜNG
+                    </h3>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-semibold">
+                    Tin cập nhật từ trang thông tin điện tử nhà trường (<a href="https://suoilu.db.edu.vn" target="_blank" referrerPolicy="no-referrer" className="text-blue-600 hover:underline inline-flex items-center gap-0.5 font-bold">suoilu.db.edu.vn <ExternalLink className="w-2.5 h-2.5" /></a>)
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 self-start md:self-center">
+                  <span className="text-[9px] bg-red-100 text-[#E53935] px-2 py-0.5 rounded font-black uppercase tracking-wider animate-pulse shrink-0">
+                    Trực tuyến
+                  </span>
+                  <span className="text-[9px] font-semibold text-slate-400 italic shrink-0" title="Đã đồng bộ tự động từ trang chủ của PTDTBT TH & THCS Suối Lư">
+                    Nguồn: {newsSource}
+                  </span>
                 </div>
               </div>
 
-              <div className="bg-sky-50/50 p-6 rounded-2xl border border-sky-100/50 relative overflow-hidden">
-                 <div className="absolute top-0 right-0 p-4 opacity-10">
-                   <HelpCircle className="w-12 h-12 text-[#0055A5]" />
-                 </div>
-
-                 <h3 className="text-[11px] font-black text-[#0055A5] uppercase tracking-[0.15em] mb-4 border-l-4 border-[#0055A5] pl-3">
-                   HƯỚNG DẪN SỬ DỤNG
-                 </h3>
-
-                 <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#0055A5] text-white flex items-center justify-center text-[10px] font-black shrink-0">1</div>
-                      <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Chọn chế độ tra cứu bằng Họ tên hoặc CCCD.</p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#0055A5] text-white flex items-center justify-center text-[10px] font-black shrink-0">2</div>
-                      <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Nhập đầy đủ thông tin định danh và ngày sinh.</p>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#E53935] text-white flex items-center justify-center text-[10px] font-black shrink-0">3</div>
-                      <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để tải dữ liệu học bạ điện tử.</p>
-                    </div>
-                 </div>
-              </div>
-
-              <div className="flex-1 min-h-[180px]">
-                 <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-                   <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                     <Bell className="w-4 h-4 text-[#E53935] animate-swing origin-top" />
-                     THÔNG BÁO NHÀ TRƯỜNG
-                   </h3>
-                   <span className="text-[8px] bg-red-100 text-[#E53935] px-2 py-0.5 rounded font-black uppercase tracking-widest">LIVE</span>
-                 </div>
-
-                 <div className="space-y-3 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
-                   {newsLoading ? (
-                     <div className="animate-pulse space-y-3">{[1,2].map(i=><div key={i} className="h-14 bg-slate-50 rounded-xl"></div>)}</div>
-                   ) : newsItems.slice(0, 3).map((item, idx) => (
-                     <div key={idx} className="p-3 bg-white border border-slate-100 rounded-xl hover:bg-slate-50 transition cursor-pointer flex gap-4 items-center group">
-                        <div className="w-14 h-14 bg-slate-50 rounded-lg shrink-0 overflow-hidden border border-slate-100">
-                          <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
+              <div className="divide-y divide-slate-100 text-xs">
+                {newsLoading ? (
+                  // Pulse Skeleton Loaders for modern list with images
+                  <div className="space-y-4 py-2">
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="animate-pulse flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                        <div className="w-full sm:w-28 h-20 bg-slate-150 rounded-lg shrink-0"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3.5 bg-slate-100 rounded w-5/6"></div>
+                          <div className="h-3 bg-slate-50 rounded w-1/3"></div>
                         </div>
-                        <div className="space-y-1 min-w-0 flex-1">
-                          <p className="text-[11px] font-black text-slate-800 line-clamp-2 leading-tight">{item.title}</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[8px] text-slate-400 font-bold uppercase">{item.date}</span>
-                            <span className="text-[7px] text-[#0055A5] font-black underline uppercase">Xem chi tiết</span>
-                          </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : newsItems && newsItems.length > 0 ? (
+                  newsItems.map((item, idx) => (
+                    <a
+                      key={item.id || idx}
+                      href={item.link || "https://suoilu.db.edu.vn"}
+                      target="_blank"
+                      referrerPolicy="no-referrer"
+                      className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-slate-50/70 p-2 -mx-2 rounded-xl transition duration-200 group cursor-pointer"
+                    >
+                      {/* Left: Beautiful article illustration image */}
+                      <div className="w-full sm:w-28 h-20 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-150 relative">
+                        <img 
+                          src={item.image} 
+                          alt={item.title}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            // Smooth fallback on error
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&auto=format&fit=crop&q=60";
+                          }}
+                        />
+                        <div className="absolute top-1 left-1">
+                          <span className="text-[8px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-1.5 py-0.5 rounded leading-none">
+                            {idx === 0 ? "Mới nhất" : `Tin #${idx + 1}`}
+                          </span>
                         </div>
-                     </div>
-                   ))}
-                 </div>
+                      </div>
+
+                      {/* Right: metadata & title details */}
+                      <div className="flex-1 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] text-[#0055A5] font-extrabold uppercase bg-[#0055A5]/10 px-1.5 py-0.5 rounded tracking-wide font-sans">
+                            {item.category}
+                          </span>
+                          <span className="text-[9px] font-medium text-slate-300">•</span>
+                          <span className="font-mono text-[9px] text-slate-400 font-bold">
+                            {item.date}
+                          </span>
+                        </div>
+
+                        <p className="font-bold text-slate-800 text-xs leading-snug group-hover:text-[#0055A5] transition-colors flex items-start gap-1">
+                          <span>{item.title}</span>
+                          <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-0.5" />
+                        </p>
+                      </div>
+                    </a>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-slate-400">
+                    <p className="text-[11px] font-medium mb-2">Không nạp được bản tin từ nguồn Suối Lư.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewsLoading(true);
+                        fetch("/api/news")
+                          .then((r) => r.json())
+                          .then((res) => {
+                            if (res && res.data) {
+                              setNewsItems(res.data);
+                              setNewsSource(res.source === "scraped" ? "suoilu.db.edu.vn (Trực tuyến)" : "Hệ thống");
+                            }
+                          })
+                          .catch((e) => console.error(e))
+                          .finally(() => setNewsLoading(false));
+                      }}
+                      className="text-[10px] font-black text-blue-600 uppercase hover:underline"
+                    >
+                      Thử tải lại
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
+
           </div>
         </div>
       </main>
