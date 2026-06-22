@@ -27,6 +27,7 @@ import {
   CalendarDays,
   BarChartHorizontal
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import dbService from "../lib/supabase";
 import { Student, RecentActivity } from "../types";
 
@@ -63,6 +64,14 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     // Tự động nhận diện nếu tên đã có dấu tiếng việt hoặc đã là Title Case thì giữ nguyên một số phần
     // Ở đây ta dùng regex đơn giản để viết hoa chữ cái đầu mỗi từ
     return str.toLowerCase().split(' ').map(s => s.charAt(0).toUpperCase() + s.substring(1)).join(' ');
+  };
+
+  const isToday = (dateString: string) => {
+    const d = new Date(dateString);
+    const now = new Date();
+    return d.getDate() === now.getDate() &&
+           d.getMonth() === now.getMonth() &&
+           d.getFullYear() === now.getFullYear();
   };
 
   useEffect(() => {
@@ -689,61 +698,93 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Recent Lookups Live Feed */}
-            <div className="glass-card p-4 rounded-xl border border-white/50 shadow-lg relative z-10 overflow-hidden">
-              <div className="flex items-center gap-1.5 border-b pb-2 border-slate-100 mb-3 text-emerald-600">
-                <Zap className="w-4 h-4 fill-emerald-600 animate-pulse" />
-                <h3 className="text-xs font-black uppercase tracking-wider leading-none">
-                  TRA CỨU GẦN ĐÂY
-                </h3>
-                <div className="ml-auto flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  <span className="text-[9px] font-black text-emerald-600/70 uppercase tracking-tighter">Trực tiếp</span>
+            <div className="glass-card rounded-xl border border-white/50 shadow-lg relative z-10 overflow-hidden group/card">
+              {/* Animated decorative gradient bg */}
+              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl" />
+
+              <div className="p-4 relative">
+                <div className="flex items-center gap-1.5 border-b pb-2 border-slate-100 mb-3 text-emerald-600">
+                  <div className="bg-emerald-50 p-1.5 rounded-lg border border-emerald-100 group-hover/card:scale-110 transition-transform duration-500">
+                    <Zap className="w-4 h-4 fill-emerald-600 animate-pulse" />
+                  </div>
+                  <h3 className="text-xs font-black uppercase tracking-wider leading-none">
+                    TRA CỨU GẦN ĐÂY
+                  </h3>
+                  <div className="ml-auto flex items-center gap-1.5 px-2 py-1 bg-emerald-50 rounded-full border border-emerald-100 shrink-0">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-[8px] font-black text-emerald-600 uppercase tracking-tighter">TRỰC TIẾP</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex flex-col gap-2 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
-                {recentActivities.length > 0 ? (
-                  recentActivities.map((activity) => (
-                    <div 
-                      key={activity.id} 
-                      className="w-full bg-white/40 backdrop-blur-sm p-3 rounded-lg border border-white/60 hover:border-emerald-200 transition-colors group flex items-center justify-between gap-4"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs group-hover:bg-emerald-200 transition-colors shrink-0">
-                          <User className="w-4 h-4 text-emerald-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[11px] font-black text-slate-800 truncate leading-none mb-1">
-                            {toDisplayCase(activity.studentName)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-[9px] font-bold text-emerald-600">
-                              Lớp {activity.className}
+                
+                <div className="flex flex-col gap-2 max-h-[340px] overflow-y-auto pr-1 custom-scrollbar">
+                  <AnimatePresence initial={false}>
+                    {recentActivities.length > 0 ? (
+                      recentActivities.map((activity, idx) => (
+                        <motion.div 
+                          key={activity.id} 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="w-full bg-white/50 backdrop-blur-md p-3 rounded-xl border border-white/80 hover:border-emerald-200 hover:bg-white/80 transition-all duration-300 group flex items-center justify-between gap-4 shadow-sm hover:shadow-md"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center group-hover:from-emerald-100 group-hover:to-emerald-200 transition-all duration-500 shrink-0 border border-emerald-50">
+                              <User className="w-4.5 h-4.5 text-emerald-600" />
                             </div>
-                            {activity.count && activity.count > 1 && (
-                              <div className="bg-emerald-50/80 text-emerald-700 text-[8px] font-black px-1.5 py-0.5 rounded-full border border-emerald-200/50">
-                                {activity.count} lần
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[12px] font-black text-slate-800 truncate leading-none mb-1 group-hover:text-emerald-700 transition-colors">
+                                {toDisplayCase(activity.studentName)}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                                  <span className="text-emerald-500 font-black">Lớp</span> 
+                                  <span className="text-emerald-600">{activity.className}</span>
+                                </div>
+                                {activity.count && activity.count > 1 && (
+                                  <div className="bg-emerald-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full border border-emerald-500 shadow-sm animate-in fade-in zoom-in duration-500">
+                                    {activity.count} lần
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end shrink-0 gap-1.5">
+                            <div className="text-[9px] font-mono font-black text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 shadow-inner">
+                              {new Date(activity.queriedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            {isToday(activity.queriedAt) ? (
+                              <div className="flex items-center gap-1 text-[7px] font-black text-slate-300 uppercase tracking-tighter">
+                                <Clock className="w-2.5 h-2.5" />
+                                Vừa tra cứu
+                              </div>
+                            ) : (
+                              <div className="text-[7px] font-black text-slate-300 uppercase tracking-tighter">
+                                {new Date(activity.queriedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
                               </div>
                             )}
                           </div>
-                        </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="w-full text-center py-8 text-[11px] font-bold text-slate-400 italic bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                        Chưa có hoạt động tra cứu mới hôm nay
                       </div>
-                      <div className="flex flex-col items-end shrink-0 gap-1">
-                        <div className="text-[9px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                          {new Date(activity.queriedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                        <div className="text-[7px] font-black text-slate-300 uppercase tracking-tighter">Vừa tra cứu</div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="w-full text-center py-4 text-[10px] font-bold text-slate-400 italic">
-                    Chưa có hoạt động tra cứu mới hôm nay
+                    )}
+                  </AnimatePresence>
+                </div>
+                
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex gap-1">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="w-1.5 h-1.5 rounded-full bg-emerald-200" />
+                    ))}
                   </div>
-                )}
+                  <span className="text-[7px] font-black text-slate-300 uppercase tracking-[0.2em]">Dữ liệu học tập thời thực</span>
+                </div>
               </div>
             </div>
             
