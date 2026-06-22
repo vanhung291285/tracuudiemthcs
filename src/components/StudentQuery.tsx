@@ -25,7 +25,9 @@ import {
   Zap,
   Filter,
   CalendarDays,
-  BarChartHorizontal
+  BarChartHorizontal,
+  BookOpen,
+  Lightbulb
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import dbService from "../lib/supabase";
@@ -318,10 +320,24 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       </div>
 
       {/* Dynamic Background SVG blobs / patterns */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 mix-blend-multiply overflow-hidden no-print">
-         <svg className="absolute top-[-5%] left-[-5%] w-[450px] h-[450px] text-slate-200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-30 mix-blend-overlay overflow-hidden no-print">
+         <svg className="absolute top-[-5%] left-[-5%] w-[450px] h-[450px] text-white/50" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
             <path fill="currentColor" d="M44.5,-76.3C58.1,-69.1,70.1,-58.5,78.8,-45.5C87.4,-32.5,92.8,-17.1,92.2,-2.1C91.6,12.9,85.1,27.5,76,40.8C66.9,54.1,55.3,66.1,41.4,73.4C27.5,80.7,11.3,83.2,-4.5,91C-20.2,98.8,-35.4,111.9,-48.3,110.8C-61.2,109.8,-71.7,94.6,-78.9,79.5C-86.2,64.4,-90.1,49.4,-92.3,34.8C-94.5,20.2,-95,5.9,-93.4,-8.2C-91.8,-22.3,-88.2,-36.1,-80.6,-48.4C-73,-60.7,-61.4,-71.4,-48.4,-79.1C-35.4,-86.8,-21.1,-91.4,-6.2,-80.6C8.7,-69.9,23.5,-43.8,44.5,-76.3Z" transform="translate(100 100)" />
          </svg>
+
+         {/* Floating icons match the provided image */}
+         <div className="absolute top-10 left-[10%] opacity-10 animate-vertical-floating">
+            <BookOpen className="w-24 h-24 text-white" />
+         </div>
+         <div className="absolute top-40 left-[5%] opacity-10 animate-vertical-floating [animation-delay:1s]">
+            <Lightbulb className="w-16 h-16 text-white" />
+         </div>
+         <div className="absolute top-80 left-[12%] opacity-10 animate-vertical-floating [animation-delay:2s]">
+            <GraduationCap className="w-20 h-20 text-white" />
+         </div>
+         <div className="absolute bottom-20 left-[8%] opacity-5">
+            <BarChartHorizontal className="w-32 h-32 text-white" />
+         </div>
       </div>
       
       {/* Top Banner Navigation Header */}
@@ -698,54 +714,61 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Recent Lookups Live Feed */}
-            <div className="glass-card rounded-xl border border-white/50 shadow-lg relative z-10 overflow-hidden group/card">
+            <div className="glass-card rounded-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10 overflow-hidden group/card bg-white/70 backdrop-blur-xl">
+              {/* Decorative side accent */}
+              <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500/80 group-hover/card:w-2 transition-all duration-500" />
+              
               {/* Animated decorative gradient bg */}
-              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl" />
+              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-40 h-40 bg-emerald-100/30 rounded-full blur-3xl group-hover/card:scale-110 transition-transform duration-700" />
+              <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 bg-emerald-50/20 rounded-full blur-2xl" />
 
-              <div className="p-4 relative">
-                <div className="flex items-center gap-1.5 border-b pb-2 border-slate-100 mb-3 text-emerald-600">
-                  <div className="bg-emerald-50 p-1.5 rounded-lg border border-emerald-100 group-hover/card:scale-110 transition-transform duration-500">
+              <div className="p-5 relative">
+                <div className="flex items-center gap-2 border-b pb-3 border-slate-100 mb-4 text-emerald-700">
+                  <div className="bg-emerald-100 p-2 rounded-xl border border-emerald-200 group-hover/card:scale-110 group-hover/card:rotate-12 transition-all duration-500 shadow-sm">
                     <Zap className="w-4 h-4 fill-emerald-600 animate-pulse" />
                   </div>
-                  <h3 className="text-xs font-black uppercase tracking-wider leading-none">
-                    TRA CỨU GẦN ĐÂY
-                  </h3>
-                  <div className="ml-auto flex items-center gap-1.5 px-2 py-1 bg-emerald-50 rounded-full border border-emerald-100 shrink-0">
-                    <span className="relative flex h-1.5 w-1.5">
+                  <div className="flex flex-col">
+                    <h3 className="text-xs font-black uppercase tracking-widest leading-none">
+                      TRA CỨU GẦN ĐÂY
+                    </h3>
+                    <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">Hoạt động thời gian thực</span>
+                  </div>
+                  <div className="ml-auto flex items-center gap-2 px-2.5 py-1.5 bg-white/80 rounded-full border border-emerald-100 shadow-sm transition-all hover:bg-emerald-50">
+                    <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                    <span className="text-[8px] font-black text-emerald-600 uppercase tracking-tighter">TRỰC TIẾP</span>
+                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">LIVE</span>
                   </div>
                 </div>
                 
-                <div className="flex flex-col gap-2 max-h-[340px] overflow-y-auto pr-1 custom-scrollbar">
+                <div className="flex flex-col gap-2.5 max-h-[360px] overflow-y-auto pr-1.5 custom-scrollbar">
                   <AnimatePresence initial={false}>
                     {recentActivities.length > 0 ? (
                       recentActivities.map((activity, idx) => (
                         <motion.div 
                           key={activity.id} 
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
                           transition={{ delay: idx * 0.05 }}
-                          className="w-full bg-white/50 backdrop-blur-md p-3 rounded-xl border border-white/80 hover:border-emerald-200 hover:bg-white/80 transition-all duration-300 group flex items-center justify-between gap-4 shadow-sm hover:shadow-md"
+                          className="w-full bg-white/60 backdrop-blur-md p-3.5 rounded-2xl border border-white/90 hover:border-emerald-300 hover:bg-white/95 transition-all duration-500 group flex items-center justify-between gap-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5"
                         >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center group-hover:from-emerald-100 group-hover:to-emerald-200 transition-all duration-500 shrink-0 border border-emerald-50">
-                              <User className="w-4.5 h-4.5 text-emerald-600" />
+                          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shrink-0 border border-white shadow-inner">
+                              <User className="w-5 h-5 text-emerald-600" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-[12px] font-black text-slate-800 truncate leading-none mb-1 group-hover:text-emerald-700 transition-colors">
+                              <div className="text-[13px] font-black text-slate-800 truncate leading-none mb-1.5 group-hover:text-emerald-700 transition-colors tracking-tight">
                                 {toDisplayCase(activity.studentName)}
                               </div>
-                              <div className="flex items-center gap-2">
-                                <div className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                                  <span className="text-emerald-500 font-black">Lớp</span> 
-                                  <span className="text-emerald-600">{activity.className}</span>
+                              <div className="flex items-center gap-2.5">
+                                <div className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                                  <span className="text-emerald-600 font-extrabold uppercase text-[8px]">Lớp</span> 
+                                  <span className="text-slate-700 font-black">{activity.className}</span>
                                 </div>
                                 {activity.count && activity.count > 1 && (
-                                  <div className="bg-emerald-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full border border-emerald-500 shadow-sm animate-in fade-in zoom-in duration-500">
+                                  <div className="bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500 shadow-sm shadow-emerald-200">
                                     {activity.count} lần
                                   </div>
                                 )}
@@ -753,37 +776,42 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                             </div>
                           </div>
                           <div className="flex flex-col items-end shrink-0 gap-1.5">
-                            <div className="text-[9px] font-mono font-black text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50 shadow-inner">
+                            <div className="text-[10px] font-mono font-black text-emerald-800 bg-white px-2 py-1 rounded-xl border border-emerald-100 shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                               {new Date(activity.queriedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                             </div>
-                            {isToday(activity.queriedAt) ? (
-                              <div className="flex items-center gap-1 text-[7px] font-black text-slate-300 uppercase tracking-tighter">
-                                <Clock className="w-2.5 h-2.5" />
-                                Vừa tra cứu
-                              </div>
-                            ) : (
-                              <div className="text-[7px] font-black text-slate-300 uppercase tracking-tighter">
-                                {new Date(activity.queriedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
-                              </div>
-                            )}
+                            <div className="flex items-center gap-1 text-[8px] font-black text-slate-300 uppercase tracking-widest">
+                               {isToday(activity.queriedAt) ? (
+                                  <>
+                                    <Clock className="w-3 h-3 text-emerald-300" />
+                                    <span>Vừa tra</span>
+                                  </>
+                               ) : (
+                                  <span>{new Date(activity.queriedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}</span>
+                               )}
+                            </div>
                           </div>
                         </motion.div>
                       ))
                     ) : (
-                      <div className="w-full text-center py-8 text-[11px] font-bold text-slate-400 italic bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                      <div className="w-full text-center py-12 text-[11px] font-bold text-slate-400 italic bg-white/40 rounded-3xl border-2 border-dashed border-slate-200/50">
                         Chưa có hoạt động tra cứu mới hôm nay
                       </div>
                     )}
                   </AnimatePresence>
                 </div>
                 
-                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div className="flex gap-1">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="w-1.5 h-1.5 rounded-full bg-emerald-200" />
+                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4].map(i => (
+                      <motion.div 
+                        key={i} 
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+                        className="w-1.5 h-1.5 rounded-full bg-emerald-300" 
+                      />
                     ))}
                   </div>
-                  <span className="text-[7px] font-black text-slate-300 uppercase tracking-[0.2em]">Dữ liệu học tập thời thực</span>
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em]">HỆ THỐNG TRỰC TUYẾN</span>
                 </div>
               </div>
             </div>
