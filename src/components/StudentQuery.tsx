@@ -656,35 +656,35 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             
             {/* Quick Three-Step Guideline (Moved here) */}
             <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
-              <div className="flex items-center gap-1.5 border-b pb-2.5 border-slate-100">
-                <LayoutDashboard className="w-4.5 h-4.5 text-[#0055A5]" />
-                <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">
-                  HƯỚNG DẪN TRA CỨU HỌC BẠ ĐIỆN TỬ
+              <div className="flex items-center gap-1.5 border-b pb-3.5 border-slate-100 mb-5 text-[#0055A5]">
+                <LayoutDashboard className="w-4.5 h-4.5" />
+                <h3 className="text-xs font-black uppercase tracking-wider">
+                  QUY TRÌNH TRA CỨU HỌC BẠ ĐIỆN TỬ
                 </h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-slate-700">
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-start gap-2">
-                  <span className="text-xs font-black bg-[#0055A5] text-white w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
-                  <div>
-                    <h4 className="text-[11px] font-black uppercase text-[#0055A5]">Nhập Mã HS</h4>
-                    <p className="text-[10px] text-slate-500 font-semibold mt-0.5 leading-snug">Điền chính xác mã định danh gồm định dạng chữ và số.</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="p-4 bg-sky-50/40 rounded-xl border border-sky-100 flex items-start gap-3 transition hover:shadow-sm">
+                  <span className="text-sm font-black bg-[#0055A5] text-white w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm">1</span>
+                  <div className="space-y-1">
+                    <h4 className="text-[11px] font-black uppercase text-[#0055A5] tracking-tight">Nhập Thông Tin</h4>
+                    <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Nhập đầy đủ Họ tên hoặc số CCCD của học sinh cần tra cứu.</p>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-start gap-2">
-                  <span className="text-xs font-black bg-[#0055A5] text-white w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
-                  <div>
-                    <h4 className="text-[11px] font-black uppercase text-[#0055A5]">Nhập Ngày Sinh</h4>
-                    <p className="text-[10px] text-slate-500 font-semibold mt-0.5 leading-snug">Khớp định dạng năm-tháng-ngày ghi trên khai sinh gốc.</p>
+                <div className="p-4 bg-sky-50/40 rounded-xl border border-sky-100 flex items-start gap-3 transition hover:shadow-sm">
+                  <span className="text-sm font-black bg-[#0055A5] text-white w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm">2</span>
+                  <div className="space-y-1">
+                    <h4 className="text-[11px] font-black uppercase text-[#0055A5] tracking-tight">Nhập Ngày Sinh</h4>
+                    <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Nhập chính xác ngày sinh học sinh (Ví dụ: 15/05/2011).</p>
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-start gap-2">
-                  <span className="text-xs font-black bg-[#E53935] text-white w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
-                  <div>
-                    <h4 className="text-[11px] font-black uppercase text-[#E53935]">Nhận học bạ</h4>
-                    <p className="text-[10px] text-slate-500 font-semibold mt-0.5 leading-snug">Xem bảng điểm chi tiết học kỳ, rèn luyện cùng danh hiệu.</p>
+                <div className="p-4 bg-sky-50/40 rounded-xl border border-sky-100 flex items-start gap-3 transition hover:shadow-sm">
+                  <span className="text-sm font-black bg-[#E53935] text-white w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm">3</span>
+                  <div className="space-y-1">
+                    <h4 className="text-[11px] font-black uppercase text-[#E53935] tracking-tight">Xem Kết Quả</h4>
+                    <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Nhấn "TRA CỨU" để xem chi tiết học bạ và kết quả rèn luyện.</p>
                   </div>
                 </div>
               </div>
