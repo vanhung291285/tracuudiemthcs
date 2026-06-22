@@ -28,7 +28,7 @@ import {
   BarChartHorizontal
 } from "lucide-react";
 import dbService from "../lib/supabase";
-import { Student } from "../types";
+import { Student, RecentActivity } from "../types";
 
 interface StudentQueryProps {
   onQueryResult: (student: Student, term: "hk1" | "hk2" | "canam") => void;
@@ -55,10 +55,33 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const [topStudents, setTopStudents] = useState<Student[]>([]);
   const [multipleMatches, setMultipleMatches] = useState<Student[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [studentCount, setStudentCount] = useState<number>(0);
+
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+  };
 
   useEffect(() => {
     let active = true;
+
+    const fetchRecentActivities = async () => {
+      try {
+        const activities = await dbService.getRecentActivities();
+        if (active) {
+          if (activities.length === 0) {
+            // Provide sample activities with accents if empty
+            setRecentActivities([
+              { id: 'm1', studentName: "Nguyễn Văn Hùng", className: "9A1", queriedAt: new Date().toISOString(), count: 5 },
+              { id: 'm2', studentName: "Phạm Thị Mai Chi", className: "8B2", queriedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), count: 3 },
+              { id: 'm3', studentName: "Lê Hoàng Bảo", className: "7C3", queriedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), count: 1 }
+            ]);
+          } else {
+            setRecentActivities(activities);
+          }
+        }
+      } catch (err) { }
+    };
 
     const fetchStudentCount = async () => {
       try {
@@ -126,6 +149,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     fetchNews();
     fetchTopStudents();
     fetchStudentCount();
+    fetchRecentActivities();
     return () => {
       active = false;
     };
@@ -231,7 +255,11 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
       if (results && results.length > 0) {
         if (results.length === 1) {
-          onQueryResult(results[0], selectedTerm);
+          const student = results[0];
+          await dbService.logSearchActivity(student.fullName, student.className);
+          const updatedActivities = await dbService.getRecentActivities();
+          setRecentActivities(updatedActivities);
+          onQueryResult(student, selectedTerm);
         } else {
           // Found multiple matches
           setMultipleMatches(results);
@@ -254,8 +282,11 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     }
   };
 
-  const handleSelectMatch = (student: Student) => {
+  const handleSelectMatch = async (student: Student) => {
     setMultipleMatches([]);
+    await dbService.logSearchActivity(student.fullName, student.className);
+    const updatedActivities = await dbService.getRecentActivities();
+    setRecentActivities(updatedActivities);
     onQueryResult(student, selectedTerm);
   };
 
@@ -649,6 +680,62 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   <div className="col-span-full text-center py-8 text-xs text-amber-600/30 font-black uppercase tracking-[0.2em] italic flex flex-col items-center gap-4">
                     <RefreshCw className="w-6 h-6 animate-spin opacity-20" />
                     Đang thiết lập...
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Recent Lookups Live Feed */}
+            <div className="glass-card p-4 rounded-xl border border-white/50 shadow-lg relative z-10 overflow-hidden">
+              <div className="flex items-center gap-1.5 border-b pb-2 border-slate-100 mb-3 text-emerald-600">
+                <Zap className="w-4 h-4 fill-emerald-600 animate-pulse" />
+                <h3 className="text-xs font-black uppercase tracking-wider leading-none">
+                  TRA CỨU GẦN ĐÂY
+                </h3>
+                <div className="ml-auto flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-[9px] font-black text-emerald-600/70 uppercase tracking-tighter">Trực tiếp</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 overflow-x-auto pb-1 custom-scrollbar snap-x">
+                {recentActivities.length > 0 ? (
+                  recentActivities.map((activity) => (
+                    <div 
+                      key={activity.id} 
+                      className="flex-shrink-0 w-44 bg-white/40 backdrop-blur-sm p-3 rounded-lg border border-white/60 snap-start hover:border-emerald-200 transition-colors group"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-xs group-hover:bg-emerald-200 transition-colors">
+                          <User className="w-3.5 h-3.5 text-emerald-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-black text-slate-800 truncate leading-none mb-1">
+                            {toTitleCase(activity.studentName)}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-[9px] font-bold text-emerald-600">
+                              Lớp {activity.className}
+                            </div>
+                            {activity.count && activity.count > 1 && (
+                              <div className="bg-emerald-100 text-emerald-700 text-[8px] font-black px-1 py-0.5 rounded-full border border-emerald-200">
+                                {activity.count} lần
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end text-[8px] font-mono font-bold text-slate-400">
+                        {new Date(activity.queriedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="w-full text-center py-4 text-[10px] font-bold text-slate-400 italic">
+                    Chưa có hoạt động tra cứu mới hôm nay
                   </div>
                 )}
               </div>

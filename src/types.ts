@@ -81,3 +81,11 @@ export interface VisitorDailyStats {
   date: string;
   count: number;
 }
+
+export interface RecentActivity {
+  id: string;
+  studentName: string;
+  className: string;
+  queriedAt: string;
+  count?: number;
+}

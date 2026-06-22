@@ -4,7 +4,7 @@
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { Student, SchoolClass, VisitorMonthlyStats } from "../types";
+import { Student, SchoolClass, VisitorMonthlyStats, RecentActivity } from "../types";
 import { DEFAULT_STUDENTS } from "./mockData";
 
 // Environment variables
@@ -1097,6 +1097,112 @@ class DatabaseService {
       thisMonth: thisMonth || today || 1,
       total: total || thisMonth || 1
     };
+  }
+
+  // Activity feed: Logging searches
+  public async logSearchActivity(studentName: string, className: string): Promise<void> {
+    const now = new Date().toISOString();
+    
+    // 1. Local fallback logic (Group by studentName and className)
+    const stored = localStorage.getItem("thcs_recent_activities") || "[]";
+    try {
+      let activities = JSON.parse(stored) as RecentActivity[];
+      const existingIndex = activities.findIndex(a => 
+        a.studentName.toLowerCase() === studentName.toLowerCase() && 
+        a.className === className
+      );
+
+      if (existingIndex !== -1) {
+        // Increment count and update time
+        activities[existingIndex].count = (activities[existingIndex].count || 1) + 1;
+        activities[existingIndex].queriedAt = now;
+        // Move to top
+        const existing = activities.splice(existingIndex, 1)[0];
+        activities.unshift(existing);
+      } else {
+        activities.unshift({
+          id: Math.random().toString(36).substring(2, 9),
+          studentName,
+          className,
+          queriedAt: now,
+          count: 1
+        });
+      }
+      
+      localStorage.setItem("thcs_recent_activities", JSON.stringify(activities.slice(0, 20)));
+    } catch {
+      localStorage.setItem("thcs_recent_activities", JSON.stringify([{
+        id: Math.random().toString(36).substring(2, 9),
+        studentName,
+        className,
+        queriedAt: now,
+        count: 1
+      }]));
+    }
+
+    // 2. Supabase (Try to upsert or log)
+    if (this.supabase) {
+      try {
+        // Try to find existing record in search_activity
+        const { data } = await this.supabase
+          .from("search_activity")
+          .select("id, count")
+          .eq("student_name", studentName)
+          .eq("class_name", className)
+          .single();
+
+        if (data) {
+          await this.supabase
+            .from("search_activity")
+            .update({ 
+              count: (data.count || 1) + 1,
+              queried_at: now
+            })
+            .eq("id", data.id);
+        } else {
+          await this.supabase.from("search_activity").insert({
+            student_name: studentName,
+            class_name: className,
+            queried_at: now,
+            count: 1
+          });
+        }
+      } catch (err) {
+        // Silently fail if table/columns don't exist
+      }
+    }
+  }
+
+  public async getRecentActivities(): Promise<RecentActivity[]> {
+    if (this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from("search_activity")
+          .select("*")
+          .order("queried_at", { ascending: false })
+          .limit(10);
+        
+        if (!error && data) {
+          return data.map((d: any) => ({
+            id: d.id || Math.random().toString(),
+            studentName: d.student_name || d.studentName || "",
+            className: d.class_name || d.className || "",
+            queriedAt: d.queried_at || d.queriedAt || "",
+            count: d.count || 1
+          }));
+        }
+      } catch (err) {
+        // fallback
+      }
+    }
+
+    // Local fallback
+    const stored = localStorage.getItem("thcs_recent_activities") || "[]";
+    try {
+      return JSON.parse(stored) as RecentActivity[];
+    } catch {
+      return [];
+    }
   }
 }
 
