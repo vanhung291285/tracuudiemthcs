@@ -492,7 +492,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     ) : (
                       <>
                         <Search className="w-4 h-4 stroke-[3]" />
-                        TRA CỨU HỌC BẠ ĐIỆN TỬ
+                        TRA CỨU KẾT QUẢ
                       </>
                     )}
                   </button>
