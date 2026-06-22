@@ -659,32 +659,35 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               <div className="flex items-center gap-1.5 border-b pb-3.5 border-slate-100 mb-5 text-[#0055A5]">
                 <LayoutDashboard className="w-4.5 h-4.5" />
                 <h3 className="text-xs font-black uppercase tracking-wider">
-                  QUY TRÌNH TRA CỨU HỌC BẠ ĐIỆN TỬ
+                  HƯỚNG DẪN TRA CỨU KẾT QUẢ
                 </h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="p-4 bg-sky-50/40 rounded-xl border border-sky-100 flex items-start gap-3 transition hover:shadow-sm">
-                  <span className="text-sm font-black bg-[#0055A5] text-white w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm">1</span>
+              <div className="flex flex-col gap-5">
+                {/* Step 1 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">1</div>
                   <div className="space-y-1">
-                    <h4 className="text-[11px] font-black uppercase text-[#0055A5] tracking-tight">Nhập Thông Tin</h4>
-                    <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Nhập đầy đủ Họ tên hoặc số CCCD của học sinh cần tra cứu.</p>
+                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP THÔNG TIN</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ tên học sinh hoặc nhập số căn cước công dân (CCCD).</p>
                   </div>
                 </div>
 
-                <div className="p-4 bg-sky-50/40 rounded-xl border border-sky-100 flex items-start gap-3 transition hover:shadow-sm">
-                  <span className="text-sm font-black bg-[#0055A5] text-white w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm">2</span>
+                {/* Step 2 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">2</div>
                   <div className="space-y-1">
-                    <h4 className="text-[11px] font-black uppercase text-[#0055A5] tracking-tight">Nhập Ngày Sinh</h4>
-                    <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Nhập chính xác ngày sinh học sinh (Ví dụ: 15/05/2011).</p>
+                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP NGÀY SINH</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Điền chính xác ngày sinh (Ví dụ: 15/05/2011) như trong khai sinh.</p>
                   </div>
                 </div>
 
-                <div className="p-4 bg-sky-50/40 rounded-xl border border-sky-100 flex items-start gap-3 transition hover:shadow-sm">
-                  <span className="text-sm font-black bg-[#E53935] text-white w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm">3</span>
+                {/* Step 3 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E53935] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
                   <div className="space-y-1">
-                    <h4 className="text-[11px] font-black uppercase text-[#E53935] tracking-tight">Xem Kết Quả</h4>
-                    <p className="text-[10px] text-slate-600 font-bold leading-relaxed">Nhấn "TRA CỨU" để xem chi tiết học bạ và kết quả rèn luyện.</p>
+                    <h4 className="text-[13px] font-black uppercase text-[#E53935] tracking-tight">TRA CỨU KẾT QUẢ</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để xem chi tiết học bạ và kết quả rèn luyện.</p>
                   </div>
                 </div>
               </div>
