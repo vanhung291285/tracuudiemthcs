@@ -58,8 +58,11 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [studentCount, setStudentCount] = useState<number>(0);
 
-  const toTitleCase = (str: string) => {
-    return str.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+  const toDisplayCase = (str: string) => {
+    if (!str) return "Học sinh";
+    // Tự động nhận diện nếu tên đã có dấu tiếng việt hoặc đã là Title Case thì giữ nguyên một số phần
+    // Ở đây ta dùng regex đơn giản để viết hoa chữ cái đầu mỗi từ
+    return str.toLowerCase().split(' ').map(s => s.charAt(0).toUpperCase() + s.substring(1)).join(' ');
   };
 
   useEffect(() => {
@@ -714,7 +717,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="text-[10px] font-black text-slate-800 truncate leading-none mb-1">
-                            {toTitleCase(activity.studentName)}
+                            {toDisplayCase(activity.studentName)}
                           </div>
                           <div className="flex items-center justify-between">
                             <div className="text-[9px] font-bold text-emerald-600">
