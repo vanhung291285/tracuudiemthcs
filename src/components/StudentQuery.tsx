@@ -281,27 +281,30 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
          </svg>
       </div>
       
-      {/* Top Banner Navigation Header */}
-      <header className="w-full bg-[#0055A5] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
-        <div className="max-w-6xl mx-auto space-y-1.5">
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] md:text-xs uppercase tracking-[0.15em] font-bold text-slate-100/90 leading-none">
-              {headerTop}
-            </span>
-            <h1 className="text-base md:text-xl font-black mt-1 leading-tight tracking-wide uppercase text-white">
-              {headerMain}
-            </h1>
-          </div>
-          <div className="inline-block bg-[#E53935] px-3 py-0.5 rounded font-black text-[9px] md:text-xs uppercase tracking-wider text-white shadow-sm">
+      {/* Main Content Area: Redesigned as an Open Book */}
+      <main className="flex-1 max-w-6xl w-full mx-auto pt-8 pb-12 md:pt-12 md:pb-16 px-4">
+        
+        {/* New Integrated Title Section above the book */}
+        <div className="mb-8 md:mb-10 text-center animate-in fade-in slide-in-from-top-4 duration-700">
+          <h1 className="text-lg md:text-2xl font-black text-[#E53935] leading-tight tracking-tighter uppercase mb-2">
+            {headerMain}
+          </h1>
+          
+          <div className="inline-flex items-center gap-2 bg-[#0055A5]/10 border border-[#0055A5]/20 text-[#0055A5] px-4 py-1 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest mb-3 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E53935] animate-pulse" />
             {schoolYear}
+          </div>
+
+          <p className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-[0.2em] max-w-lg mx-auto">
+            {headerTop}
+          </p>
+          <div className="flex items-center justify-center gap-2 mt-4">
+            <div className="h-px w-8 md:w-12 bg-slate-200"></div>
+            <div className="w-2 h-2 rounded-full border border-slate-300"></div>
+            <div className="h-px w-8 md:w-12 bg-slate-200"></div>
           </div>
         </div>
 
-
-      </header>
-
-      {/* Main Content Area: Redesigned as an Open Book */}
-      <main className="flex-1 max-w-6xl w-full mx-auto pt-4 pb-12 md:pt-12 md:pb-16 px-4">
         <div className="open-book-container relative">
           {/* Visual Book Spine for Desktop */}
           <div className="book-spine hidden lg:block" />
