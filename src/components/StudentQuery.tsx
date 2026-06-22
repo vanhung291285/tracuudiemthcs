@@ -329,7 +329,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         onClick={() => setSearchMode("name")}
                         className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
                           searchMode === "name"
-                            ? "bg-white text-[#0055A5] shadow-sm ring-1 ring-slate-200/50"
+                            ? "bg-[#0055A5] text-white shadow-md"
                             : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
@@ -340,7 +340,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         onClick={() => setSearchMode("cccd")}
                         className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-black tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
                           searchMode === "cccd"
-                            ? "bg-white text-[#0055A5] shadow-sm ring-1 ring-slate-200/50"
+                            ? "bg-[#0055A5] text-white shadow-md"
                             : "text-slate-500 hover:text-slate-700"
                         }`}
                       >
