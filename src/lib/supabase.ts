@@ -313,7 +313,22 @@ class DatabaseService {
 
   private normalizeName(name: string): string {
     if (!name) return "";
-    return name.trim().toLowerCase().normalize("NFC").replace(/\s+/g, " ");
+    let normalized = name.trim().toLowerCase().normalize("NFC").replace(/\s+/g, " ");
+    
+    // Standardize Vietnamese accent placement (handling old vs new spelling)
+    // Common cases: òa/oà, òe/oè, úy/uý, ùy/uỳ, ủy/uỷ, ũy/uỹ, ụy/uỵ
+    const map: Record<string, string> = {
+      "uỳ": "ùy", "uý": "úy", "uỷ": "ủy", "uỹ": "ũy", "uỵ": "ụy",
+      "oà": "òa", "oè": "òe", "oả": "ỏa", "oã": "oã", "oạ": "ọa",
+      "uờ": "ườ", "uớ": "ướ", "uở": "ưở", "uỡ": "ưỡ", "uợ": "ượ",
+      "iề": "iề", "iế": "iế", "iể": "iể", "iễ": "iễ", "iệ": "iệ"
+    };
+    
+    for (const [key, value] of Object.entries(map)) {
+      normalized = normalized.replace(new RegExp(key, "g"), value);
+    }
+    
+    return normalized;
   }
 
   public async queryStudentsByName(fullName: string, dob: string): Promise<Student[]> {
