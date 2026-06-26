@@ -311,12 +311,24 @@ class DatabaseService {
     }
   }
 
+  private removeDiacritics(str: string): string {
+    if (!str) return "";
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  }
+
   private normalizeName(name: string): string {
     if (!name) return "";
     let normalized = name.trim().toLowerCase().normalize("NFC").replace(/\s+/g, " ");
     
     // Standardize Vietnamese accent placement (handling old vs new spelling)
-    // Common cases: òa/oà, òe/oè, úy/uý, ùy/uỳ, ủy/uỷ, ũy/uỹ, ụy/uỵ
+    // This is crucial for matching manually typed names vs imported names
     const map: Record<string, string> = {
       "uỳ": "ùy", "uý": "úy", "uỷ": "ủy", "uỹ": "ũy", "uỵ": "ụy",
       "oà": "òa", "oè": "òe", "oả": "ỏa", "oã": "oã", "oạ": "ọa",
@@ -333,39 +345,29 @@ class DatabaseService {
 
   public async queryStudentsByName(fullName: string, dob: string): Promise<Student[]> {
     const cleanName = this.normalizeName(fullName);
+    const noDiacriticInput = this.removeDiacritics(fullName);
     const cleanDob = dob.trim();
 
-    if (!cleanName) return [];
+    if (!cleanName && !noDiacriticInput) return [];
 
     if (this.supabase) {
       try {
         await this.checkSchemaCase();
         const nameField = this.isSnakeCaseSchema ? "full_name" : "fullName";
         
-        // First try an exact match for efficiency
-        let { data, error } = await this.supabase
+        // Fetch candidates by the last name (personal name) to handle normalization in JS
+        const searchTerms = fullName.trim().split(" ");
+        const lastName = searchTerms[searchTerms.length - 1];
+        
+        const { data, error } = await this.supabase
           .from("students")
           .select("*")
-          .ilike(nameField, cleanName);
-
-        // If no exact match, try searching by the last term (personal name)
-        if (error || !data || data.length === 0) {
-          const searchTerms = cleanName.split(" ");
-          const lastName = searchTerms[searchTerms.length - 1];
-          
-          const { data: fuzzyData, error: fuzzyError } = await this.supabase
-            .from("students")
-            .select("*")
-            .ilike(nameField, `%${lastName}%`);
-          
-          data = fuzzyData;
-          error = fuzzyError;
-        }
+          .ilike(nameField, `%${lastName}%`);
 
         if (!error && data && data.length > 0) {
           const mappedList = data.map((d: any) => this.mapDbToStudent(d));
           
-          // 1. Strict match after normalization
+          // 1. Try strict match with normalization
           let found = mappedList.filter((m: Student) => 
             this.compareDates(m.dob, cleanDob) && 
             this.normalizeName(m.fullName) === cleanName
@@ -373,13 +375,21 @@ class DatabaseService {
           
           if (found.length > 0) return found;
 
-          // 2. Fuzzy match for long names: Ensure all words in the input are present in the database name
-          // This helps if the order is slightly different or if there are extra middle names in DB
+          // 2. Try match without diacritics (extremely robust for manual typing)
+          found = mappedList.filter((m: Student) => 
+            this.compareDates(m.dob, cleanDob) && 
+            this.removeDiacritics(m.fullName) === noDiacriticInput
+          );
+
+          if (found.length > 0) return found;
+
+          // 3. Fuzzy match for long names: Ensure all words in the input are present in the database name
           const inputParts = cleanName.split(" ").filter(p => p.length > 1);
           found = mappedList.filter((m: Student) => {
             if (!this.compareDates(m.dob, cleanDob)) return false;
             const dbName = this.normalizeName(m.fullName);
-            return inputParts.every(part => dbName.includes(part));
+            const dbNoAccents = this.removeDiacritics(m.fullName);
+            return inputParts.every(part => dbName.includes(part) || dbNoAccents.includes(this.removeDiacritics(part)));
           });
 
           if (found.length > 0) return found;
@@ -391,15 +401,19 @@ class DatabaseService {
 
     // Fallback: search local database
     const localFound = this.localStudentsList.filter(s => {
-      const dbName = this.normalizeName(s.fullName);
       const isDateMatch = this.compareDates(s.dob, cleanDob);
-      
       if (!isDateMatch) return false;
+
+      const dbNameNormalized = this.normalizeName(s.fullName);
+      const dbNoAccents = this.removeDiacritics(s.fullName);
       
-      if (dbName === cleanName) return true;
+      if (dbNameNormalized === cleanName) return true;
+      if (dbNoAccents === noDiacriticInput) return true;
       
       const inputParts = cleanName.split(" ").filter(p => p.length > 1);
-      return inputParts.length > 0 && inputParts.every(part => dbName.includes(part));
+      return inputParts.length > 0 && inputParts.every(part => 
+        dbNameNormalized.includes(part) || dbNoAccents.includes(this.removeDiacritics(part))
+      );
     });
     
     return localFound;
