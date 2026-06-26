@@ -311,74 +311,88 @@ class DatabaseService {
     }
   }
 
+  private normalizeName(name: string): string {
+    if (!name) return "";
+    return name.trim().toLowerCase().normalize("NFC").replace(/\s+/g, " ");
+  }
+
   public async queryStudentsByName(fullName: string, dob: string): Promise<Student[]> {
-    const cleanName = fullName.trim().toLowerCase();
+    const cleanName = this.normalizeName(fullName);
     const cleanDob = dob.trim();
+
+    if (!cleanName) return [];
 
     if (this.supabase) {
       try {
         await this.checkSchemaCase();
-        let query = this.supabase.from("students").select("*");
-        if (this.isSnakeCaseSchema) {
-          query = query.ilike("full_name", `%${cleanName}%`);
-        } else {
-          query = query.ilike("fullName", `%${cleanName}%`);
-        }
-        const { data, error } = await query;
+        const nameField = this.isSnakeCaseSchema ? "full_name" : "fullName";
+        
+        // First try an exact match for efficiency
+        let { data, error } = await this.supabase
+          .from("students")
+          .select("*")
+          .ilike(nameField, cleanName);
 
-        if (error) {
-          // Query info status
-        } else if (data && data.length > 0) {
+        // If no exact match, try searching by the last term (personal name)
+        if (error || !data || data.length === 0) {
+          const searchTerms = cleanName.split(" ");
+          const lastName = searchTerms[searchTerms.length - 1];
+          
+          const { data: fuzzyData, error: fuzzyError } = await this.supabase
+            .from("students")
+            .select("*")
+            .ilike(nameField, `%${lastName}%`);
+          
+          data = fuzzyData;
+          error = fuzzyError;
+        }
+
+        if (!error && data && data.length > 0) {
           const mappedList = data.map((d: any) => this.mapDbToStudent(d));
-          const found = mappedList.filter((m: Student) => this.compareDates(m.dob, cleanDob) && m.fullName.toLowerCase() === cleanName);
+          
+          // 1. Strict match after normalization
+          let found = mappedList.filter((m: Student) => 
+            this.compareDates(m.dob, cleanDob) && 
+            this.normalizeName(m.fullName) === cleanName
+          );
+          
+          if (found.length > 0) return found;
+
+          // 2. Fuzzy match for long names: Ensure all words in the input are present in the database name
+          // This helps if the order is slightly different or if there are extra middle names in DB
+          const inputParts = cleanName.split(" ").filter(p => p.length > 1);
+          found = mappedList.filter((m: Student) => {
+            if (!this.compareDates(m.dob, cleanDob)) return false;
+            const dbName = this.normalizeName(m.fullName);
+            return inputParts.every(part => dbName.includes(part));
+          });
+
           if (found.length > 0) return found;
         }
       } catch (err) {
-        // Silent query error
+        console.warn("Supabase query error:", err);
       }
     }
 
     // Fallback: search local database
-    const found = this.localStudentsList.filter(s => 
-      s.fullName.toLowerCase() === cleanName && 
-      this.compareDates(s.dob, cleanDob)
-    );
-    return found;
+    const localFound = this.localStudentsList.filter(s => {
+      const dbName = this.normalizeName(s.fullName);
+      const isDateMatch = this.compareDates(s.dob, cleanDob);
+      
+      if (!isDateMatch) return false;
+      
+      if (dbName === cleanName) return true;
+      
+      const inputParts = cleanName.split(" ").filter(p => p.length > 1);
+      return inputParts.length > 0 && inputParts.every(part => dbName.includes(part));
+    });
+    
+    return localFound;
   }
 
   public async queryStudentByName(fullName: string, dob: string): Promise<Student | null> {
-    const cleanName = fullName.trim().toLowerCase();
-    const cleanDob = dob.trim();
-
-    if (this.supabase) {
-      try {
-        await this.checkSchemaCase();
-        let query = this.supabase.from("students").select("*");
-        if (this.isSnakeCaseSchema) {
-          query = query.ilike("full_name", `%${cleanName}%`);
-        } else {
-          query = query.ilike("fullName", `%${cleanName}%`);
-        }
-        const { data, error } = await query;
-
-        if (error) {
-          // Query info status
-        } else if (data && data.length > 0) {
-          const mappedList = data.map((d: any) => this.mapDbToStudent(d));
-          const found = mappedList.find((m: Student) => this.compareDates(m.dob, cleanDob) && m.fullName.toLowerCase() === cleanName);
-          if (found) return found;
-        }
-      } catch (err) {
-        // Silent query error
-      }
-    }
-
-    // Fallback: search local database
-    const found = this.localStudentsList.find(s => 
-      s.fullName.toLowerCase() === cleanName && 
-      this.compareDates(s.dob, cleanDob)
-    );
-    return found || null;
+    const results = await this.queryStudentsByName(fullName, dob);
+    return results.length > 0 ? results[0] : null;
   }
 
   // Query student records
@@ -424,39 +438,46 @@ class DatabaseService {
   }
 
   private compareDates(dbDob: string, inputDob: string): boolean {
+    if (!dbDob || !inputDob) return false;
+    
     const cleanDb = dbDob.replace(/[^0-9]/g, "");
     const cleanInput = inputDob.replace(/[^0-9]/g, "");
     
-    // Exact match or partial end-of-string match (e.g. DD-MM-YYYY comparing with input)
+    // Quick match
     if (cleanDb === cleanInput) return true;
     
-    // If user input is DD/MM/YYYY vs DB YYYY-MM-DD, try reordering:
-    // database "2011-05-15" (20110515) vs input "15/05/2011" (15052011)
-    if (dbDob.includes("-") && (inputDob.includes("/") || inputDob.includes("-"))) {
-      const dbParts = dbDob.split("-"); // YYYY, MM, DD
-      const inputChar = inputDob.includes("/") ? "/" : "-";
-      const inputParts = inputDob.split(inputChar); // DD, MM, YYYY or YYYY, MM, DD
+    // Helper to extract parts from various string formats
+    const getParts = (str: string) => {
+      let parts: string[] = [];
+      if (str.includes("-")) parts = str.split("-");
+      else if (str.includes("/")) parts = str.split("/");
+      else if (str.includes(".")) parts = str.split(".");
       
-      if (dbParts.length === 3 && inputParts.length === 3) {
-        // match: [2011, 05, 15] vs [15, 05, 2011]
-        const dbY = dbParts[0], dbM = dbParts[1], dbD = dbParts[2];
-        
-        let inY = "", inM = "", inD = "";
-        if (inputParts[0].length === 4) {
-          inY = inputParts[0]; inM = inputParts[1]; inD = inputParts[2];
-        } else {
-          inD = inputParts[0]; inM = inputParts[1]; inY = inputParts[2];
+      if (parts.length === 3) {
+        // Handle YYYY-MM-DD
+        if (parts[0].length === 4) {
+          return { y: parseInt(parts[0]), m: parseInt(parts[1]), d: parseInt(parts[2]) };
+        } 
+        // Handle DD-MM-YYYY
+        else if (parts[2].length === 4) {
+          return { y: parseInt(parts[2]), m: parseInt(parts[1]), d: parseInt(parts[0]) };
         }
-         
-        if (parseInt(dbY) === parseInt(inY) && 
-            parseInt(dbM) === parseInt(inM) && 
-            parseInt(dbD) === parseInt(inD)) {
-          return true;
+        // Handle YY-MM-DD (fallback)
+        else if (parts[0].length === 2 && parseInt(parts[0]) > 31) {
+           return { y: 2000 + parseInt(parts[0]), m: parseInt(parts[1]), d: parseInt(parts[2]) };
         }
       }
+      return null;
+    };
+
+    const dbP = getParts(dbDob);
+    const inP = getParts(inputDob);
+
+    if (dbP && inP) {
+      return dbP.y === inP.y && dbP.m === inP.m && dbP.d === inP.d;
     }
     
-    // Quick string match
+    // Final fallback: string containment
     return dbDob.includes(inputDob) || inputDob.includes(dbDob);
   }
 
