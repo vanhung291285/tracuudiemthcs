@@ -148,8 +148,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   });
   const [searchByName, setSearchByName] = useState(() => {
     const val = localStorage.getItem("portal_search_name");
-    return val === "true"; // default false for retro-compatibility, or true? the user wants search by name with toggle. Let's make it true if they enable it here. Defaults to true. Let's make it default to false to not break anything unless admin toggles. Actually we will just make it true as requested by user. Let's do true.
+    return val === "true"; 
   });
+  const [zaloUrl, setZaloUrl] = useState(() => localStorage.getItem("portal_zalo_url") || "https://zalo.me/0333333333");
+  const [facebookUrl, setFacebookUrl] = useState(() => localStorage.getItem("portal_facebook_url") || "https://facebook.com/suoilu");
+  const [websiteUrl, setWebsiteUrl] = useState(() => localStorage.getItem("portal_website_url") || "https://suoilu.db.edu.vn");
 
   // Student Form Dialog
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -242,6 +245,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
       const searchName = await dbService.getPortalSetting("portal_search_name", "true");
       setSearchByName(searchName === "true");
+
+      const z = await dbService.getPortalSetting("portal_zalo_url", "https://zalo.me/0333333333");
+      setZaloUrl(z);
+      const f = await dbService.getPortalSetting("portal_facebook_url", "https://facebook.com/suoilu");
+      setFacebookUrl(f);
+      const w = await dbService.getPortalSetting("portal_website_url", "https://suoilu.db.edu.vn");
+      setWebsiteUrl(w);
     } catch (e) {
       // Configuration fallback log
       console.log("Portal settings deferred load info:", (e as any).message);
@@ -391,17 +401,20 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const r6 = await dbService.savePortalSetting("portal_footer_copy", footerCopy.trim());
       const r7 = await dbService.savePortalSetting("portal_search_cccd", searchByCccd ? "true" : "false");
       const r8 = await dbService.savePortalSetting("portal_search_name", searchByName ? "true" : "false");
+      const r9 = await dbService.savePortalSetting("portal_zalo_url", zaloUrl.trim());
+      const r10 = await dbService.savePortalSetting("portal_facebook_url", facebookUrl.trim());
+      const r11 = await dbService.savePortalSetting("portal_website_url", websiteUrl.trim());
       
       const config = dbService.getConfig();
       if (config.isRealSupabase) {
-        if (r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8) {
-          alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công và đồng bộ lên Supabase!");
+        if (r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9 && r10 && r11) {
+          alert("Cấu hình cổng tra cứu đã được lưu thành công và đồng bộ lên Supabase!");
         } else {
           const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}\n\n💡 HƯỚNG DẪN MẸO: Bạn hãy mở lại tab "Supabase & Database" trong Cài đặt, COPY toàn bộ Mã SQL VÀ CHẠY LẠI MỘT LẦN NỮA trên SQL Editor của Supabase để hệ thống làm mới schema cache, sau đó thử lưu lại.` : "";
           alert(`Cấu hình đã được lưu thành công ở trình duyệt của bạn (LocalStorage) nhưng không thể đồng bộ lên Supabase! Vui lòng đảm bảo bạn đã tạo bảng 'portal_settings' trong cơ sở dữ liệu Supabase bằng cách chạy đoạn mã SQL khởi tạo được hiển thị ở tab 'Supabase & Database' trong trang Quản trị này.${dbErr}`);
         }
       } else {
-        alert("Cấu hình cổng tra cứu (Tiêu đề và Chân trang) đã được lưu thành công vào trình duyệt (LocalStorage)!");
+        alert("Cấu hình cổng tra cứu đã được lưu thành công vào trình duyệt (LocalStorage)!");
       }
     } catch (err: any) {
       alert("Lỗi khi lưu cấu hình: " + err.message);
@@ -427,6 +440,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setFooterCopy(defaultFooterCopy);
       setSearchByCccd(true);
       setSearchByName(true);
+      setZaloUrl("https://zalo.me/0333333333");
+      setFacebookUrl("https://facebook.com/suoilu");
+      setWebsiteUrl("https://suoilu.db.edu.vn");
       
       setAuthIsLoading(true);
       try {
@@ -438,6 +454,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         await dbService.savePortalSetting("portal_footer_copy", defaultFooterCopy);
         await dbService.savePortalSetting("portal_search_cccd", "true");
         await dbService.savePortalSetting("portal_search_name", "true");
+        await dbService.savePortalSetting("portal_zalo_url", "https://zalo.me/0333333333");
+        await dbService.savePortalSetting("portal_facebook_url", "https://facebook.com/suoilu");
+        await dbService.savePortalSetting("portal_website_url", "https://suoilu.db.edu.vn");
         alert("Đã đặt lại toàn bộ cấu hình hiển thị và đồng bộ về mặc định thành công.");
       } catch (err: any) {
         alert("Lỗi khi đặt lại cấu hình trên Supabase: " + err.message);
@@ -3488,6 +3507,49 @@ NOTIFY pgrst, 'reload schema';`}
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Thông tin bảo lưu quyền sở hữu trí tuệ hoặc niên khóa ở đáy cổng.
                       </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100">
+                      <h4 className="font-extrabold text-[#0055A5] text-[11px] uppercase tracking-wider mb-3">Cấu hình Liên kết Mạng xã hội</h4>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
+                        Liên kết Zalo <span className="text-[#E53935]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={zaloUrl}
+                        onChange={(e) => setZaloUrl(e.target.value)}
+                        placeholder="Ví dụ: https://zalo.me/0333333333"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
+                        Liên kết Facebook <span className="text-[#E53935]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={facebookUrl}
+                        onChange={(e) => setFacebookUrl(e.target.value)}
+                        placeholder="Ví dụ: https://facebook.com/suoilu"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
+                        Liên kết Website <span className="text-[#E53935]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={websiteUrl}
+                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                        placeholder="Ví dụ: https://suoilu.db.edu.vn"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                      />
                     </div>
 
                     <div className="pt-4 border-t border-slate-100">
