@@ -248,25 +248,56 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
         if (!title) title = aTag.text().trim();
 
         // Try multiple selectors for images, including WordPress standard ones
-        let imgElem = $(elem).find("img.wp-post-image, img.attachment-post-thumbnail, .featured-image img, .post-thumbnail img, .entry-thumbnail img, .wp-block-post-featured-image img, .td-thumb-css, .entry-thumb").first();
+        const imgSelectors = [
+          "img.wp-post-image", 
+          "img.attachment-post-thumbnail", 
+          ".featured-image img", 
+          ".post-thumbnail img", 
+          ".entry-thumbnail img", 
+          ".wp-block-post-featured-image img",
+          ".td-thumb-css", 
+          ".entry-thumb",
+          ".td-module-thumb img",
+          ".td-image-wrap img",
+          ".image img",
+          ".thumb img"
+        ];
+        
+        let imgElem = $(elem).find(imgSelectors.join(", ")).first();
         if (imgElem.length === 0) imgElem = $(elem).find("img").first();
 
-        let imageSrc = imgElem.attr("src") || 
+        let imageSrc = "";
+        if (imgElem.length > 0) {
+          if (imgElem.is("img")) {
+            // Priority list for image sources, prefer high-quality/original files
+            imageSrc = imgElem.attr("data-orig-file") || 
+                       imgElem.attr("data-large-file") ||
                        imgElem.attr("data-src") || 
                        imgElem.attr("data-original") ||
                        imgElem.attr("data-lazy-src") ||
-                       imgElem.attr("data-src-meta") ||
-                       imgElem.attr("data-large-file") ||
-                       imgElem.attr("data-orig-file") ||
-                       imgElem.attr("srcset")?.split(" ")[0];
-        
-        // If image in element is bad/tiny, look for background images or nearby images
-        if (!imageSrc || imageSrc.includes("spacer.png") || imageSrc.includes("data:image")) {
-           const style = imgElem.attr("style") || $(elem).attr("style") || $(elem).find(".image, .thumb, .bg-img").first().attr("style");
-           if (style && style.includes("background-image")) {
-              const match = style.match(/url\(["']?([^"']+)["']?\)/);
-              if (match) imageSrc = match[1];
-           }
+                       imgElem.attr("src");
+            
+            // Try to get the largest one from srcset if src is still placeholder-ish or low quality
+            if (imgElem.attr("srcset")) {
+              const srcsetParts = imgElem.attr("srcset")?.split(",");
+              if (srcsetParts && srcsetParts.length > 0) {
+                // Usually the last one in srcset is the largest/best quality
+                const candidate = srcsetParts[srcsetParts.length - 1].trim().split(" ")[0];
+                if (isValidImage(candidate)) {
+                  imageSrc = candidate;
+                }
+              }
+            }
+          }
+          
+          // If still no valid image or it's a non-img element (like a div with background-image)
+          if (!imageSrc || !isValidImage(imageSrc)) {
+             const style = imgElem.attr("style") || $(elem).attr("style") || $(elem).find(".image, .thumb, .bg-img, .td-thumb-css, .entry-thumb").first().attr("style");
+             if (style && style.includes("background-image")) {
+                const match = style.match(/url\(["']?([^"']+)["']?\)/);
+                if (match && isValidImage(match[1])) imageSrc = match[1];
+             }
+          }
         }
 
         if (!href || !title) return;
