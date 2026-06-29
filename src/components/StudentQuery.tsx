@@ -180,6 +180,9 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [schoolYear, setSchoolYear] = useState(() => 
     localStorage.getItem("portal_school_year") || "NĂM HỌC 2025 - 2026"
   );
+  const [zaloUrl, setZaloUrl] = useState("https://zalo.me/0333333333");
+  const [facebookUrl, setFacebookUrl] = useState("https://facebook.com/suoilu");
+  const [websiteUrl, setWebsiteUrl] = useState("https://suoilu.db.edu.vn");
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -190,6 +193,13 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         setHeaderMain(main);
         const year = await dbService.getPortalSetting("portal_school_year", "NĂM HỌC 2025 - 2026");
         setSchoolYear(year);
+
+        const z = await dbService.getPortalSetting("portal_zalo_url", "https://zalo.me/0333333333");
+        setZaloUrl(z);
+        const f = await dbService.getPortalSetting("portal_facebook_url", "https://facebook.com/suoilu");
+        setFacebookUrl(f);
+        const w = await dbService.getPortalSetting("portal_website_url", "https://suoilu.db.edu.vn");
+        setWebsiteUrl(w);
         
         const isCccdEnabled = await dbService.getPortalSetting("portal_search_cccd", "true");
         const cccdEnabled = isCccdEnabled !== "false";
@@ -1044,7 +1054,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       {/* Floating Contact Buttons */}
       <div className="fixed right-4 bottom-24 z-50 flex flex-col gap-3">
         <motion.a
-          href="https://zalo.me/0333333333" // Placeholder Zalo, ideally the school's Zalo number/link
+          href={zaloUrl}
           target="_blank"
           rel="noopener noreferrer"
           whileHover={{ scale: 1.1, x: -5 }}
@@ -1057,7 +1067,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         </motion.a>
 
         <motion.a
-          href="https://facebook.com/suoilu" // Placeholder Facebook
+          href={facebookUrl}
           target="_blank"
           rel="noopener noreferrer"
           whileHover={{ scale: 1.1, x: -5 }}
@@ -1070,7 +1080,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         </motion.a>
 
         <motion.a
-          href="https://suoilu.db.edu.vn"
+          href={websiteUrl}
           target="_blank"
           rel="noopener noreferrer"
           whileHover={{ scale: 1.1, x: -5 }}
