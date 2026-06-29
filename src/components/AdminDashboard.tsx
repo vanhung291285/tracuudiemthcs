@@ -159,6 +159,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [zaloUrl, setZaloUrl] = useState(() => localStorage.getItem("portal_zalo_url") || "https://zalo.me/0333333333");
   const [facebookUrl, setFacebookUrl] = useState(() => localStorage.getItem("portal_facebook_url") || "https://facebook.com/suoilu");
   const [websiteUrl, setWebsiteUrl] = useState(() => localStorage.getItem("portal_website_url") || "https://suoilu.db.edu.vn");
+  const [newsSourceUrl, setNewsSourceUrl] = useState(() => localStorage.getItem("portal_news_source_url") || "https://suoilu.db.edu.vn");
 
   // Student Form Dialog
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -264,6 +265,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setFacebookUrl(f);
       const w = await dbService.getPortalSetting("portal_website_url", "https://suoilu.db.edu.vn");
       setWebsiteUrl(w);
+      const n = await dbService.getPortalSetting("portal_news_source_url", "https://suoilu.db.edu.vn");
+      setNewsSourceUrl(n);
     } catch (e) {
       // Configuration fallback log
       console.log("Portal settings deferred load info:", (e as any).message);
@@ -416,12 +419,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const r9 = await dbService.savePortalSetting("portal_zalo_url", zaloUrl.trim());
       const r10 = await dbService.savePortalSetting("portal_facebook_url", facebookUrl.trim());
       const r11 = await dbService.savePortalSetting("portal_website_url", websiteUrl.trim());
-      const r12 = await dbService.savePortalSetting("portal_footer_keywords", footerKeywords.trim());
-      const r13 = await dbService.savePortalSetting("portal_footer_contact", footerContact.trim());
+      const r12 = await dbService.savePortalSetting("portal_news_source_url", newsSourceUrl.trim());
+      const r13 = await dbService.savePortalSetting("portal_footer_keywords", footerKeywords.trim());
+      const r14 = await dbService.savePortalSetting("portal_footer_contact", footerContact.trim());
       
       const config = dbService.getConfig();
       if (config.isRealSupabase) {
-        if (r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9 && r10 && r11 && r12 && r13) {
+        if (r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9 && r10 && r11 && r12 && r13 && r14) {
           alert("Cấu hình cổng tra cứu đã được lưu thành công và đồng bộ lên Supabase!");
         } else {
           const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}\n\n💡 HƯỚNG DẪN MẸO: Bạn hãy mở lại tab "Supabase & Database" trong Cài đặt, COPY toàn bộ Mã SQL VÀ CHẠY LẠI MỘT LẦN NỮA trên SQL Editor của Supabase để hệ thống làm mới schema cache, sau đó thử lưu lại.` : "";
@@ -461,6 +465,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setZaloUrl("https://zalo.me/0333333333");
       setFacebookUrl("https://facebook.com/suoilu");
       setWebsiteUrl("https://suoilu.db.edu.vn");
+      setNewsSourceUrl("https://suoilu.db.edu.vn");
       
       setAuthIsLoading(true);
       try {
@@ -477,6 +482,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         await dbService.savePortalSetting("portal_zalo_url", "https://zalo.me/0333333333");
         await dbService.savePortalSetting("portal_facebook_url", "https://facebook.com/suoilu");
         await dbService.savePortalSetting("portal_website_url", "https://suoilu.db.edu.vn");
+        await dbService.savePortalSetting("portal_news_source_url", "https://suoilu.db.edu.vn");
         alert("Đã đặt lại toàn bộ cấu hình hiển thị và đồng bộ về mặc định thành công.");
       } catch (err: any) {
         alert("Lỗi khi đặt lại cấu hình trên Supabase: " + err.message);
@@ -3586,6 +3592,22 @@ NOTIFY pgrst, 'reload schema';`}
                         placeholder="Ví dụ: https://suoilu.db.edu.vn"
                         className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
                       />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
+                        Nguồn lấy bản tin (News Source URL) <span className="text-[#E53935]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newsSourceUrl}
+                        onChange={(e) => setNewsSourceUrl(e.target.value)}
+                        placeholder="Ví dụ: https://suoilu.db.edu.vn"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
+                        Gợi ý: Địa chỉ Website để hệ thống tự động lấy tin bài mới nhất.
+                      </p>
                     </div>
 
                     <div className="pt-4 border-t border-slate-100">
