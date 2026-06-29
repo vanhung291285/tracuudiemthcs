@@ -232,13 +232,23 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       const $ = cheerio.load(html);
 
       // Look for standard layout nodes
-      $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item, .entry-item").each((_, elem) => {
+      $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item, .entry-item, .td-block-span4, .td-block-span6, .td-block-span12, .post-column, .entry-item").each((_, elem) => {
         const aTag = $(elem).find("a").first();
         const href = aTag.attr("href");
-        let title = aTag.text().trim() || $(elem).find(".title, .news-title, .post-title, h2, h3, h4").first().text().trim();
         
+        let title = "";
+        const titleSelectors = [".title", ".news-title", ".post-title", "h1", "h2", "h3", "h4", ".entry-title", ".entry-header", ".post-header", "a"];
+        for (const sel of titleSelectors) {
+           const t = $(elem).find(sel).first().text().trim();
+           if (t) {
+             title = t;
+             break;
+           }
+        }
+        if (!title) title = aTag.text().trim();
+
         // Try multiple selectors for images, including WordPress standard ones
-        let imgElem = $(elem).find("img.wp-post-image, img.attachment-post-thumbnail, .featured-image img, .post-thumbnail img, .entry-thumbnail img, .wp-block-post-featured-image img").first();
+        let imgElem = $(elem).find("img.wp-post-image, img.attachment-post-thumbnail, .featured-image img, .post-thumbnail img, .entry-thumbnail img, .wp-block-post-featured-image img, .td-thumb-css, .entry-thumb").first();
         if (imgElem.length === 0) imgElem = $(elem).find("img").first();
 
         let imageSrc = imgElem.attr("src") || 
@@ -252,14 +262,16 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
         
         // If image in element is bad/tiny, look for background images or nearby images
         if (!imageSrc || imageSrc.includes("spacer.png") || imageSrc.includes("data:image")) {
-          const style = $(elem).attr("style") || $(elem).find(".image, .thumb, .bg-img").attr("style");
-          if (style && style.includes("background-image")) {
-            const bgMatch = style.match(/url\(['"]?([^'"]+)['"]?\)/);
-            if (bgMatch) imageSrc = bgMatch[1];
-          }
+           const style = imgElem.attr("style") || $(elem).attr("style") || $(elem).find(".image, .thumb, .bg-img").first().attr("style");
+           if (style && style.includes("background-image")) {
+              const match = style.match(/url\(["']?([^"']+)["']?\)/);
+              if (match) imageSrc = match[1];
+           }
         }
 
-        if (href && title && title.length > 15) {
+        if (!href || !title) return;
+
+        if (href && title && title.length > 10) {
           let dateText = "";
           let timestamp = 0;
           const dateMatch = $(elem).text().match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
