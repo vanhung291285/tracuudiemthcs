@@ -139,16 +139,24 @@ function parseRSSXml(xmlText: string): any[] {
     const $ = cheerio.load(xmlText, { xmlMode: true });
     const items: any[] = [];
     
-    $("item").each((_, elem) => {
+    // Support both RSS <item> and Atom <entry> elements
+    $("item, entry").each((_, elem) => {
       const title = decodeHtml($(elem).find("title").first().text().trim());
+      
+      // Get link
       let link = $(elem).find("link").first().text().trim();
+      if (!link) {
+        link = $(elem).find("link").attr("href") || "";
+      }
       if (!link) {
         const htmlContent = $(elem).html() || "";
         const match = htmlContent.match(/<link>(.*?)<\/link>/);
         if (match) link = match[1].trim();
       }
+      link = link.trim();
       
-      let pubDate = $(elem).find("pubDate").first().text().trim() || $(elem).find("pubdate").first().text().trim() || "";
+      // Get pubDate / updated / published
+      let pubDate = $(elem).find("pubDate, pubdate, updated, published").first().text().trim() || "";
       let timestamp = 0;
       let dateText = "";
       if (pubDate) {
@@ -179,8 +187,8 @@ function parseRSSXml(xmlText: string): any[] {
         } else if (featuredImg && isValidImage(featuredImg)) {
           imageSrc = featuredImg;
         } else {
-          const desc = $(elem).find("description").first().text();
-          const content = $(elem).find("content\\:encoded, encoded").first().text();
+          const desc = $(elem).find("description, summary").first().text();
+          const content = $(elem).find("content\\:encoded, encoded, content").first().text();
           const combined = desc + " " + content;
           // Look for larger images first, skip small icons
           const imgMatches = [...combined.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)];
@@ -411,61 +419,122 @@ async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
     ].join(", ");
 
     $(itemSelector).each((_, elem) => {
-      const aTag = $(elem).find("a").first();
-      const href = aTag.attr("href");
-      if (!href) return;
-      
-      let title = "";
-      const titleSelectors = [
-        ".title", 
-        ".news-title", 
-        ".post-title", 
-        "h1", 
-        "h2", 
-        "h3", 
-        "h4", 
-        ".entry-title", 
-        ".entry-header", 
-        ".post-header", 
-        "a"
-      ];
-      for (const sel of titleSelectors) {
-         const t = $(elem).find(sel).first().text().trim();
-         if (t) {
-           title = t;
-           break;
-         }
-      }
-      if (!title) title = aTag.text().trim();
-      
-      let imageSrc = "";
-      // Prioritize Nukeviet thumbnail and standard image classes
-      const imgSelectors = [
-        "img.img-thumbnail",
-        "img.img-responsive",
-        "img.wp-post-image",
-        "img.attachment-post-thumbnail",
-        "img"
-      ];
-      const imgElem = $(elem).find(imgSelectors.join(", ")).first();
-      if (imgElem.length > 0) {
-        imageSrc = imgElem.attr("data-orig-file") || 
-                   imgElem.attr("data-large-file") ||
-                   imgElem.attr("data-src") || 
-                   imgElem.attr("src") || "";
-      }
-
-      if (title && href && title.length > 10) {
+      // Find all anchors inside this matched container/element that can be articles
+      const aTags = $(elem).find("a");
+      aTags.each((_, aElem) => {
+        const aTag = $(aElem);
+        const href = aTag.attr("href");
+        if (!href) return;
+        
+        let title = aTag.text().trim();
+        // Skip tiny text (e.g. "Chi tiết", "Xem thêm") or huge paragraphs
+        if (title.length < 18 || title.length > 180) return;
+        
+        const lowerText = title.toLowerCase();
+        const skipPatterns = [
+          "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
+          "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
+          "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
+          "cơ cấu tổ chức", "ban giám hiệu", "kết quả tìm kiếm", "chọn năm học",
+          "tra cứu điểm", "đăng ký", "phân hiệu", "lớp học", "trực tuyến", "video",
+          "album ảnh", "thư viện ảnh", "lịch thi", "thời khóa biểu", "thực đơn",
+          "hỏi đáp", "đăng ký", "bản quyền", "hướng dẫn sử dụng", "chi tiết", "xem chi tiết"
+        ];
+        if (skipPatterns.some(p => lowerText.includes(p))) return;
+        
+        const parent = aTag.closest("div, li, p, td, tr, article");
         let dateText = "";
         let timestamp = 0;
-        const dateMatch = $(elem).text().match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+        const parentText = parent.text() || "";
+        const dateMatch = parentText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
         if (dateMatch) {
           dateText = dateMatch[0];
           timestamp = parseVietnameseDate(dateText).getTime();
         }
+        
+        let imageSrc = "";
+        const imgSelectors = [
+          "img.img-thumbnail",
+          "img.img-responsive",
+          "img.wp-post-image",
+          "img.attachment-post-thumbnail",
+          "img"
+        ];
+        let imgElem = parent.find(imgSelectors.join(", ")).first();
+        if (imgElem.length === 0) {
+          imgElem = aTag.parent().find("img").first();
+        }
+        if (imgElem.length === 0) {
+          imgElem = parent.prev().find("img").first();
+        }
+        if (imgElem.length > 0) {
+          imageSrc = imgElem.attr("data-orig-file") || 
+                     imgElem.attr("data-large-file") ||
+                     imgElem.attr("data-src") || 
+                     imgElem.attr("src") || "";
+        }
+        
         candidates.push({ title, href, dateText, timestamp, image: imageSrc });
-      }
+      });
     });
+
+    // If no candidates found from the main grid selectors, run the generic "all anchors" fallback
+    if (candidates.length === 0) {
+      $("a").each((_, aElem) => {
+        const aTag = $(aElem);
+        const href = aTag.attr("href");
+        if (!href) return;
+        
+        let title = aTag.text().trim();
+        if (title.length < 18 || title.length > 180) return;
+        
+        const lowerText = title.toLowerCase();
+        const skipPatterns = [
+          "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
+          "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
+          "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
+          "cơ cấu tổ chức", "ban giám hiệu", "kết quả tìm kiếm", "chọn năm học",
+          "tra cứu điểm", "đăng ký", "phân hiệu", "lớp học", "trực tuyến", "video",
+          "album ảnh", "thư viện ảnh", "lịch thi", "thời khóa biểu", "thực đơn",
+          "hỏi đáp", "đăng ký", "bản quyền", "hướng dẫn sử dụng", "chi tiết", "xem chi tiết"
+        ];
+        if (skipPatterns.some(p => lowerText.includes(p))) return;
+        
+        const parent = aTag.closest("div, li, p, td, tr, article");
+        let dateText = "";
+        let timestamp = 0;
+        const parentText = parent.text() || "";
+        const dateMatch = parentText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+        if (dateMatch) {
+          dateText = dateMatch[0];
+          timestamp = parseVietnameseDate(dateText).getTime();
+        }
+        
+        let imageSrc = "";
+        const imgSelectors = [
+          "img.img-thumbnail",
+          "img.img-responsive",
+          "img.wp-post-image",
+          "img.attachment-post-thumbnail",
+          "img"
+        ];
+        let imgElem = parent.find(imgSelectors.join(", ")).first();
+        if (imgElem.length === 0) {
+          imgElem = aTag.parent().find("img").first();
+        }
+        if (imgElem.length === 0) {
+          imgElem = parent.prev().find("img").first();
+        }
+        if (imgElem.length > 0) {
+          imageSrc = imgElem.attr("data-orig-file") || 
+                     imgElem.attr("data-large-file") ||
+                     imgElem.attr("data-src") || 
+                     imgElem.attr("src") || "";
+        }
+        
+        candidates.push({ title, href, dateText, timestamp, image: imageSrc });
+      });
+    }
 
     return candidates;
   } catch {
@@ -732,7 +801,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       });
     }
 
-    if (finalItems.length >= 8) break; // Return a few more for the carousel
+    if (finalItems.length >= 5) break; // Return exactly about 5 news items as requested
   }
 
   return finalItems;
