@@ -14,6 +14,7 @@ import {
   Key, 
   Info, 
   Award, 
+  Crown,
   ShieldCheck, 
   Clock, 
   Bell, 
@@ -97,15 +98,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       } catch (err) { }
     };
 
-    const fetchStudentCount = async () => {
-      try {
-        const count = await dbService.getStudentCount();
-        if (active) setStudentCount(count);
-      } catch (err) {
-        // Silent skip
-      }
-    };
-    
     const fetchNews = async () => {
       try {
         const response = await fetch("/api/news");
@@ -154,6 +146,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
         if (active) {
           setTopStudents(targetStudents);
+          setStudentCount(all.length);
         }
       } catch (err) {
         console.warn("Could not load top students:", err);
@@ -162,7 +155,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
     fetchNews();
     fetchTopStudents();
-    fetchStudentCount();
     fetchRecentActivities();
     return () => {
       active = false;
@@ -214,7 +206,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     setError("");
 
     const cleanCode = studentCode.trim().replace(/\s/g, "");
-    const cleanName = fullName.trim();
+    const cleanName = fullName.trim().normalize("NFC");
     const cleanDob = dob.trim();
 
     if (searchMode === "cccd") {
@@ -239,12 +231,17 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       return;
     }
 
-    // Format D/M/YYYY or DD/M/YYYY or D/MM/YYYY into DD/MM/YYYY
-    let queryDob = cleanDob;
+    // Format D/M/YYYY or DD/M/YYYY or D/MM/YYYY into DD/MM/YYYY, allowing spaces around slashes
+    let queryDob = cleanDob.replace(/\s/g, "");
     if (queryDob.includes("/")) {
       const parts = queryDob.split("/");
       if (parts.length === 3) {
-        queryDob = `${parts[0].padStart(2, "0")}/${parts[1].padStart(2, "0")}/${parts[2]}`;
+        queryDob = `${parts[0].trim().padStart(2, "0")}/${parts[1].trim().padStart(2, "0")}/${parts[2].trim()}`;
+      }
+    } else if (queryDob.includes("-")) {
+      const parts = queryDob.split("-");
+      if (parts.length === 3) {
+        queryDob = `${parts[0].trim().padStart(2, "0")}/${parts[1].trim().padStart(2, "0")}/${parts[2].trim()}`;
       }
     }
 
@@ -581,7 +578,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   </div>
                 </div>
                 <div>
-                  <span className="text-2xl font-black text-[#0055A5] tracking-tight block">{studentCount.toLocaleString()}+</span>
+                  <span className="text-2xl font-black text-[#0055A5] tracking-tight block">{studentCount.toLocaleString()}</span>
                   <span className="text-[10px] font-bold text-slate-500 leading-tight">Hồ sơ học bạ điện tử</span>
                 </div>
               </div>
@@ -634,80 +631,103 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           {/* RIGHT SIDE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
           <div className="lg:col-span-7 space-y-6">
             
-            {/* Board of Honor (Bảng Vàng) panel - Shrinked to fit precisely next to Query card */}
-            <div className="w-full bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] border-2 border-amber-400 text-slate-900 p-5 md:p-6 rounded-xl shadow-[0_10px_35px_-10px_rgba(251,191,36,0.25)] relative z-10 overflow-hidden">
-              {/* Corner Decorations */}
-              <div className="absolute -top-12 -right-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
-              <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
+            {/* Board of Honor (Bảng Vàng) panel - Game Show Style */}
+            <div className="w-full bg-[#FFFBEB] border-2 border-amber-300 text-slate-900 p-5 md:p-6 rounded-3xl shadow-[0_15px_40px_-12px_rgba(251,191,36,0.2)] relative z-10 overflow-hidden">
+              {/* Decorative elements */}
+              <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-200/20 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-amber-200/20 rounded-full blur-3xl animate-pulse" />
+              
+              <div className="flex flex-col items-center mb-6 pt-2">
+                <div className="relative flex items-center justify-center gap-4 md:gap-6">
+                  {/* Left Wreath Decoration */}
+                  <motion.div 
+                    animate={{ rotate: [-5, 5, -5] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="flex flex-col items-center opacity-90"
+                  >
+                    <Award className="w-8 h-8 md:w-10 md:h-10 text-amber-500 drop-shadow-sm" />
+                    <div className="w-0.5 h-3 bg-amber-400 rounded-full mt-1" />
+                  </motion.div>
 
-              <div className="flex flex-col items-center mb-5 pt-2">
-                <div className="relative mb-2.5 scale-100">
-                   <div className="absolute -left-12 top-0 h-full flex items-center justify-center opacity-90 scale-[1.2]">
-                     <div className="relative">
-                        <Award className="w-7 h-7 text-amber-500 transform -rotate-[35deg]" />
-                        <Award className="w-3 h-3 text-amber-400 absolute -bottom-1 -right-0.5 transform rotate-[15deg]" />
-                     </div>
-                   </div>
-                   
-                   <div className="bg-white/40 px-6 py-2.5 rounded-xl border border-amber-200/50 backdrop-blur-md shadow-inner">
-                     <h3 className="text-[14px] font-black text-amber-900 uppercase tracking-[0.2em] text-center leading-none">
-                       BẢNG VÀNG
-                     </h3>
-                     <div className="text-[9px] font-black text-amber-700/60 uppercase tracking-[0.3em] text-center mt-2">
-                       VINH DANH
-                     </div>
-                   </div>
+                  <div className="bg-white px-8 py-3 rounded-2xl border-2 border-amber-200 shadow-[0_6px_0_0_#FEF3C7] flex flex-col items-center justify-center relative">
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-sm">
+                      VINH DANH
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-black text-amber-900 uppercase tracking-[0.12em] text-center leading-tight">
+                      BẢNG VÀNG
+                    </h3>
+                  </div>
 
-                   <div className="absolute -right-12 top-0 h-full flex items-center justify-center opacity-90 scale-[1.2]">
-                     <div className="relative">
-                        <Award className="w-7 h-7 text-amber-500 transform rotate-[35deg] scale-x-[-1]" />
-                        <Award className="w-3 h-3 text-amber-400 absolute -bottom-1 -left-0.5 transform -rotate-[15deg] scale-x-[-1]" />
-                     </div>
-                   </div>
+                  {/* Right Wreath Decoration */}
+                  <motion.div 
+                    animate={{ rotate: [5, -5, 5] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="flex flex-col items-center opacity-90"
+                  >
+                    <Award className="w-8 h-8 md:w-10 md:h-10 text-amber-500 drop-shadow-sm" />
+                    <div className="w-0.5 h-3 bg-amber-400 rounded-full mt-1" />
+                  </motion.div>
                 </div>
-                <div className="h-0.5 w-12 bg-gradient-to-r from-transparent via-amber-400 to-transparent rounded-full mt-2" />
+                
+                {/* Decorative separator */}
+                <div className="flex items-center gap-3 mt-5">
+                   <div className="h-0.5 w-6 bg-gradient-to-r from-transparent to-amber-400 rounded-full" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                   <div className="h-0.5 w-6 bg-gradient-to-l from-transparent to-amber-400 rounded-full" />
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-2 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-2 max-h-[400px] overflow-y-auto pr-1.5 custom-scrollbar">
                 {topStudents.length > 0 ? topStudents.map((student, idx) => {
-                  let badgeStyles = "bg-sky-50 text-sky-800 border-sky-100";
+                  let badgeStyles = "bg-sky-50 text-sky-700 border-sky-100";
                   let label = "Học sinh Giỏi";
-                  let icon = "🎖️";
-                  let cardStyles = "bg-white/70 border-amber-100 hover:border-amber-300";
+                  let icon = <Award className="w-4.5 h-4.5 text-sky-500" />;
+                  let cardStyles = "bg-white border-slate-100";
+                  let nameStyles = "text-slate-800";
 
                   if (student.distinction === "Học sinh Xuất sắc") {
-                    badgeStyles = "bg-amber-100 text-amber-900 border-amber-200 shadow-sm";
-                    label = "Học sinh Xuất sắc";
-                    icon = "👑"; 
-                    cardStyles = "bg-amber-50/40 border-amber-300 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.2)] hover:bg-white/80 transition-all";
+                    badgeStyles = "bg-amber-50 text-amber-800 border-amber-100";
+                    label = "Xuất sắc";
+                    icon = <Crown className="w-4.5 h-4.5 text-amber-500" />; 
+                    cardStyles = "bg-white border-amber-200 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.15)]";
+                    nameStyles = "text-amber-900";
                   }
                   
                   return (
-                    <div
+                    <motion.div
                       key={student.id || idx}
-                      className={`p-2.5 ${cardStyles} border rounded-lg text-left shadow-sm flex items-center justify-between group transition-all duration-300 relative overflow-hidden`}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: idx * 0.05 }}
+                      className={`p-3.5 ${cardStyles} border rounded-2xl text-left flex items-center justify-between group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden`}
                     >
-                      <div className="flex items-center gap-2.5 relative z-10">
-                        <div className="w-8 h-8 rounded-full bg-amber-50/50 flex items-center justify-center text-base grayscale-0 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 border border-amber-100/50 shadow-sm">
+                      <div className="flex items-center gap-3 relative z-10 min-w-0 flex-1">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 border border-slate-50 shadow-sm ${student.distinction === "Học sinh Xuất sắc" ? "bg-amber-50/80" : "bg-sky-50/80"}`}>
                           {icon}
                         </div>
-                        <div className="space-y-0.5">
-                          <div className="font-extrabold text-amber-950 text-[11px] uppercase leading-none tracking-tight">{student.fullName}</div>
-                          <div className="text-[9px] text-amber-800/60 font-bold flex items-center gap-1">
-                            <Users className="w-3 h-3 opacity-60" />
-                            Lớp: {student.className}
+                        <div className="space-y-0.5 min-w-0">
+                          <div className={`font-black ${nameStyles} text-[12px] md:text-[13px] uppercase leading-tight tracking-tighter truncate whitespace-nowrap`}>{student.fullName}</div>
+                          <div className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 bg-slate-50/50 px-2 py-0.5 rounded-lg border border-slate-100/50 w-fit">
+                            <Users className="w-3 h-3 opacity-50" />
+                            {student.className}
                           </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1 relative z-10">
-                        <span className={`text-[7px] ${badgeStyles} border px-2 py-0.5 rounded-full font-black uppercase tracking-tighter`}>{label}</span>
+                      <div className="flex flex-col items-end shrink-0 relative z-10 ml-2">
+                        <span className={`${badgeStyles} border px-2 py-0.5 rounded-lg font-black text-[8px] uppercase tracking-wider shadow-sm`}>
+                          {label}
+                        </span>
                       </div>
-                    </div>
+                      
+                      {/* Suble hover highlight */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    </motion.div>
                   );
                 }) : (
-                  <div className="col-span-full text-center py-8 text-xs text-amber-600/30 font-black uppercase tracking-[0.2em] italic flex flex-col items-center gap-4">
+                  <div className="col-span-full text-center py-10 text-[10px] text-amber-600/40 font-black uppercase tracking-[0.2em] flex flex-col items-center gap-5 bg-white/40 rounded-3xl border-2 border-dashed border-amber-200/50">
                     <RefreshCw className="w-6 h-6 animate-spin opacity-20" />
-                    Đang thiết lập...
+                    Chưa có danh sách vinh danh...
                   </div>
                 )}
               </div>
