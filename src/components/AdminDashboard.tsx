@@ -133,13 +133,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     localStorage.getItem("portal_school_year") || "NĂM HỌC 2025 - 2026"
   );
   const [footerTitle, setFooterTitle] = useState(() =>
-    localStorage.getItem("portal_footer_title") || "CỔNG THÔNG TIN ĐIỆN TỬ TRƯỜNG PHỔ THÔNG DÂN TỘC BÁN TRÚ TIỂU HỌC VÀ THCS SUỐI LƯ"
+    localStorage.getItem("portal_footer_title") || "HỆ THỐNG SUỐI LƯ"
   );
   const [footerDesc, setFooterDesc] = useState(() =>
-    localStorage.getItem("portal_footer_desc") || "Hạ tầng quản lý kết quả học tập trực tuyến dành cho toàn thể học sinh Tiểu học và THCS xã Suối Lư. Địa chỉ: Xã Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên."
+    localStorage.getItem("portal_footer_desc") || "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh."
   );
   const [footerCopy, setFooterCopy] = useState(() =>
-    localStorage.getItem("portal_footer_copy") || "© 2026 PTDTBT TH & THCS SUỐI LƯ"
+    localStorage.getItem("portal_footer_copy") || "• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư"
+  );
+  const [footerKeywords, setFooterKeywords] = useState(() =>
+    localStorage.getItem("portal_footer_keywords") || "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên"
+  );
+  const [footerContact, setFooterContact] = useState(() =>
+    localStorage.getItem("portal_footer_contact") || "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư"
   );
   
   const [searchByCccd, setSearchByCccd] = useState(() => {
@@ -231,14 +237,20 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const year = await dbService.getPortalSetting("portal_school_year", "NĂM HỌC 2025 - 2026");
       setSchoolYear(year);
 
-      const title = await dbService.getPortalSetting("portal_footer_title", "CỔNG THÔNG TIN ĐIỆN TỬ TRƯỜNG PHỔ THÔNG DÂN TỘC BÁN TRÚ TIỂU HỌC VÀ THCS SUỐI LƯ");
+      const title = await dbService.getPortalSetting("portal_footer_title", "HỆ THỐNG SUỐI LƯ");
       setFooterTitle(title);
 
-      const desc = await dbService.getPortalSetting("portal_footer_desc", "Hạ tầng quản lý kết quả học tập trực tuyến dành cho toàn thể học sinh Tiểu học và THCS xã Suối Lư. Địa chỉ: Xã Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên.");
+      const desc = await dbService.getPortalSetting("portal_footer_desc", "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.");
       setFooterDesc(desc);
 
-      const copy = await dbService.getPortalSetting("portal_footer_copy", "© 2026 PTDTBT TH & THCS SUỐI LƯ");
+      const copy = await dbService.getPortalSetting("portal_footer_copy", "• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư");
       setFooterCopy(copy);
+
+      const keywords = await dbService.getPortalSetting("portal_footer_keywords", "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên");
+      setFooterKeywords(keywords);
+
+      const contact = await dbService.getPortalSetting("portal_footer_contact", "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư");
+      setFooterContact(contact);
 
       const searchCccd = await dbService.getPortalSetting("portal_search_cccd", "true");
       setSearchByCccd(searchCccd !== "false");
@@ -404,10 +416,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const r9 = await dbService.savePortalSetting("portal_zalo_url", zaloUrl.trim());
       const r10 = await dbService.savePortalSetting("portal_facebook_url", facebookUrl.trim());
       const r11 = await dbService.savePortalSetting("portal_website_url", websiteUrl.trim());
+      const r12 = await dbService.savePortalSetting("portal_footer_keywords", footerKeywords.trim());
+      const r13 = await dbService.savePortalSetting("portal_footer_contact", footerContact.trim());
       
       const config = dbService.getConfig();
       if (config.isRealSupabase) {
-        if (r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9 && r10 && r11) {
+        if (r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9 && r10 && r11 && r12 && r13) {
           alert("Cấu hình cổng tra cứu đã được lưu thành công và đồng bộ lên Supabase!");
         } else {
           const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}\n\n💡 HƯỚNG DẪN MẸO: Bạn hãy mở lại tab "Supabase & Database" trong Cài đặt, COPY toàn bộ Mã SQL VÀ CHẠY LẠI MỘT LẦN NỮA trên SQL Editor của Supabase để hệ thống làm mới schema cache, sau đó thử lưu lại.` : "";
@@ -428,15 +442,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const defaultHeaderTop = "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
       const defaultHeaderMain = "TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS";
       const defaultSchoolYear = "NĂM HỌC 2025 - 2026";
-      const defaultFooterTitle = "CỔNG THÔNG TIN ĐIỆN TỬ TRƯỜNG PHỔ THÔNG DÂN TỘC BÁN TRÚ TIỂU HỌC VÀ THCS SUỐI LƯ";
-      const defaultFooterDesc = "Hạ tầng quản lý kết quả học tập trực tuyến dành cho toàn thể học sinh Tiểu học và THCS xã Suối Lư. Địa chỉ: Xã Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên.";
-      const defaultFooterCopy = "© 2026 PTDTBT TH & THCS SUỐI LƯ";
+      const defaultFooterTitle = "HỆ THỐNG SUỐI LƯ";
+      const defaultFooterDesc = "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.";
+      const defaultFooterKeywords = "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên";
+      const defaultFooterContact = "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư";
+      const defaultFooterCopy = "• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư";
       
       setHeaderTop(defaultHeaderTop);
       setHeaderMain(defaultHeaderMain);
       setSchoolYear(defaultSchoolYear);
       setFooterTitle(defaultFooterTitle);
       setFooterDesc(defaultFooterDesc);
+      setFooterKeywords(defaultFooterKeywords);
+      setFooterContact(defaultFooterContact);
       setFooterCopy(defaultFooterCopy);
       setSearchByCccd(true);
       setSearchByName(true);
@@ -451,6 +469,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         await dbService.savePortalSetting("portal_school_year", defaultSchoolYear);
         await dbService.savePortalSetting("portal_footer_title", defaultFooterTitle);
         await dbService.savePortalSetting("portal_footer_desc", defaultFooterDesc);
+        await dbService.savePortalSetting("portal_footer_keywords", defaultFooterKeywords);
+        await dbService.savePortalSetting("portal_footer_contact", defaultFooterContact);
         await dbService.savePortalSetting("portal_footer_copy", defaultFooterCopy);
         await dbService.savePortalSetting("portal_search_cccd", "true");
         await dbService.savePortalSetting("portal_search_name", "true");
@@ -3463,13 +3483,13 @@ NOTIFY pgrst, 'reload schema';`}
 
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
-                        4. Tiêu đề chân trang (Footer Title) <span className="text-[#E53935]">*</span>
+                        4. Tiêu đề Chân trang (Cột 1) <span className="text-[#E53935]">*</span>
                       </label>
                       <input
                         type="text"
                         value={footerTitle}
                         onChange={(e) => setFooterTitle(e.target.value)}
-                        placeholder="Ví dụ: CỔNG THÔNG TIN ĐIỆN TỬ TRƯỜNG PHỔ THÔNG DÂN TỘC BÁN TRÚ TIỂU HỌC VÀ THCS SUỐI LƯ"
+                        placeholder="Ví dụ: HỆ THỐNG SUỐI LƯ"
                         className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
@@ -3479,33 +3499,49 @@ NOTIFY pgrst, 'reload schema';`}
 
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
-                        5. Nội dung mô tả / Địa chỉ chân trang (Footer Description) <span className="text-[#E53935]">*</span>
+                        5. Mô tả Chân trang (Cột 1) <span className="text-[#E53935]">*</span>
                       </label>
                       <textarea
                         value={footerDesc}
                         onChange={(e) => setFooterDesc(e.target.value)}
-                        placeholder="Nhập địa chỉ, số điện thoại hoặc mô tả hệ thống..."
+                        placeholder="Nhập giới thiệu ngắn..."
                         rows={3}
                         className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
-                        Gợi ý: Giới thiệu ngắn về nhà trường hoặc cơ quan chủ quản, kèm thông tin liên hệ.
+                        Gợi ý: Dùng **text** để in đậm tên trường.
                       </p>
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
-                        6. Bản quyền sở hữu (Footer Copyright) <span className="text-[#E53935]">*</span>
+                        6. Từ khóa phổ biến (Cột 2) <span className="text-[#E53935]">*</span>
                       </label>
                       <input
                         type="text"
-                        value={footerCopy}
-                        onChange={(e) => setFooterCopy(e.target.value)}
-                        placeholder="Ví dụ: © 2026 PTDTBT TH & THCS SUỐI LƯ"
+                        value={footerKeywords}
+                        onChange={(e) => setFooterKeywords(e.target.value)}
+                        placeholder="Suối Lư, THCS Suối Lư, ..."
                         className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
-                        Gợi ý: Thông tin bảo lưu quyền sở hữu trí tuệ hoặc niên khóa ở đáy cổng.
+                        Gợi ý: Ngăn cách bởi dấu phẩy.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
+                        7. Thông tin liên hệ (Cột 3) <span className="text-[#E53935]">*</span>
+                      </label>
+                      <textarea
+                        value={footerContact}
+                        onChange={(e) => setFooterContact(e.target.value)}
+                        placeholder="Nhập địa chỉ, website, bản quyền..."
+                        rows={4}
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
+                        Gợi ý: Ngăn cách các dòng bằng dấu xuống dòng.
                       </p>
                     </div>
 
