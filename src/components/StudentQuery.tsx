@@ -43,9 +43,9 @@ interface StudentQueryProps {
 }
 
 const ZaloIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10z" fill="white"/>
-    <path d="M16 16.5H8v-1.144l4.63-5.212H8.384V8.5H16v1.131l-4.629 5.225H16v1.644z" fill="#0068ff"/>
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className={className} fill="currentColor">
+    <path d="M12 2C6.477 2 2 6.136 2 11.25c0 3.012 1.583 5.711 4.1 7.378-.124.786-.607 2.195-.732 2.535-.145.41.134.4.284.298.118-.08 1.884-1.285 2.637-1.808.558.129 1.144.197 1.741.197 5.523 0 10-4.136 10-9.25C22 6.136 17.523 2 12 2z"/>
+    <path d="M15.5 13.5h-4.31l3.52-4.04c.16-.18.16-.46 0-.64l-.36-.36c-.18-.18-.46-.18-.64 0l-4.5 5.16c-.11.12-.11.3 0 .42l.36.36c.12.12.3.12.42 0l.5-.58h5.01c.25 0 .45-.2.45-.45v-.45c0-.25-.2-.42-.45-.42z" fill="white"/>
   </svg>
 );
 
@@ -110,12 +110,14 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
     const fetchNews = async () => {
       try {
-        const response = await fetch("/api/news");
+        const newsUrl = localStorage.getItem("portal_news_source_url") || "https://suoilu.db.edu.vn";
+        const response = await fetch(`/api/news?source=${encodeURIComponent(newsUrl)}`);
         if (!response.ok) throw new Error("Server error");
         const result = await response.json();
         if (active && result && result.data) {
           setNewsItems(result.data);
-          setNewsSource(result.source === "scraped" ? "suoilu.db.edu.vn (Trực tuyến)" : "Hệ thống");
+          const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(result.source);
+          setNewsSource(isFromWebsite ? "suoilu.db.edu.vn" : "Hệ thống");
         }
       } catch (err) {
         // Reduced news loading log severity
@@ -923,6 +925,27 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   </p>
                 </div>
                 <div className="flex items-center gap-2 self-start md:self-center">
+                  <button 
+                    onClick={() => {
+                      setNewsLoading(true);
+                      const newsUrl = localStorage.getItem("portal_news_source_url") || "https://suoilu.db.edu.vn";
+                      fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsUrl)}`)
+                        .then(r => r.json())
+                        .then(res => {
+                          if (res && res.data) {
+                            setNewsItems(res.data);
+                            const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
+                            setNewsSource(isFromWebsite ? "suoilu.db.edu.vn" : "Hệ thống");
+                          }
+                        })
+                        .finally(() => setNewsLoading(false));
+                    }}
+                    className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-[#0055A5] cursor-pointer"
+                    title="Lấy tin mới nhất ngay"
+                    disabled={newsLoading}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${newsLoading ? 'animate-spin' : ''}`} />
+                  </button>
                   <span className="text-[9px] bg-red-100 text-[#E53935] px-2 py-0.5 rounded font-black uppercase tracking-wider animate-pulse shrink-0">
                     Trực tuyến
                   </span>
@@ -1007,12 +1030,14 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       type="button"
                       onClick={() => {
                         setNewsLoading(true);
-                        fetch("/api/news")
+                        const newsUrl = localStorage.getItem("portal_news_source_url") || "https://suoilu.db.edu.vn";
+                        fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsUrl)}`)
                           .then((r) => r.json())
                           .then((res) => {
                             if (res && res.data) {
                               setNewsItems(res.data);
-                              setNewsSource(res.source === "scraped" ? "suoilu.db.edu.vn (Trực tuyến)" : "Hệ thống");
+                              const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
+                              setNewsSource(isFromWebsite ? "suoilu.db.edu.vn" : "Hệ thống");
                             }
                           })
                           .catch((e) => console.error(e))
