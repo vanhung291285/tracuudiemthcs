@@ -304,7 +304,68 @@ function parseRss2Json(data: any): any[] {
   return items;
 }
 
-// Direct scraping method using cheerio as a fallback option
+// Helper to dynamically auto-discover RSS feed URLs from a homepage or return standard Nukeviet fallbacks
+async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
+  const targetUrl = customUrl || "https://suoilu.db.edu.vn/";
+  const urls: string[] = [];
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 6000);
+    const response = await fetch(targetUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+      },
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    
+    if (response.ok) {
+      const html = await response.text();
+      const $ = cheerio.load(html);
+      
+      // Look for alternate rss/xml links in the head
+      $('link[type="application/rss+xml"], link[type="application/atom+xml"]').each((_, elem) => {
+        const href = $(elem).attr("href");
+        if (href) {
+          try {
+            const absoluteUrl = new URL(href, targetUrl).toString();
+            if (!urls.includes(absoluteUrl)) {
+              urls.push(absoluteUrl);
+            }
+          } catch { }
+        }
+      });
+    }
+  } catch (err) {
+    console.warn("Failed to dynamically auto-discover RSS feeds:", err);
+  }
+
+  // Always append standard Nukeviet and WordPress fallback patterns for high availability
+  try {
+    const urlObj = new URL(targetUrl);
+    const origin = urlObj.origin;
+    const fallbacks = [
+      `${origin}/news/rss/`,
+      `${origin}/vi/news/rss/`,
+      `${origin}/index.php?language=vi&nv=news&op=rss`,
+      `${origin}/index.php?nv=news&op=rss`,
+      `${origin}/feed/`
+    ];
+
+    for (const fb of fallbacks) {
+      if (!urls.includes(fb)) {
+        urls.push(fb);
+      }
+    }
+  } catch {
+    urls.push("https://suoilu.db.edu.vn/news/rss/");
+  }
+
+  return urls;
+}
+
+// Direct scraping method using cheerio as a fallback option, enhanced for Nukeviet CSS structures
 async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
   try {
     const controller = new AbortController();
@@ -326,13 +387,48 @@ async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
     const $ = cheerio.load(html);
     const candidates: any[] = [];
 
-    $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item, .entry-item, .td-block-span4, .td-block-span6, .td-block-span12, .post-column").each((_, elem) => {
+    // Comprehensive selector list supporting Nukeviet templates and traditional frameworks
+    const itemSelector = [
+      "article", 
+      ".news_column", 
+      ".news-item", 
+      ".post-item", 
+      ".tin-tuc-item", 
+      ".news-box", 
+      ".post-block", 
+      ".item-news", 
+      ".views-row", 
+      ".wp-block-post", 
+      ".grid-item", 
+      ".entry-item", 
+      ".td-block-span4", 
+      ".td-block-span6", 
+      ".td-block-span12", 
+      ".post-column", 
+      ".panel-body", 
+      ".content-box", 
+      ".main-show"
+    ].join(", ");
+
+    $(itemSelector).each((_, elem) => {
       const aTag = $(elem).find("a").first();
       const href = aTag.attr("href");
       if (!href) return;
       
       let title = "";
-      const titleSelectors = [".title", ".news-title", ".post-title", "h1", "h2", "h3", "h4", ".entry-title", ".entry-header", ".post-header", "a"];
+      const titleSelectors = [
+        ".title", 
+        ".news-title", 
+        ".post-title", 
+        "h1", 
+        "h2", 
+        "h3", 
+        "h4", 
+        ".entry-title", 
+        ".entry-header", 
+        ".post-header", 
+        "a"
+      ];
       for (const sel of titleSelectors) {
          const t = $(elem).find(sel).first().text().trim();
          if (t) {
@@ -343,7 +439,15 @@ async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
       if (!title) title = aTag.text().trim();
       
       let imageSrc = "";
-      const imgElem = $(elem).find("img").first();
+      // Prioritize Nukeviet thumbnail and standard image classes
+      const imgSelectors = [
+        "img.img-thumbnail",
+        "img.img-responsive",
+        "img.wp-post-image",
+        "img.attachment-post-thumbnail",
+        "img"
+      ];
+      const imgElem = $(elem).find(imgSelectors.join(", ")).first();
       if (imgElem.length > 0) {
         imageSrc = imgElem.attr("data-orig-file") || 
                    imgElem.attr("data-large-file") ||
@@ -371,7 +475,8 @@ async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
 
 // Helper to scrape RSS/XML news feed as a robust fallback
 async function fetchSuoiluRSS(): Promise<any[]> {
-  const targetUrl = "https://suoilu.db.edu.vn/feed/";
+  // Deprecated in favor of multi-origin discovery fallback mechanism, but kept as a simple fallback
+  const targetUrl = "https://suoilu.db.edu.vn/news/rss/";
   try {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), 8000); 
@@ -407,12 +512,16 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
 
   console.log("Starting high-resilience news fetch for", baseOrigin);
 
-  // --- CHANNEL 1: WordPress REST API (The absolute gold standard for WP sites) ---
-  if (baseOrigin.includes("suoilu")) {
+  // Discover feed URLs (highly compatible with NukeViet, WordPress, etc.)
+  const discoveredRssUrls = await discoverSuoiluRSSUrls(customUrl || targetHostUrl);
+  console.log("Discovered RSS endpoints for fallback sequence:", discoveredRssUrls);
+
+  // --- CHANNEL 1: WordPress REST API (Usually skipped if Nukeviet, but checked for completeness) ---
+  if (baseOrigin.includes("suoilu") && !baseOrigin.includes("nukeviet")) {
     try {
       const wpApiUrl = "https://suoilu.db.edu.vn/wp-json/wp/v2/posts?_embed&per_page=12";
       const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 7000);
+      const id = setTimeout(() => controller.abort(), 5000);
       const res = await fetch(wpApiUrl, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; vi-VN) AppleWebKit/534.31" },
         signal: controller.signal
@@ -433,54 +542,60 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
 
   // --- CHANNEL 2: Public RSS to JSON Proxy (Ultra-high bypass rate for CDN/geo firewall blocks) ---
   if (candidates.length === 0) {
-    try {
-      const rss2JsonUrl = "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fsuoilu.db.edu.vn%2Ffeed%2F";
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 7000);
-      const res = await fetch(rss2JsonUrl, { signal: controller.signal });
-      clearTimeout(id);
-      if (res.ok) {
-        const json = await res.json();
-        const parsed = parseRss2Json(json);
-        if (parsed.length > 0) {
-          candidates = parsed;
-          successfulMethod = "RSS-to-JSON API Proxy";
+    for (const rssUrl of discoveredRssUrls) {
+      try {
+        const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(rss2JsonUrl, { signal: controller.signal });
+        clearTimeout(id);
+        if (res.ok) {
+          const json = await res.json();
+          const parsed = parseRss2Json(json);
+          if (parsed.length > 0) {
+            candidates = parsed;
+            successfulMethod = `RSS-to-JSON API Proxy (${rssUrl})`;
+            break;
+          }
         }
+      } catch (err: any) {
+        console.log(`Channel 2 RSS-to-JSON Proxy deferred for ${rssUrl}:`, err.message);
       }
-    } catch (err: any) {
-      console.log("Channel 2 RSS-to-JSON Proxy deferred:", err.message);
     }
   }
 
   // --- CHANNEL 3: AllOrigins CORS Proxy for RSS Feed (Decentralized backup proxy) ---
   if (candidates.length === 0) {
-    try {
-      const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://suoilu.db.edu.vn/feed/");
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(proxyUrl, { signal: controller.signal });
-      clearTimeout(id);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.contents) {
-          const parsed = parseRSSXml(data.contents);
-          if (parsed.length > 0) {
-            candidates = parsed;
-            successfulMethod = "AllOrigins RSS Proxy";
+    for (const rssUrl of discoveredRssUrls) {
+      try {
+        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(rssUrl);
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 7000);
+        const res = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(id);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.contents) {
+            const parsed = parseRSSXml(data.contents);
+            if (parsed.length > 0) {
+              candidates = parsed;
+              successfulMethod = `AllOrigins RSS Proxy (${rssUrl})`;
+              break;
+            }
           }
         }
+      } catch (err: any) {
+        console.log(`Channel 3 AllOrigins RSS Proxy deferred for ${rssUrl}:`, err.message);
       }
-    } catch (err: any) {
-      console.log("Channel 3 AllOrigins RSS Proxy deferred:", err.message);
     }
   }
 
-  // --- CHANNEL 4: AllOrigins CORS Proxy for WP REST API ---
-  if (candidates.length === 0) {
+  // --- CHANNEL 4: AllOrigins CORS Proxy for WP REST API (WordPress only fallback) ---
+  if (candidates.length === 0 && !baseOrigin.includes("nukeviet")) {
     try {
       const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://suoilu.db.edu.vn/wp-json/wp/v2/posts?_embed&per_page=12");
       const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 8000);
+      const id = setTimeout(() => controller.abort(), 7000);
       const res = await fetch(proxyUrl, { signal: controller.signal });
       clearTimeout(id);
       if (res.ok) {
@@ -501,10 +616,30 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
 
   // --- CHANNEL 5: Direct RSS Parser (Standard cloud attempt) ---
   if (candidates.length === 0) {
-    const rss = await fetchSuoiluRSS();
-    if (rss.length > 0) {
-      candidates = rss;
-      successfulMethod = "Direct RSS Feed Parser";
+    for (const rssUrl of discoveredRssUrls) {
+      try {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(rssUrl, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
+            "Accept": "text/xml,application/xml,application/rss+xml,application/atom+xml;q=0.9"
+          },
+          signal: controller.signal
+        });
+        clearTimeout(id);
+        if (res.ok) {
+          const xmlText = await res.text();
+          const parsed = parseRSSXml(xmlText);
+          if (parsed.length > 0) {
+            candidates = parsed;
+            successfulMethod = `Direct RSS Feed Parser (${rssUrl})`;
+            break;
+          }
+        }
+      } catch (err: any) {
+        console.log(`Channel 5 Direct RSS Parser failed for ${rssUrl}:`, err.message);
+      }
     }
   }
 
