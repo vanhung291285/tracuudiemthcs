@@ -930,8 +930,15 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                           referrerPolicy="no-referrer"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
-                            // Smooth fallback on error
-                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&auto=format&fit=crop&q=60";
+                            // Diverse smooth fallbacks on error to prevent same-image bug
+                            const fallbacks = [
+                              "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&auto=format&fit=crop&q=60",
+                              "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60",
+                              "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60",
+                              "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60",
+                              "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500&auto=format&fit=crop&q=60"
+                            ];
+                            (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
                           }}
                         />
                         <div className="absolute top-1 left-1">
@@ -990,7 +997,39 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           </div>
         </div>
       </main>
+      
+      {/* Footer / SEO Section */}
+      <footer className="w-full bg-slate-50 border-t border-slate-200 py-10 mt-8">
+        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="space-y-4">
+            <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wider">Hệ thống Suối Lư</h3>
+            <p className="text-[11px] leading-relaxed text-slate-600 font-medium">
+              Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. 
+              Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wider">Từ khóa phổ biến</h3>
+            <div className="flex flex-wrap gap-2">
+              {["Suối Lư", "THCS Suối Lư", "Tiểu học Suối Lư", "Học bạ điện tử", "Tra cứu điểm", "Điện Biên"].map(tag => (
+                <span key={tag} className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded text-slate-500 font-bold">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
 
+          <div className="space-y-4">
+            <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wider">Thông tin liên hệ</h3>
+            <ul className="text-[11px] space-y-2 text-slate-600 font-medium">
+              <li>• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên</li>
+              <li>• Website gốc: <a href="https://suoilu.db.edu.vn" className="text-blue-600 hover:underline">suoilu.db.edu.vn</a></li>
+              <li>• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư</li>
+            </ul>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
