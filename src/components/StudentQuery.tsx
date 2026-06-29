@@ -66,6 +66,9 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [newsItems, setNewsItems] = useState<any[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsSource, setNewsSource] = useState("Hệ thống");
+  const [newsSourceUrl, setNewsSourceUrl] = useState(() => 
+    localStorage.getItem("portal_news_source_url") || "https://suoilu.db.edu.vn"
+  );
 
   const [topStudents, setTopStudents] = useState<Student[]>([]);
   const [multipleMatches, setMultipleMatches] = useState<Student[]>([]);
@@ -108,16 +111,16 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       } catch (err) { }
     };
 
-    const fetchNews = async () => {
+    const fetchNews = async (url?: string) => {
       try {
-        const newsUrl = localStorage.getItem("portal_news_source_url") || "https://suoilu.db.edu.vn";
-        const response = await fetch(`/api/news?source=${encodeURIComponent(newsUrl)}`);
+        const targetUrl = url || newsSourceUrl;
+        const response = await fetch(`/api/news?source=${encodeURIComponent(targetUrl)}`);
         if (!response.ok) throw new Error("Server error");
         const result = await response.json();
         if (active && result && result.data) {
           setNewsItems(result.data);
           const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(result.source);
-          setNewsSource(isFromWebsite ? "suoilu.db.edu.vn" : "Hệ thống");
+          setNewsSource(isFromWebsite ? new URL(targetUrl).hostname : "Hệ thống");
         }
       } catch (err) {
         // Reduced news loading log severity
@@ -223,6 +226,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         const isNameEnabled = await dbService.getPortalSetting("portal_search_name", "true");
         const nameEnabled = isNameEnabled === "true";
         setSearchByName(nameEnabled);
+
+        const nUrl = await dbService.getPortalSetting("portal_news_source_url", "https://suoilu.db.edu.vn");
+        setNewsSourceUrl(nUrl);
+        fetchNews(nUrl);
         
         if (!nameEnabled && cccdEnabled) {
           setSearchMode("cccd");
@@ -928,14 +935,13 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   <button 
                     onClick={() => {
                       setNewsLoading(true);
-                      const newsUrl = localStorage.getItem("portal_news_source_url") || "https://suoilu.db.edu.vn";
-                      fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsUrl)}`)
+                      fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsSourceUrl)}`)
                         .then(r => r.json())
                         .then(res => {
                           if (res && res.data) {
                             setNewsItems(res.data);
                             const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
-                            setNewsSource(isFromWebsite ? "suoilu.db.edu.vn" : "Hệ thống");
+                            setNewsSource(isFromWebsite ? new URL(newsSourceUrl).hostname : "Hệ thống");
                           }
                         })
                         .finally(() => setNewsLoading(false));
@@ -1030,14 +1036,13 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       type="button"
                       onClick={() => {
                         setNewsLoading(true);
-                        const newsUrl = localStorage.getItem("portal_news_source_url") || "https://suoilu.db.edu.vn";
-                        fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsUrl)}`)
+                        fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsSourceUrl)}`)
                           .then((r) => r.json())
                           .then((res) => {
                             if (res && res.data) {
                               setNewsItems(res.data);
                               const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
-                              setNewsSource(isFromWebsite ? "suoilu.db.edu.vn" : "Hệ thống");
+                              setNewsSource(isFromWebsite ? new URL(newsSourceUrl).hostname : "Hệ thống");
                             }
                           })
                           .catch((e) => console.error(e))
@@ -1056,50 +1061,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         </div>
       </main>
       
-      {/* Footer / SEO Section */}
-      <footer className="w-full bg-slate-50 border-t border-slate-200 py-12 mt-12 no-print">
-        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
-          <div className="space-y-5">
-            <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider">{footerTitle}</h3>
-            <p className="text-[13px] leading-relaxed text-slate-600 font-medium whitespace-pre-wrap">
-              {footerDesc.split("**").map((part, i) => i % 2 === 1 ? <strong key={i} className="text-slate-800 font-black">{part}</strong> : part)}
-            </p>
-          </div>
-          
-          <div className="space-y-5">
-            <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider">TỪ KHÓA PHỔ BIẾN</h3>
-            <div className="flex flex-wrap gap-2.5">
-              {footerKeywords.split(",").map(tag => (
-                <span key={tag.trim()} className="text-[12px] bg-white border border-slate-200 px-3 py-1.5 rounded-md text-slate-600 font-bold shadow-sm hover:border-[#0055A5] transition-colors cursor-default">
-                  {tag.trim()}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider">THÔNG TIN LIÊN HỆ</h3>
-            <ul className="text-[13px] space-y-3 text-slate-600 font-medium">
-              {footerContact.split("\n").map((line, i) => {
-                if (line.includes("http")) {
-                  const parts = line.split(": ");
-                  const label = parts[0];
-                  const url = parts[1];
-                  const displayUrl = url.replace("https://", "").replace("http://", "");
-                  return (
-                    <li key={i} className="flex items-start gap-1.5">
-                      <span className="shrink-0">{label}:</span>
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">{displayUrl}</a>
-                    </li>
-                  );
-                }
-                return <li key={i}>{line}</li>;
-              })}
-            </ul>
-          </div>
-        </div>
-      </footer>
-
       {/* Floating Contact Buttons */}
       <div className="fixed right-4 bottom-24 z-50 flex flex-col gap-3">
         <motion.a
