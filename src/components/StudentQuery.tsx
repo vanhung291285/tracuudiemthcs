@@ -28,7 +28,10 @@ import {
   CalendarDays,
   BarChartHorizontal,
   BookOpen,
-  Lightbulb
+  Lightbulb,
+  MessageCircle,
+  Facebook,
+  Globe
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import dbService from "../lib/supabase";
@@ -1030,6 +1033,48 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           </div>
         </div>
       </footer>
+
+      {/* Floating Contact Buttons */}
+      <div className="fixed right-4 bottom-24 z-50 flex flex-col gap-3">
+        <motion.a
+          href="https://zalo.me/0333333333" // Placeholder Zalo, ideally the school's Zalo number/link
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.1, x: -5 }}
+          whileTap={{ scale: 0.9 }}
+          className="group flex items-center gap-3 bg-blue-500 text-white p-3 rounded-full shadow-lg shadow-blue-200 border border-blue-400"
+          title="Liên hệ qua Zalo"
+        >
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-sm">Zalo Nhà Trường</span>
+          <MessageCircle className="w-6 h-6 fill-current" />
+        </motion.a>
+
+        <motion.a
+          href="https://facebook.com/suoilu" // Placeholder Facebook
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.1, x: -5 }}
+          whileTap={{ scale: 0.9 }}
+          className="group flex items-center gap-3 bg-[#1877F2] text-white p-3 rounded-full shadow-lg shadow-blue-300 border border-blue-600"
+          title="Theo dõi trên Facebook"
+        >
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-sm">Fanpage Facebook</span>
+          <Facebook className="w-6 h-6 fill-current" />
+        </motion.a>
+
+        <motion.a
+          href="https://suoilu.db.edu.vn"
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.1, x: -5 }}
+          whileTap={{ scale: 0.9 }}
+          className="group flex items-center gap-3 bg-[#0055A5] text-white p-3 rounded-full shadow-lg shadow-slate-300 border border-blue-900"
+          title="Truy cập Website chính thức"
+        >
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-sm">Website Suối Lư</span>
+          <Globe className="w-6 h-6" />
+        </motion.a>
+      </div>
     </div>
   );
 }
