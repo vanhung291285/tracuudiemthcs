@@ -3228,7 +3228,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       {/* SNAKE CASE SQL */}
                       <div id="sql_snake_case" className="block">
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
-{`-- [MẪU 1] TẠO 4 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
+{`-- [MẪU 1] TẠO 6 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
 
 -- 1. Tạo bảng học sinh (students)
 CREATE TABLE IF NOT EXISTS students (
@@ -3254,7 +3254,6 @@ CREATE TABLE IF NOT EXISTS portal_classes (
 );
 
 -- 3. Tạo bảng lưu trữ cấu hình cổng tra cứu (portal_settings)
-DROP TABLE IF EXISTS portal_settings;
 CREATE TABLE IF NOT EXISTS portal_settings (
   id TEXT PRIMARY KEY,
   setting_value TEXT NOT NULL,
@@ -3273,6 +3272,15 @@ CREATE TABLE IF NOT EXISTS visitor_counts (
   visit_date DATE PRIMARY KEY,
   count INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5. Tạo bảng nhật ký tìm kiếm (search_activity)
+CREATE TABLE IF NOT EXISTS search_activity (
+  id BIGSERIAL PRIMARY KEY,
+  student_name TEXT NOT NULL,
+  class_name TEXT NOT NULL,
+  queried_at TIMESTAMPTZ DEFAULT NOW(),
+  count INTEGER DEFAULT 1
 );
 
 -- BẬT CHÍNH SÁCH BẢO MẬT ROW LEVEL SECURITY (RLS) & CHO PHÉP ĐỌC GHI CÔNG KHAI
@@ -3297,14 +3305,27 @@ DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_settings" 
 CREATE POLICY "Cho phép đọc công khai portal_settings" ON portal_settings FOR SELECT USING (true);
 CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true) WITH CHECK (true);
 
--- D. Áp dụng cho bảng thống kê truy cập (visitor_stats)
+-- D. Áp dụng cho bảng thống kê truy cập (visitor_stats & visitor_counts)
 ALTER TABLE visitor_stats ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai visitor_stats" ON visitor_stats;
 DROP POLICY IF EXISTS "Cho phép ghi công khai visitor_stats" ON visitor_stats;
 CREATE POLICY "Cho phép đọc công khai visitor_stats" ON visitor_stats FOR SELECT USING (true);
 CREATE POLICY "Cho phép ghi công khai visitor_stats" ON visitor_stats FOR INSERT WITH CHECK (true);
 
--- E. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
+ALTER TABLE visitor_counts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai visitor_counts" ON visitor_counts;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác visitor_counts" ON visitor_counts;
+CREATE POLICY "Cho phép đọc công khai visitor_counts" ON visitor_counts FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác visitor_counts" ON visitor_counts FOR ALL USING (true) WITH CHECK (true);
+
+-- E. Áp dụng cho bảng nhật ký tìm kiếm (search_activity)
+ALTER TABLE search_activity ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai search_activity" ON search_activity;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác search_activity" ON search_activity;
+CREATE POLICY "Cho phép đọc công khai search_activity" ON search_activity FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác search_activity" ON search_activity FOR ALL USING (true) WITH CHECK (true);
+
+-- F. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
 NOTIFY pgrst, 'reload schema';`}
                         </pre>
                       </div>
@@ -3312,7 +3333,7 @@ NOTIFY pgrst, 'reload schema';`}
                       {/* CAMEL CASE SQL */}
                       <div id="sql_camel_case" className="hidden">
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
-{`-- [MẪU 2] TẠO 4 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
+{`-- [MẪU 2] TẠO 6 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
 
 -- 1. Tạo bảng học sinh (students)
 CREATE TABLE IF NOT EXISTS students (
@@ -3348,7 +3369,6 @@ CREATE TABLE IF NOT EXISTS portal_classes (
 );
 
 -- 3. Tạo bảng lưu trữ cấu hình cổng tra cứu (portal_settings)
-DROP TABLE IF EXISTS portal_settings;
 CREATE TABLE IF NOT EXISTS portal_settings (
   id TEXT PRIMARY KEY,
   setting_value TEXT NOT NULL,
@@ -3367,6 +3387,15 @@ CREATE TABLE IF NOT EXISTS visitor_counts (
   visit_date DATE PRIMARY KEY,
   count INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5. Tạo bảng nhật ký tìm kiếm (search_activity)
+CREATE TABLE IF NOT EXISTS search_activity (
+  id BIGSERIAL PRIMARY KEY,
+  student_name TEXT NOT NULL,
+  class_name TEXT NOT NULL,
+  queried_at TIMESTAMPTZ DEFAULT NOW(),
+  count INTEGER DEFAULT 1
 );
 
 -- BẬT CHÍNH SÁCH BẢO MẬT ROW LEVEL SECURITY (RLS) & CHO PHÉP ĐỌC GHI CÔNG KHAI
@@ -3391,14 +3420,27 @@ DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_settings" 
 CREATE POLICY "Cho phép đọc công khai portal_settings" ON portal_settings FOR SELECT USING (true);
 CREATE POLICY "Cho phép thực hiện mọi thao tác portal_settings" ON portal_settings FOR ALL USING (true) WITH CHECK (true);
 
--- D. Áp dụng cho bảng thống kê truy cập (visitor_stats)
+-- D. Áp dụng cho bảng thống kê truy cập (visitor_stats & visitor_counts)
 ALTER TABLE visitor_stats ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Cho phép đọc công khai visitor_stats" ON visitor_stats;
 DROP POLICY IF EXISTS "Cho phép ghi công khai visitor_stats" ON visitor_stats;
 CREATE POLICY "Cho phép đọc công khai visitor_stats" ON visitor_stats FOR SELECT USING (true);
 CREATE POLICY "Cho phép ghi công khai visitor_stats" ON visitor_stats FOR INSERT WITH CHECK (true);
 
--- E. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
+ALTER TABLE visitor_counts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai visitor_counts" ON visitor_counts;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác visitor_counts" ON visitor_counts;
+CREATE POLICY "Cho phép đọc công khai visitor_counts" ON visitor_counts FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác visitor_counts" ON visitor_counts FOR ALL USING (true) WITH CHECK (true);
+
+-- E. Áp dụng cho bảng nhật ký tìm kiếm (search_activity)
+ALTER TABLE search_activity ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai search_activity" ON search_activity;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác search_activity" ON search_activity;
+CREATE POLICY "Cho phép đọc công khai search_activity" ON search_activity FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác search_activity" ON search_activity FOR ALL USING (true) WITH CHECK (true);
+
+-- F. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
 NOTIFY pgrst, 'reload schema';`}
                         </pre>
                       </div>
