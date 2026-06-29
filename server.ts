@@ -114,33 +114,33 @@ function parseVietnameseDate(dateStr: string): Date {
   return new Date(dateStr);
 }
 
-// Helper to scrape RSS/XML news feed as a robust fallback
-async function fetchSuoiluRSS(): Promise<any[]> {
-  const targetUrl = "https://suoilu.db.edu.vn/feed/";
+// Decode HTML entities commonly returned by WordPress or RSS feeds
+function decodeHtml(html: string): string {
+  if (!html) return "";
+  return html
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#8211;/g, "-")
+    .replace(/&#8230;/g, "...")
+    .replace(/&#8220;/g, "“")
+    .replace(/&#8221;/g, "”")
+    .replace(/&#8216;/g, "‘")
+    .replace(/&#8217;/g, "’")
+    .replace(/&nbsp;/g, " ");
+}
+
+// Helper to parse XML string using cheerio (used by direct RSS and proxy RSS)
+function parseRSSXml(xmlText: string): any[] {
+  if (!xmlText) return [];
   try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 10000); 
-
-    const response = await fetch(targetUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
-        "Accept": "text/xml,application/xml,application/rss+xml,application/atom+xml;q=0.9"
-      },
-      signal: controller.signal
-    });
-    
-    clearTimeout(id);
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const xmlText = await response.text();
     const $ = cheerio.load(xmlText, { xmlMode: true });
     const items: any[] = [];
     
     $("item").each((_, elem) => {
-      const title = $(elem).find("title").first().text().trim();
+      const title = decodeHtml($(elem).find("title").first().text().trim());
       let link = $(elem).find("link").first().text().trim();
       if (!link) {
         const htmlContent = $(elem).html() || "";
@@ -166,56 +166,149 @@ async function fetchSuoiluRSS(): Promise<any[]> {
       
       if (title && link) {
         let imageSrc = "";
-        const desc = $(elem).find("description").first().text();
-        const content = $(elem).find("content\\:encoded, encoded").first().text();
         
-      // Try media:content, enclosure, or featured image fields first
-      const mediaContent = $(elem).find("media\\:content, content").attr("url");
-      const enclosure = $(elem).find("enclosure").attr("url");
-      const featuredImg = $(elem).find("wp\\:featured_item, featured_item").text();
-      
-      if (mediaContent && isValidImage(mediaContent)) {
-        imageSrc = mediaContent;
-      } else if (enclosure && isValidImage(enclosure)) {
-        imageSrc = enclosure;
-      } else if (featuredImg && isValidImage(featuredImg)) {
-        imageSrc = featuredImg;
-      } else {
-        const desc = $(elem).find("description").first().text();
-        const content = $(elem).find("content\\:encoded, encoded").first().text();
+        // Try media:content, enclosure, or featured image fields first
+        const mediaContent = $(elem).find("media\\:content, content").attr("url");
+        const enclosure = $(elem).find("enclosure").attr("url");
+        const featuredImg = $(elem).find("wp\\:featured_item, featured_item").text();
         
-        const combined = desc + " " + content;
-        // Look for larger images first, skip small icons
-        const imgMatches = [...combined.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)];
-        for (const match of imgMatches) {
-          const src = match[1];
-          if (isValidImage(src) && !src.includes("s.w.org") && !src.includes("emoji")) {
-            imageSrc = src;
-            break;
+        if (mediaContent && isValidImage(mediaContent)) {
+          imageSrc = mediaContent;
+        } else if (enclosure && isValidImage(enclosure)) {
+          imageSrc = enclosure;
+        } else if (featuredImg && isValidImage(featuredImg)) {
+          imageSrc = featuredImg;
+        } else {
+          const desc = $(elem).find("description").first().text();
+          const content = $(elem).find("content\\:encoded, encoded").first().text();
+          const combined = desc + " " + content;
+          // Look for larger images first, skip small icons
+          const imgMatches = [...combined.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)];
+          for (const match of imgMatches) {
+            const src = match[1];
+            if (isValidImage(src) && !src.includes("s.w.org") && !src.includes("emoji")) {
+              imageSrc = src;
+              break;
+            }
           }
         }
-      }
         
         items.push({ title, href: link, dateText, timestamp, image: imageSrc });
       }
     });
-    
     return items;
   } catch (err) {
+    console.warn("Error parsing RSS XML:", err);
     return [];
   }
 }
 
-// Helper to scrape https://suoilu.db.edu.vn/ using cheerio
-async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
-  const targetUrl = customUrl || "https://suoilu.db.edu.vn/";
-  const urlObj = new URL(targetUrl);
-  const baseOrigin = urlObj.origin;
-  let candidates: any[] = [];
+// Helper to parse WordPress WP-JSON REST API posts
+function parseWordPressPosts(postsJson: any): any[] {
+  if (!postsJson || !Array.isArray(postsJson)) return [];
+  const items: any[] = [];
+  for (const post of postsJson) {
+    try {
+      const rawTitle = post.title?.rendered || post.title || "";
+      const title = decodeHtml(rawTitle);
+      const link = post.link || "";
+      
+      let dateText = "";
+      let timestamp = 0;
+      if (post.date) {
+        try {
+          const d = new Date(post.date);
+          if (!isNaN(d.getTime())) {
+            timestamp = d.getTime();
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            dateText = `${dd}/${mm}/${yyyy}`;
+          }
+        } catch { }
+      }
+      
+      let imageSrc = "";
+      // Check embedded media if present
+      const featuredMedia = post._embedded?.['wp:featuredmedia']?.[0];
+      if (featuredMedia && featuredMedia.source_url && isValidImage(featuredMedia.source_url)) {
+        imageSrc = featuredMedia.source_url;
+      }
+      
+      if (!imageSrc && featuredMedia?.media_details?.sizes) {
+        const sizes = featuredMedia.media_details.sizes;
+        const bestSize = sizes.large || sizes.medium_large || sizes.full || sizes.medium;
+        if (bestSize?.source_url && isValidImage(bestSize.source_url)) {
+          imageSrc = bestSize.source_url;
+        }
+      }
 
+      // Extract image fallback from content string
+      if (!imageSrc && post.content?.rendered) {
+        const contentStr = post.content.rendered;
+        const match = contentStr.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (match && isValidImage(match[1])) {
+          imageSrc = match[1];
+        }
+      }
+
+      if (title && link) {
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
+      }
+    } catch { }
+  }
+  return items;
+}
+
+// Helper to parse rss2json API output
+function parseRss2Json(data: any): any[] {
+  if (!data || data.status !== "ok" || !Array.isArray(data.items)) return [];
+  const items: any[] = [];
+  for (const item of data.items) {
+    try {
+      const title = decodeHtml(item.title || "");
+      const link = item.link || "";
+      
+      let dateText = "";
+      let timestamp = 0;
+      if (item.pubDate) {
+        try {
+          const d = new Date(item.pubDate);
+          if (!isNaN(d.getTime())) {
+            timestamp = d.getTime();
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            dateText = `${dd}/${mm}/${yyyy}`;
+          }
+        } catch { }
+      }
+      
+      let imageSrc = item.thumbnail || "";
+      if (item.enclosure?.link && isValidImage(item.enclosure.link)) {
+        imageSrc = item.enclosure.link;
+      }
+      if (!imageSrc || !isValidImage(imageSrc)) {
+        const content = (item.description || "") + " " + (item.content || "");
+        const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (match && isValidImage(match[1])) {
+          imageSrc = match[1];
+        }
+      }
+      
+      if (title && link) {
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
+      }
+    } catch { }
+  }
+  return items;
+}
+
+// Direct scraping method using cheerio as a fallback option
+async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 12000);
+    const id = setTimeout(() => controller.abort(), 8000);
 
     const response = await fetch(targetUrl, {
       headers: {
@@ -227,149 +320,204 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
     
     clearTimeout(id);
 
-    if (response.ok) {
-      const html = await response.text();
-      const $ = cheerio.load(html);
+    if (!response.ok) return [];
+    
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const candidates: any[] = [];
 
-      // Look for standard layout nodes
-      $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item, .entry-item, .td-block-span4, .td-block-span6, .td-block-span12, .post-column, .entry-item").each((_, elem) => {
-        const aTag = $(elem).find("a").first();
-        const href = aTag.attr("href");
-        
-        let title = "";
-        const titleSelectors = [".title", ".news-title", ".post-title", "h1", "h2", "h3", "h4", ".entry-title", ".entry-header", ".post-header", "a"];
-        for (const sel of titleSelectors) {
-           const t = $(elem).find(sel).first().text().trim();
-           if (t) {
-             title = t;
-             break;
-           }
-        }
-        if (!title) title = aTag.text().trim();
-
-        // Try multiple selectors for images, including WordPress standard ones
-        const imgSelectors = [
-          "img.wp-post-image", 
-          "img.attachment-post-thumbnail", 
-          ".featured-image img", 
-          ".post-thumbnail img", 
-          ".entry-thumbnail img", 
-          ".wp-block-post-featured-image img",
-          ".td-thumb-css", 
-          ".entry-thumb",
-          ".td-module-thumb img",
-          ".td-image-wrap img",
-          ".image img",
-          ".thumb img"
-        ];
-        
-        let imgElem = $(elem).find(imgSelectors.join(", ")).first();
-        if (imgElem.length === 0) imgElem = $(elem).find("img").first();
-
-        let imageSrc = "";
-        if (imgElem.length > 0) {
-          if (imgElem.is("img")) {
-            // Priority list for image sources, prefer high-quality/original files
-            imageSrc = imgElem.attr("data-orig-file") || 
-                       imgElem.attr("data-large-file") ||
-                       imgElem.attr("data-src") || 
-                       imgElem.attr("data-original") ||
-                       imgElem.attr("data-lazy-src") ||
-                       imgElem.attr("src");
-            
-            // Try to get the largest one from srcset if src is still placeholder-ish or low quality
-            if (imgElem.attr("srcset")) {
-              const srcsetParts = imgElem.attr("srcset")?.split(",");
-              if (srcsetParts && srcsetParts.length > 0) {
-                // Usually the last one in srcset is the largest/best quality
-                const candidate = srcsetParts[srcsetParts.length - 1].trim().split(" ")[0];
-                if (isValidImage(candidate)) {
-                  imageSrc = candidate;
-                }
-              }
-            }
-          }
-          
-          // If still no valid image or it's a non-img element (like a div with background-image)
-          if (!imageSrc || !isValidImage(imageSrc)) {
-             const style = imgElem.attr("style") || $(elem).attr("style") || $(elem).find(".image, .thumb, .bg-img, .td-thumb-css, .entry-thumb").first().attr("style");
-             if (style && style.includes("background-image")) {
-                const match = style.match(/url\(["']?([^"']+)["']?\)/);
-                if (match && isValidImage(match[1])) imageSrc = match[1];
-             }
-          }
-        }
-
-        if (!href || !title) return;
-
-        if (href && title && title.length > 10) {
-          let dateText = "";
-          let timestamp = 0;
-          const dateMatch = $(elem).text().match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-          if (dateMatch) {
-            dateText = dateMatch[0];
-            timestamp = parseVietnameseDate(dateText).getTime();
-          }
-          candidates.push({ title, href, dateText, timestamp, image: imageSrc });
-        }
-      });
-
-      // If nothing is found, scan all links
-      if (candidates.length === 0) {
-        $("a").each((_, elem) => {
-          const href = $(elem).attr("href");
-          const title = $(elem).text().trim();
-          
-          if (href && title && title.length > 28 && title.length < 180) {
-            const lowerText = title.toLowerCase();
-            const skipPatterns = [
-              "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
-              "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
-              "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
-              "cơ cấu tổ chức", "ban giám hiệu", "kết quả tìm kiếm", "chọn năm học",
-              "tra cứu điểm", "đăng ký", "phân hiệu", "lớp học", "trực tuyến", "video",
-              "album ảnh", "thư viện ảnh", "lịch thi", "thời khóa biểu", "thực đơn"
-            ];
-            
-            if (!skipPatterns.some(p => lowerText.includes(p))) {
-              let dateText = "";
-              let timestamp = 0;
-              const parentContainer = $(elem).closest("div, li, p, td, tr, article");
-              const parentText = parentContainer.text() || "";
-              const dateMatch = parentText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-              if (dateMatch) {
-                dateText = dateMatch[0];
-                timestamp = parseVietnameseDate(dateText).getTime();
-              }
-              
-              let imgElem = parentContainer.find("img").first();
-              if (imgElem.length === 0) {
-                imgElem = $(elem).parent().find("img").first();
-              }
-              if (imgElem.length === 0) {
-                imgElem = $(elem).closest("section, article, .row").find("img").first();
-              }
-              
-              let imageSrc = imgElem.attr("src") || 
-                             imgElem.attr("data-src") || 
-                             imgElem.attr("data-lazy-src") ||
-                             imgElem.attr("data-original") ||
-                             imgElem.attr("data-src-meta");
-              
-              // Only add if it likely has a date or is in a list-like structure
-              if (timestamp > 0 || href.includes("/202") || href.includes("/tin-tuc/") || href.includes("/bai-viet/")) {
-                candidates.push({ title, href, dateText, timestamp, image: imageSrc });
-              }
-            }
-          }
-        });
+    $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item, .entry-item, .td-block-span4, .td-block-span6, .td-block-span12, .post-column").each((_, elem) => {
+      const aTag = $(elem).find("a").first();
+      const href = aTag.attr("href");
+      if (!href) return;
+      
+      let title = "";
+      const titleSelectors = [".title", ".news-title", ".post-title", "h1", "h2", "h3", "h4", ".entry-title", ".entry-header", ".post-header", "a"];
+      for (const sel of titleSelectors) {
+         const t = $(elem).find(sel).first().text().trim();
+         if (t) {
+           title = t;
+           break;
+         }
       }
-    }
-  } catch (error) { }
+      if (!title) title = aTag.text().trim();
+      
+      let imageSrc = "";
+      const imgElem = $(elem).find("img").first();
+      if (imgElem.length > 0) {
+        imageSrc = imgElem.attr("data-orig-file") || 
+                   imgElem.attr("data-large-file") ||
+                   imgElem.attr("data-src") || 
+                   imgElem.attr("src") || "";
+      }
 
-  // RSS Fallback/Primary (usually cleaner)
-  const rssItems = await fetchSuoiluRSS();
-  candidates = [...rssItems, ...candidates];
+      if (title && href && title.length > 10) {
+        let dateText = "";
+        let timestamp = 0;
+        const dateMatch = $(elem).text().match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+        if (dateMatch) {
+          dateText = dateMatch[0];
+          timestamp = parseVietnameseDate(dateText).getTime();
+        }
+        candidates.push({ title, href, dateText, timestamp, image: imageSrc });
+      }
+    });
+
+    return candidates;
+  } catch {
+    return [];
+  }
+}
+
+// Helper to scrape RSS/XML news feed as a robust fallback
+async function fetchSuoiluRSS(): Promise<any[]> {
+  const targetUrl = "https://suoilu.db.edu.vn/feed/";
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 8000); 
+
+    const response = await fetch(targetUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
+        "Accept": "text/xml,application/xml,application/rss+xml,application/atom+xml;q=0.9"
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(id);
+
+    if (response.ok) {
+      const xmlText = await response.text();
+      return parseRSSXml(xmlText);
+    }
+  } catch (err) {
+    console.warn("Direct RSS fetch failed:", err);
+  }
+  return [];
+}
+
+// Primary controller to fetch and organize news using high-availability, multi-origin fallback system
+async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
+  const targetHostUrl = "https://suoilu.db.edu.vn";
+  const urlObj = new URL(customUrl || targetHostUrl);
+  const baseOrigin = urlObj.origin;
+  
+  let candidates: any[] = [];
+  let successfulMethod = "";
+
+  console.log("Starting high-resilience news fetch for", baseOrigin);
+
+  // --- CHANNEL 1: WordPress REST API (The absolute gold standard for WP sites) ---
+  if (baseOrigin.includes("suoilu")) {
+    try {
+      const wpApiUrl = "https://suoilu.db.edu.vn/wp-json/wp/v2/posts?_embed&per_page=12";
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 7000);
+      const res = await fetch(wpApiUrl, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; vi-VN) AppleWebKit/534.31" },
+        signal: controller.signal
+      });
+      clearTimeout(id);
+      if (res.ok) {
+        const posts = await res.json();
+        const parsed = parseWordPressPosts(posts);
+        if (parsed.length > 0) {
+          candidates = parsed;
+          successfulMethod = "WordPress REST API (Direct)";
+        }
+      }
+    } catch (err: any) {
+      console.log("Channel 1 WP REST API direct deferred:", err.message);
+    }
+  }
+
+  // --- CHANNEL 2: Public RSS to JSON Proxy (Ultra-high bypass rate for CDN/geo firewall blocks) ---
+  if (candidates.length === 0) {
+    try {
+      const rss2JsonUrl = "https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Fsuoilu.db.edu.vn%2Ffeed%2F";
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 7000);
+      const res = await fetch(rss2JsonUrl, { signal: controller.signal });
+      clearTimeout(id);
+      if (res.ok) {
+        const json = await res.json();
+        const parsed = parseRss2Json(json);
+        if (parsed.length > 0) {
+          candidates = parsed;
+          successfulMethod = "RSS-to-JSON API Proxy";
+        }
+      }
+    } catch (err: any) {
+      console.log("Channel 2 RSS-to-JSON Proxy deferred:", err.message);
+    }
+  }
+
+  // --- CHANNEL 3: AllOrigins CORS Proxy for RSS Feed (Decentralized backup proxy) ---
+  if (candidates.length === 0) {
+    try {
+      const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://suoilu.db.edu.vn/feed/");
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(proxyUrl, { signal: controller.signal });
+      clearTimeout(id);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.contents) {
+          const parsed = parseRSSXml(data.contents);
+          if (parsed.length > 0) {
+            candidates = parsed;
+            successfulMethod = "AllOrigins RSS Proxy";
+          }
+        }
+      }
+    } catch (err: any) {
+      console.log("Channel 3 AllOrigins RSS Proxy deferred:", err.message);
+    }
+  }
+
+  // --- CHANNEL 4: AllOrigins CORS Proxy for WP REST API ---
+  if (candidates.length === 0) {
+    try {
+      const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://suoilu.db.edu.vn/wp-json/wp/v2/posts?_embed&per_page=12");
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(proxyUrl, { signal: controller.signal });
+      clearTimeout(id);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.contents) {
+          const posts = JSON.parse(data.contents);
+          const parsed = parseWordPressPosts(posts);
+          if (parsed.length > 0) {
+            candidates = parsed;
+            successfulMethod = "AllOrigins WP-JSON Proxy";
+          }
+        }
+      }
+    } catch (err: any) {
+      console.log("Channel 4 AllOrigins WP-JSON Proxy deferred:", err.message);
+    }
+  }
+
+  // --- CHANNEL 5: Direct RSS Parser (Standard cloud attempt) ---
+  if (candidates.length === 0) {
+    const rss = await fetchSuoiluRSS();
+    if (rss.length > 0) {
+      candidates = rss;
+      successfulMethod = "Direct RSS Feed Parser";
+    }
+  }
+
+  // --- CHANNEL 6: Direct cheerio scraping (Standard cloud attempt) ---
+  if (candidates.length === 0) {
+    const scraped = await scrapeDirectHTML(customUrl || "https://suoilu.db.edu.vn/");
+    if (scraped.length > 0) {
+      candidates = scraped;
+      successfulMethod = "Direct HTML cheerio Scraper";
+    }
+  }
+
+  console.log(`News fetch completed. Method used: [${successfulMethod || "NONE - FALLBACK RETRIEVED"}], Articles found: ${candidates.length}`);
 
   // Final validation, relative link resolving, categorisation and deduplication
   const finalItems: any[] = [];
