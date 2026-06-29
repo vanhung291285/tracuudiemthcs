@@ -90,12 +90,26 @@ function getThematicImage(title: string, index: number): string {
   return defaults[index % defaults.length];
 }
 
+// Helper to parse DD/MM/YYYY to Date
+function parseVietnameseDate(dateStr: string): Date {
+  if (!dateStr) return new Date(0);
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    // Expected DD/MM/YYYY
+    const d = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const y = parseInt(parts[2], 10);
+    return new Date(y, m, d);
+  }
+  return new Date(dateStr);
+}
+
 // Helper to scrape RSS/XML news feed as a robust fallback
 async function fetchSuoiluRSS(): Promise<any[]> {
   const targetUrl = "https://suoilu.db.edu.vn/feed/";
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 10000); // Increased to 10s timeout
+    const id = setTimeout(() => controller.abort(), 10000); 
 
     const response = await fetch(targetUrl, {
       headers: {
@@ -108,7 +122,6 @@ async function fetchSuoiluRSS(): Promise<any[]> {
     clearTimeout(id);
 
     if (!response.ok) {
-      console.log(`RSS Scraper received status ${response.status} from /feed/ - falling back to internal storage.`);
       return [];
     }
 
@@ -120,62 +133,64 @@ async function fetchSuoiluRSS(): Promise<any[]> {
       const title = $(elem).find("title").first().text().trim();
       let link = $(elem).find("link").first().text().trim();
       if (!link) {
-        // try regex fallback for link tags inside XML
         const htmlContent = $(elem).html() || "";
         const match = htmlContent.match(/<link>(.*?)<\/link>/);
         if (match) link = match[1].trim();
       }
       
       let pubDate = $(elem).find("pubDate").first().text().trim() || $(elem).find("pubdate").first().text().trim() || "";
+      let timestamp = 0;
       let dateText = "";
       if (pubDate) {
         try {
           const d = new Date(pubDate);
           if (!isNaN(d.getTime())) {
+            timestamp = d.getTime();
             const dd = String(d.getDate()).padStart(2, '0');
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const yyyy = d.getFullYear();
             dateText = `${dd}/${mm}/${yyyy}`;
           }
-        } catch {
-          // ignore date parse err
-        }
+        } catch { }
       }
       
       if (title && link) {
-        // Try to draw a preview image out of desc or content:encoded
         let imageSrc = "";
         const desc = $(elem).find("description").first().text();
         const content = $(elem).find("content\\:encoded, encoded").first().text();
         
-        const combined = desc + " " + content;
-        const imgMatch = combined.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (imgMatch) {
-          imageSrc = imgMatch[1];
+        // Try media:content or enclosure first
+        const mediaContent = $(elem).find("media\\:content, content").attr("url");
+        const enclosure = $(elem).find("enclosure").attr("url");
+        
+        if (mediaContent) {
+          imageSrc = mediaContent;
+        } else if (enclosure) {
+          imageSrc = enclosure;
+        } else {
+          const combined = desc + " " + content;
+          const imgMatch = combined.match(/<img[^>]+src=["']([^"']+)["']/i);
+          if (imgMatch) imageSrc = imgMatch[1];
         }
         
-        items.push({ title, href: link, dateText, image: imageSrc });
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
       }
     });
     
-    console.log(`Successfully scraped ${items.length} articles via RSS feed (/feed/)`);
     return items;
   } catch (err) {
-    if ((err as any).name === 'AbortError') {
-      console.log("RSS scraper timed out - Suoi Lu website might be slow or offline.");
-    }
     return [];
   }
 }
 
-// Helper to scrape https://suoilu.db.edu.vn/ using cheerio (Dual-source: HTML + RSS XML feed)
+// Helper to scrape https://suoilu.db.edu.vn/ using cheerio
 async function fetchSuoiluNews(): Promise<any[]> {
   const targetUrl = "https://suoilu.db.edu.vn/";
   let candidates: any[] = [];
 
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 12000); // 12s timeout for main page
+    const id = setTimeout(() => controller.abort(), 12000);
 
     const response = await fetch(targetUrl, {
       headers: {
@@ -191,75 +206,89 @@ async function fetchSuoiluNews(): Promise<any[]> {
       const html = await response.text();
       const $ = cheerio.load(html);
 
-      // A. Look for standard layout nodes with text links and image elements
+      // Look for standard layout nodes
       $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item").each((_, elem) => {
         const aTag = $(elem).find("a").first();
         const href = aTag.attr("href");
         let title = aTag.text().trim() || $(elem).find(".title, .news-title, .post-title, h2, h3, h4").first().text().trim();
-        let imageSrc = $(elem).find("img").first().attr("src");
         
+        let imageSrc = $(elem).find("img").first().attr("src") || 
+                       $(elem).find("img").first().attr("data-src") || 
+                       $(elem).find("img").first().attr("data-original") ||
+                       $(elem).find("img").first().attr("data-lazy-src");
+
         if (href && title && title.length > 15) {
           let dateText = "";
-          const dateMatch = $(elem).text().match(/(\d{2})[-/](\d{2})[-/](\d{4})/);
+          let timestamp = 0;
+          const dateMatch = $(elem).text().match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
           if (dateMatch) {
             dateText = dateMatch[0];
+            timestamp = parseVietnameseDate(dateText).getTime();
           }
-          candidates.push({ title, href, dateText, image: imageSrc });
+          candidates.push({ title, href, dateText, timestamp, image: imageSrc });
         }
       });
 
-      // B. If nothing is found under standard CSS layouts, scan all links that are longer than 18 chars
+      // If nothing is found, scan all links
       if (candidates.length === 0) {
         $("a").each((_, elem) => {
           const href = $(elem).attr("href");
           const title = $(elem).text().trim();
           
-          if (href && title && title.length > 20 && title.length < 160) {
+          if (href && title && title.length > 28 && title.length < 180) {
             const lowerText = title.toLowerCase();
             const skipPatterns = [
               "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
               "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
               "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
-              "click", "bấm vào", "tải về", "đọc thêm", "chọn lớp", "tìm kiếm"
+              "cơ cấu tổ chức", "ban giám hiệu", "kết quả tìm kiếm", "chọn năm học",
+              "tra cứu điểm", "đăng ký", "phân hiệu", "lớp học", "trực tuyến", "video",
+              "album ảnh", "thư viện ảnh", "lịch thi", "thời khóa biểu", "thực đơn"
             ];
             
             if (!skipPatterns.some(p => lowerText.includes(p))) {
               let dateText = "";
-              const parentContainer = $(elem).closest("div, li, p, td, tr");
+              let timestamp = 0;
+              const parentContainer = $(elem).closest("div, li, p, td, tr, article");
               const parentText = parentContainer.text() || "";
-              const dateMatch = parentText.match(/(\d{2})[-/](\d{2})[-/](\d{4})/);
+              const dateMatch = parentText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
               if (dateMatch) {
                 dateText = dateMatch[0];
+                timestamp = parseVietnameseDate(dateText).getTime();
               }
               
-              let imageSrc = parentContainer.find("img").first().attr("src");
-              if (!imageSrc) {
-                imageSrc = $(elem).siblings("img").first().attr("src") || $(elem).find("img").first().attr("src");
+              let imgElem = parentContainer.find("img").first();
+              if (imgElem.length === 0) {
+                imgElem = $(elem).parent().find("img").first();
               }
-
-              candidates.push({ title, href, dateText, image: imageSrc });
+              
+              let imageSrc = imgElem.attr("src") || 
+                             imgElem.attr("data-src") || 
+                             imgElem.attr("data-lazy-src") ||
+                             imgElem.attr("data-original");
+              
+              // Only add if it likely has a date or is in a list-like structure
+              if (timestamp > 0 || href.includes("/202") || href.includes("/tin-tuc/") || href.includes("/bai-viet/")) {
+                candidates.push({ title, href, dateText, timestamp, image: imageSrc });
+              }
             }
           }
         });
       }
-    } else {
-      console.log(`Scraper received HTTP status ${response.status} from Suoi Lu home page - switching to RSS/Internal fallback.`);
     }
-  } catch (error) {
-    if ((error as any).name === 'AbortError') {
-      console.log("Main HTML scraper timed out - trying RSS fallback.");
-    }
-  }
+  } catch (error) { }
 
-  // C. Fallback to RSS/XML feed if direct HTML scraping returned 0 results
-  if (candidates.length === 0) {
-    candidates = await fetchSuoiluRSS();
-  }
+  // RSS Fallback/Primary (usually cleaner)
+  const rssItems = await fetchSuoiluRSS();
+  candidates = [...rssItems, ...candidates];
 
   // Final validation, relative link resolving, categorisation and deduplication
   const finalItems: any[] = [];
   const absoluteCheck = /^https?:\/\//i;
   const seenTitles = new Set<string>();
+
+  // Sort by timestamp descending
+  candidates.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
   for (const item of candidates) {
     let resolvedLink = item.href;
@@ -279,33 +308,35 @@ async function fetchSuoiluNews(): Promise<any[]> {
     if (cleanTitle.length > 18 && !seenTitles.has(cleanTitle)) {
       seenTitles.add(cleanTitle);
 
-      // Category formatting
       let category = "TIN TRƯỜNG SUỐI LƯ";
       const titleLower = cleanTitle.toLowerCase();
       if (titleLower.includes("hội nghị") || titleLower.includes("đại hội")) {
         category = "SỰ KIỆN • ĐẠI HỘI CHI BỘ";
-      } else if (titleLower.includes("phát động") || titleLower.includes("thi đua") || titleLower.includes("học sinh giỏi")) {
+      } else if (titleLower.includes("phát động") || titleLower.includes("thi đua") || titleLower.includes("học sinh giỏi") || titleLower.includes("khen thưởng")) {
         category = "THI ĐUA KHEN THƯỞNG";
       } else if (titleLower.includes("tuyển sinh") || titleLower.includes("lớp 10") || titleLower.includes("lớp 6") || titleLower.includes("xét tốt nghiệp")) {
         category = "TUYỂN SINH • HỌC BẠ";
-      } else if (titleLower.includes("chuyên đề") || titleLower.includes("ngoại khóa") || titleLower.includes("hoạt động")) {
+      } else if (titleLower.includes("chuyên đề") || titleLower.includes("ngoại khóa") || titleLower.includes("hoạt động") || titleLower.includes("trải nghiệm")) {
         category = "CHUYÊN ĐỀ DẠY HỌC";
-      } else if (titleLower.includes("thông báo") || titleLower.includes("kế hoạch")) {
-        category = "THÔNG BÁO CHUNG";
+      } else if (titleLower.includes("ôn tập") || titleLower.includes("kiểm tra") || titleLower.includes("thi") || titleLower.includes("học tập")) {
+        category = "DẠY VÀ HỌC";
+      } else if (titleLower.includes("chuyển đổi số") || titleLower.includes("công nghệ") || titleLower.includes("học bạ điện tử")) {
+        category = "CHUYỂN ĐỔI SỐ";
       }
 
-      // Date formatting
       let finalDate = item.dateText;
       if (!finalDate) {
-        const mockDates = ["18/06/2026", "17/06/2026", "14/06/2026", "10/06/2026", "28/05/2026"];
-        finalDate = mockDates[finalItems.length % mockDates.length];
+        // Only use current date if no date found, but marked as news
+        const d = new Date();
+        finalDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
       }
 
-      // Image src resolving
       let finalImage = item.image;
       if (finalImage) {
         finalImage = finalImage.trim();
-        if (!absoluteCheck.test(finalImage)) {
+        if (finalImage.startsWith("//")) {
+          finalImage = `https:${finalImage}`;
+        } else if (!absoluteCheck.test(finalImage)) {
           finalImage = finalImage.startsWith("/")
             ? `https://suoilu.db.edu.vn${finalImage}`
             : `https://suoilu.db.edu.vn/${finalImage}`;
@@ -321,11 +352,12 @@ async function fetchSuoiluNews(): Promise<any[]> {
         date: finalDate,
         link: resolvedLink,
         source: "suoilu.db.edu.vn",
-        image: finalImage
+        image: finalImage,
+        timestamp: item.timestamp
       });
     }
 
-    if (finalItems.length >= 5) break;
+    if (finalItems.length >= 8) break; // Return a few more for the carousel
   }
 
   return finalItems;
