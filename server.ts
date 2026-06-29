@@ -10,7 +10,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 // Cache for news to reduce requests and speed up response times
 let newsCache: any[] = [];
 let lastCacheTime = 0;
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache
+const CACHE_DURATION = 5 * 60 * 1000; // Reduce to 5 minutes cache
 
 // Robust mock/fallback articles for PTDTBT TH & THCS Suối Lư with premium educational illustrations
 const FALLBACK_NEWS = [
@@ -64,8 +64,8 @@ const FALLBACK_NEWS = [
 function isValidImage(src: string): boolean {
   if (!src) return false;
   const s = src.toLowerCase();
-  // Filter out tiny icons, spacers, and tracking pixels
-  if (s.includes("logo") || s.includes("icon") || s.includes("avatar") || s.includes("spacer") || s.includes("pixel") || s.includes("statscounter")) return false;
+  // Filter out tracking pixels and tiny spacers, but be less aggressive with "icon" or "logo" if they are in the path
+  if (s.includes("spacer") || s.includes("pixel") || s.includes("statscounter") || s.includes("1x1") || s.includes("transparent")) return false;
   if (s.includes("data:image")) return false;
   if (s.endsWith(".gif")) return false;
   return true;
@@ -174,11 +174,11 @@ async function fetchSuoiluRSS(): Promise<any[]> {
       const enclosure = $(elem).find("enclosure").attr("url");
       const featuredImg = $(elem).find("wp\\:featured_item, featured_item").text();
       
-      if (mediaContent) {
+      if (mediaContent && isValidImage(mediaContent)) {
         imageSrc = mediaContent;
-      } else if (enclosure) {
+      } else if (enclosure && isValidImage(enclosure)) {
         imageSrc = enclosure;
-      } else if (featuredImg) {
+      } else if (featuredImg && isValidImage(featuredImg)) {
         imageSrc = featuredImg;
       } else {
         const desc = $(elem).find("description").first().text();
@@ -189,7 +189,7 @@ async function fetchSuoiluRSS(): Promise<any[]> {
         const imgMatches = [...combined.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)];
         for (const match of imgMatches) {
           const src = match[1];
-          if (!src.includes("s.w.org") && !src.includes("emoji") && !src.endsWith(".gif")) {
+          if (isValidImage(src) && !src.includes("s.w.org") && !src.includes("emoji")) {
             imageSrc = src;
             break;
           }
@@ -207,8 +207,10 @@ async function fetchSuoiluRSS(): Promise<any[]> {
 }
 
 // Helper to scrape https://suoilu.db.edu.vn/ using cheerio
-async function fetchSuoiluNews(): Promise<any[]> {
-  const targetUrl = "https://suoilu.db.edu.vn/";
+async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
+  const targetUrl = customUrl || "https://suoilu.db.edu.vn/";
+  const urlObj = new URL(targetUrl);
+  const baseOrigin = urlObj.origin;
   let candidates: any[] = [];
 
   try {
@@ -230,21 +232,27 @@ async function fetchSuoiluNews(): Promise<any[]> {
       const $ = cheerio.load(html);
 
       // Look for standard layout nodes
-      $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item").each((_, elem) => {
+      $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item, .entry-item").each((_, elem) => {
         const aTag = $(elem).find("a").first();
         const href = aTag.attr("href");
         let title = aTag.text().trim() || $(elem).find(".title, .news-title, .post-title, h2, h3, h4").first().text().trim();
         
-        let imgElem = $(elem).find("img").first();
+        // Try multiple selectors for images, including WordPress standard ones
+        let imgElem = $(elem).find("img.wp-post-image, img.attachment-post-thumbnail, .featured-image img, .post-thumbnail img, .entry-thumbnail img, .wp-block-post-featured-image img").first();
+        if (imgElem.length === 0) imgElem = $(elem).find("img").first();
+
         let imageSrc = imgElem.attr("src") || 
                        imgElem.attr("data-src") || 
                        imgElem.attr("data-original") ||
                        imgElem.attr("data-lazy-src") ||
-                       imgElem.attr("data-src-meta");
+                       imgElem.attr("data-src-meta") ||
+                       imgElem.attr("data-large-file") ||
+                       imgElem.attr("data-orig-file") ||
+                       imgElem.attr("srcset")?.split(" ")[0];
         
         // If image in element is bad/tiny, look for background images or nearby images
         if (!imageSrc || imageSrc.includes("spacer.png") || imageSrc.includes("data:image")) {
-          const style = $(elem).attr("style");
+          const style = $(elem).attr("style") || $(elem).find(".image, .thumb, .bg-img").attr("style");
           if (style && style.includes("background-image")) {
             const bgMatch = style.match(/url\(['"]?([^'"]+)['"]?\)/);
             if (bgMatch) imageSrc = bgMatch[1];
@@ -334,8 +342,8 @@ async function fetchSuoiluNews(): Promise<any[]> {
     
     if (!absoluteCheck.test(resolvedLink)) {
       resolvedLink = resolvedLink.startsWith("/") 
-        ? `https://suoilu.db.edu.vn${resolvedLink}` 
-        : `https://suoilu.db.edu.vn/${resolvedLink}`;
+        ? `${baseOrigin}${resolvedLink}` 
+        : `${baseOrigin}/${resolvedLink}`;
     }
 
     const cleanTitle = item.title
@@ -379,8 +387,8 @@ async function fetchSuoiluNews(): Promise<any[]> {
           finalImage = `https:${finalImage}`;
         } else if (!absoluteCheck.test(finalImage)) {
           finalImage = finalImage.startsWith("/")
-            ? `https://suoilu.db.edu.vn${finalImage}`
-            : `https://suoilu.db.edu.vn/${finalImage}`;
+            ? `${baseOrigin}${finalImage}`
+            : `${baseOrigin}/${finalImage}`;
         }
       } else {
         finalImage = getThematicImage(cleanTitle, finalItems.length);
@@ -392,7 +400,7 @@ async function fetchSuoiluNews(): Promise<any[]> {
         category,
         date: finalDate,
         link: resolvedLink,
-        source: "suoilu.db.edu.vn",
+        source: urlObj.hostname,
         image: finalImage,
         timestamp: item.timestamp
       });
@@ -492,16 +500,27 @@ async function startServer() {
 
   // Endpoint to serve scrapped live news automatically
   app.get("/api/news", async (req, res) => {
+    const bypassCache = req.query.refresh === "true";
+    const sourceUrl = req.query.source as string;
     const now = Date.now();
-    if (newsCache.length > 0 && (now - lastCacheTime < CACHE_DURATION)) {
+    
+    // If we have a custom source and it's different from the one used for cache, bypass cache
+    const isDifferentSource = sourceUrl && newsCache.length > 0 && !newsCache[0].link.startsWith(sourceUrl.split('?')[0]);
+
+    if (!bypassCache && !isDifferentSource && newsCache.length > 0 && (now - lastCacheTime < CACHE_DURATION)) {
       return res.json({ status: "success", source: "cache", data: newsCache });
     }
 
-    const liveNews = await fetchSuoiluNews();
+    const liveNews = await fetchSuoiluNews(sourceUrl);
     if (liveNews && liveNews.length > 0) {
       newsCache = liveNews;
       lastCacheTime = now;
       return res.json({ status: "success", source: "scraped", data: newsCache });
+    }
+
+    // If scraping failed but we have cache, return it even if expired
+    if (newsCache.length > 0) {
+      return res.json({ status: "success", source: "cache_stale", data: newsCache });
     }
 
     // fallback gracefully
