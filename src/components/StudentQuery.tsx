@@ -112,14 +112,47 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       const response = await fetch(`/api/news?source=${encodeURIComponent(targetUrl)}`);
       if (!response.ok) throw new Error("Server error");
       const result = await response.json();
-      if (result && result.data) {
-        setNewsItems(result.data);
-        const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(result.source);
-        setNewsSource(isFromWebsite ? new URL(targetUrl).hostname : "Hệ thống");
+      if (result && result.data && result.data.length > 0) {
+        if (result.source === "scraped") {
+          // Sync successful scrape back to Supabase/localStorage central settings
+          await dbService.savePortalSetting("portal_cached_news", JSON.stringify(result.data));
+          setNewsItems(result.data);
+          setNewsSource(new URL(targetUrl).hostname);
+        } else if (result.source === "fallback_static" || result.status === "fallback") {
+          // If server failed and returned fallback, check if we have persistent cached news in DB first
+          const savedNewsStr = await dbService.getPortalSetting("portal_cached_news", "");
+          if (savedNewsStr) {
+            try {
+              const savedNews = JSON.parse(savedNewsStr);
+              if (Array.isArray(savedNews) && savedNews.length > 0) {
+                setNewsItems(savedNews);
+                setNewsSource(new URL(targetUrl).hostname);
+                return;
+              }
+            } catch { }
+          }
+          // If no cached news exists, use the server fallbacks
+          setNewsItems(result.data);
+          setNewsSource("Hệ thống");
+        } else {
+          setNewsItems(result.data);
+          const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(result.source);
+          setNewsSource(isFromWebsite ? new URL(targetUrl).hostname : "Hệ thống");
+        }
       }
     } catch (err) {
-      // Reduced news loading log severity
       console.log("Automatic news feed loading deferred:", (err as any).message);
+      // On error, check if we have persistent cached news
+      try {
+        const savedNewsStr = await dbService.getPortalSetting("portal_cached_news", "");
+        if (savedNewsStr) {
+          const savedNews = JSON.parse(savedNewsStr);
+          if (Array.isArray(savedNews) && savedNews.length > 0) {
+            setNewsItems(savedNews);
+            setNewsSource(new URL(url || newsSourceUrl).hostname);
+          }
+        }
+      } catch { }
     } finally {
       setNewsLoading(false);
     }
@@ -220,6 +253,19 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
         const nUrl = await dbService.getPortalSetting("portal_news_source_url", "https://suoilu.db.edu.vn");
         setNewsSourceUrl(nUrl);
+        
+        // Pre-populate cached news instantly to prevent empty flash
+        const cachedNewsStr = await dbService.getPortalSetting("portal_cached_news", "");
+        if (cachedNewsStr) {
+          try {
+            const cached = JSON.parse(cachedNewsStr);
+            if (Array.isArray(cached) && cached.length > 0) {
+              setNewsItems(cached);
+              setNewsSource(new URL(nUrl).hostname);
+            }
+          } catch { }
+        }
+
         fetchNews(nUrl);
         
         if (!nameEnabled && cccdEnabled) {
@@ -712,23 +758,48 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     </h3>
                   </div>
                   <p className="text-[10px] text-slate-500 font-semibold">
-                    Tin cập nhật từ trang thông tin điện tử nhà trường (<a href="https://suoilu.db.edu.vn" target="_blank" referrerPolicy="no-referrer" className="text-blue-600 hover:underline inline-flex items-center gap-0.5 font-bold">suoilu.db.edu.vn <ExternalLink className="w-2.5 h-2.5" /></a>)
+                    Tin cập nhật từ trang thông tin điện tử nhà trường <span className="inline-block whitespace-nowrap">(<a href="https://suoilu.db.edu.vn" target="_blank" referrerPolicy="no-referrer" className="text-blue-600 hover:underline inline-flex items-center gap-0.5 font-bold">suoilu.db.edu.vn <ExternalLink className="w-2.5 h-2.5" /></a>)</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-2 self-start md:self-center">
                   <button 
-                    onClick={() => {
+                    onClick={async () => {
                       setNewsLoading(true);
-                      fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsSourceUrl)}`)
-                        .then(r => r.json())
-                        .then(res => {
-                          if (res && res.data) {
-                            setNewsItems(res.data);
-                            const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
-                            setNewsSource(isFromWebsite ? new URL(newsSourceUrl).hostname : "Hệ thống");
+                      try {
+                        const r = await fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsSourceUrl)}`);
+                        if (r.ok) {
+                          const res = await r.json();
+                          if (res && res.data && res.data.length > 0) {
+                            if (res.source === "scraped") {
+                              await dbService.savePortalSetting("portal_cached_news", JSON.stringify(res.data));
+                              setNewsItems(res.data);
+                              setNewsSource(new URL(newsSourceUrl).hostname);
+                            } else if (res.source === "fallback_static" || res.status === "fallback") {
+                              const savedNewsStr = await dbService.getPortalSetting("portal_cached_news", "");
+                              if (savedNewsStr) {
+                                try {
+                                  const savedNews = JSON.parse(savedNewsStr);
+                                  if (Array.isArray(savedNews) && savedNews.length > 0) {
+                                    setNewsItems(savedNews);
+                                    setNewsSource(new URL(newsSourceUrl).hostname);
+                                    return;
+                                  }
+                                } catch { }
+                              }
+                              setNewsItems(res.data);
+                              setNewsSource("Hệ thống");
+                            } else {
+                              setNewsItems(res.data);
+                              const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
+                              setNewsSource(isFromWebsite ? new URL(newsSourceUrl).hostname : "Hệ thống");
+                            }
                           }
-                        })
-                        .finally(() => setNewsLoading(false));
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      } finally {
+                        setNewsLoading(false);
+                      }
                     }}
                     className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-[#0055A5] cursor-pointer"
                     title="Lấy tin mới nhất ngay"
@@ -760,59 +831,107 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     ))}
                   </div>
                 ) : newsItems && newsItems.length > 0 ? (
-                  newsItems.map((item, idx) => (
-                    <a
-                      key={item.id || idx}
-                      href={item.link || "https://suoilu.db.edu.vn"}
-                      target="_blank"
-                      referrerPolicy="no-referrer"
-                      className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-slate-50/70 p-2 -mx-2 rounded-xl transition duration-200 group cursor-pointer"
-                    >
-                      {/* Left: Beautiful article illustration image */}
-                      <div className="w-full sm:w-28 h-20 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-150 relative">
-                        <img 
-                          src={item.image} 
-                          alt={item.title}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            // Diverse smooth fallbacks on error to prevent same-image bug
-                            const fallbacks = [
-                              "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&auto=format&fit=crop&q=60",
-                              "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60",
-                              "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60",
-                              "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60",
-                              "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500&auto=format&fit=crop&q=60"
-                            ];
-                            (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
-                          }}
-                        />
-                        <div className="absolute top-1 left-1">
-                          <span className="text-[8px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-1.5 py-0.5 rounded leading-none">
-                            {idx === 0 ? "Mới nhất" : `Tin #${idx + 1}`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Right: metadata & title details */}
-                      <div className="flex-1 space-y-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] text-[#0055A5] font-extrabold uppercase bg-[#0055A5]/10 px-1.5 py-0.5 rounded tracking-wide font-sans">
-                            {item.category}
-                          </span>
-                          <span className="text-[9px] font-medium text-slate-300">•</span>
-                          <span className="font-mono text-[9px] text-slate-400 font-bold">
-                            {item.date}
-                          </span>
+                  <div className="space-y-4 py-2.5">
+                    {/* Hero Feature: Primary Latest News (Exactly like the design mockup) */}
+                    {newsItems.slice(0, 1).map((item, idx) => (
+                      <a
+                        key={item.id || idx}
+                        href={item.link || "https://suoilu.db.edu.vn"}
+                        target="_blank"
+                        referrerPolicy="no-referrer"
+                        className="flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-slate-50/70 p-2 -mx-2 rounded-xl transition duration-200 group cursor-pointer"
+                      >
+                        {/* Left: Beautiful article illustration image */}
+                        <div className="w-full sm:w-28 h-20 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-150 relative">
+                          <img 
+                            src={item.image} 
+                            alt={item.title}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              const fallbacks = [
+                                "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&auto=format&fit=crop&q=60",
+                                "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60",
+                                "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60",
+                                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60",
+                                "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500&auto=format&fit=crop&q=60"
+                              ];
+                              (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
+                            }}
+                          />
+                          <div className="absolute top-1 left-1">
+                            <span className="text-[8px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-1.5 py-0.5 rounded leading-none">
+                              Mới nhất
+                            </span>
+                          </div>
                         </div>
 
-                        <p className="font-bold text-slate-800 text-xs leading-snug group-hover:text-[#0055A5] transition-colors flex items-start gap-1">
-                          <span>{item.title}</span>
-                          <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-0.5" />
-                        </p>
+                        {/* Right: metadata & title details */}
+                        <div className="flex-1 space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] text-[#0055A5] font-extrabold uppercase bg-[#0055A5]/10 px-1.5 py-0.5 rounded tracking-wide font-sans">
+                              {item.category}
+                            </span>
+                            <span className="text-[9px] font-medium text-slate-300">•</span>
+                            <span className="font-mono text-[9px] text-slate-400 font-bold">
+                              {item.date}
+                            </span>
+                          </div>
+
+                          <p className="font-bold text-slate-800 text-xs leading-snug group-hover:text-[#0055A5] transition-colors flex items-start gap-1">
+                            <span>{item.title}</span>
+                            <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-0.5" />
+                          </p>
+                        </div>
+                      </a>
+                    ))}
+
+                    {/* Secondary News Row: Remaining 4 latest news items in a compact, highly polished list */}
+                    {newsItems.length > 1 && (
+                      <div className="pt-3 border-t border-slate-100/80">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">TIN TỨC LIÊN QUAN KHÁC</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {newsItems.slice(1, 5).map((item, idx) => (
+                            <a
+                              key={item.id || idx}
+                              href={item.link || "https://suoilu.db.edu.vn"}
+                              target="_blank"
+                              referrerPolicy="no-referrer"
+                              className="p-2 bg-slate-50/40 hover:bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5 transition duration-150 group cursor-pointer"
+                            >
+                              <div className="w-14 h-11 bg-slate-100 rounded overflow-hidden shrink-0 border border-slate-150 relative">
+                                <img
+                                  src={item.image}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => {
+                                    const fallbacks = [
+                                      "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=200&auto=format&fit=crop&q=60",
+                                      "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=200&auto=format&fit=crop&q=60",
+                                      "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=200&auto=format&fit=crop&q=60",
+                                      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&auto=format&fit=crop&q=60"
+                                    ];
+                                    (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
+                                  }}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-[10.5px] text-slate-700 leading-tight line-clamp-2 group-hover:text-[#0055A5] transition-colors">
+                                  {item.title}
+                                </p>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="text-[8px] text-slate-400 font-bold font-mono">{item.date}</span>
+                                  <span className="text-[8px] text-slate-300">•</span>
+                                  <span className="text-[8px] text-[#0055A5] font-extrabold uppercase bg-[#0055A5]/5 px-1 py-0.2 rounded truncate max-w-[120px]">{item.category}</span>
+                                </div>
+                              </div>
+                            </a>
+                          ))}
+                        </div>
                       </div>
-                    </a>
-                  ))
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center py-6 text-slate-400">
                     <p className="text-[11px] font-medium mb-2">Không nạp được bản tin từ nguồn Suối Lư.</p>
