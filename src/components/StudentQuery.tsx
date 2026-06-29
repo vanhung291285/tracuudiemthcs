@@ -597,7 +597,44 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
             </div>
 
+            {/* Quick Three-Step Guideline (Moved here for top-down lookup instruction flow) */}
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
+              <div className="flex items-center gap-1.5 border-b pb-3.5 border-slate-100 mb-5 text-[#0055A5]">
+                <LayoutDashboard className="w-4.5 h-4.5" />
+                <h3 className="text-xs font-black uppercase tracking-wider">
+                  HƯỚNG DẪN TRA CỨU KẾT QUẢ
+                </h3>
+              </div>
+              
+              <div className="flex flex-col gap-5">
+                {/* Step 1 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">1</div>
+                  <div className="space-y-1">
+                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP THÔNG TIN</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ tên học sinh hoặc nhập số căn cước công dân (CCCD).</p>
+                  </div>
+                </div>
 
+                {/* Step 2 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">2</div>
+                  <div className="space-y-1">
+                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP NGÀY SINH</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Điền chính xác ngày sinh (Ví dụ: 15/05/2011) như trong khai sinh.</p>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E53935] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
+                  <div className="space-y-1">
+                    <h4 className="text-[13px] font-black uppercase text-[#E53935] tracking-tight">TRA CỨU KẾT QUẢ</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để xem chi tiết kết quả học tập và kết quả rèn luyện của các em</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Realtime Statistics Bento Grid (Moved here for better balance) */}
             <div className="grid grid-cols-2 gap-4 relative z-10">
@@ -664,6 +701,146 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           {/* RIGHT SIDE: SYSTEM OVERVIEW AND INSIGHTS PANEL (col-span-7) */}
           <div className="lg:col-span-7 space-y-6">
             
+            {/* Official Bulletin / Notifications */}
+            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <Bell className="w-5 h-5 text-[#E53935] shrink-0" />
+                    <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wide leading-none">
+                      BẢN TIN MỚI NHẤT CỦA NHÀ TRƯỜNG
+                    </h3>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-semibold">
+                    Tin cập nhật từ trang thông tin điện tử nhà trường (<a href="https://suoilu.db.edu.vn" target="_blank" referrerPolicy="no-referrer" className="text-blue-600 hover:underline inline-flex items-center gap-0.5 font-bold">suoilu.db.edu.vn <ExternalLink className="w-2.5 h-2.5" /></a>)
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 self-start md:self-center">
+                  <button 
+                    onClick={() => {
+                      setNewsLoading(true);
+                      fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsSourceUrl)}`)
+                        .then(r => r.json())
+                        .then(res => {
+                          if (res && res.data) {
+                            setNewsItems(res.data);
+                            const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
+                            setNewsSource(isFromWebsite ? new URL(newsSourceUrl).hostname : "Hệ thống");
+                          }
+                        })
+                        .finally(() => setNewsLoading(false));
+                    }}
+                    className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-[#0055A5] cursor-pointer"
+                    title="Lấy tin mới nhất ngay"
+                    disabled={newsLoading}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${newsLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                  <span className="text-[9px] bg-red-100 text-[#E53935] px-2 py-0.5 rounded font-black uppercase tracking-wider animate-pulse shrink-0">
+                    Trực tuyến
+                  </span>
+                  <span className="text-[9px] font-semibold text-slate-400 italic shrink-0" title="Đã đồng bộ tự động từ trang chủ của PTDTBT TH & THCS Suối Lư">
+                    Nguồn: {newsSource}
+                  </span>
+                </div>
+              </div>
+
+              <div className="divide-y divide-slate-100 text-xs">
+                {newsLoading ? (
+                  // Pulse Skeleton Loaders for modern list with images
+                  <div className="space-y-4 py-2">
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="animate-pulse flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                        <div className="w-full sm:w-28 h-20 bg-slate-150 rounded-lg shrink-0"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3.5 bg-slate-100 rounded w-5/6"></div>
+                          <div className="h-3 bg-slate-50 rounded w-1/3"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : newsItems && newsItems.length > 0 ? (
+                  newsItems.map((item, idx) => (
+                    <a
+                      key={item.id || idx}
+                      href={item.link || "https://suoilu.db.edu.vn"}
+                      target="_blank"
+                      referrerPolicy="no-referrer"
+                      className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-slate-50/70 p-2 -mx-2 rounded-xl transition duration-200 group cursor-pointer"
+                    >
+                      {/* Left: Beautiful article illustration image */}
+                      <div className="w-full sm:w-28 h-20 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-150 relative">
+                        <img 
+                          src={item.image} 
+                          alt={item.title}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            // Diverse smooth fallbacks on error to prevent same-image bug
+                            const fallbacks = [
+                              "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&auto=format&fit=crop&q=60",
+                              "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60",
+                              "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60",
+                              "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60",
+                              "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500&auto=format&fit=crop&q=60"
+                            ];
+                            (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
+                          }}
+                        />
+                        <div className="absolute top-1 left-1">
+                          <span className="text-[8px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-1.5 py-0.5 rounded leading-none">
+                            {idx === 0 ? "Mới nhất" : `Tin #${idx + 1}`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: metadata & title details */}
+                      <div className="flex-1 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] text-[#0055A5] font-extrabold uppercase bg-[#0055A5]/10 px-1.5 py-0.5 rounded tracking-wide font-sans">
+                            {item.category}
+                          </span>
+                          <span className="text-[9px] font-medium text-slate-300">•</span>
+                          <span className="font-mono text-[9px] text-slate-400 font-bold">
+                            {item.date}
+                          </span>
+                        </div>
+
+                        <p className="font-bold text-slate-800 text-xs leading-snug group-hover:text-[#0055A5] transition-colors flex items-start gap-1">
+                          <span>{item.title}</span>
+                          <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-0.5" />
+                        </p>
+                      </div>
+                    </a>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-slate-400">
+                    <p className="text-[11px] font-medium mb-2">Không nạp được bản tin từ nguồn Suối Lư.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewsLoading(true);
+                        fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsSourceUrl)}`)
+                          .then((r) => r.json())
+                          .then((res) => {
+                            if (res && res.data) {
+                              setNewsItems(res.data);
+                              const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
+                              setNewsSource(isFromWebsite ? new URL(newsSourceUrl).hostname : "Hệ thống");
+                            }
+                          })
+                          .catch((e) => console.error(e))
+                          .finally(() => setNewsLoading(false));
+                      }}
+                      className="text-[10px] font-black text-blue-600 uppercase hover:underline"
+                    >
+                      Thử tải lại
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Board of Honor (Bảng Vàng) panel - Game Show Style */}
             <div className="w-full bg-[#FFFBEB] border-2 border-amber-300 text-slate-900 p-5 md:p-6 rounded-3xl shadow-[0_15px_40px_-12px_rgba(251,191,36,0.2)] relative z-10 overflow-hidden">
               {/* Decorative elements */}
@@ -819,7 +996,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                                 <div className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
                                   <span className="text-emerald-600 font-extrabold uppercase text-[8px]">Lớp</span> 
                                   <span className="text-slate-700 font-black">{activity.className}</span>
-                                </div>
+                               </div>
                                 {activity.count && activity.count > 1 && (
                                   <div className="bg-emerald-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500 shadow-sm shadow-emerald-200">
                                     {activity.count} lần
@@ -866,185 +1043,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   </div>
                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em]">HỆ THỐNG TRỰC TUYẾN</span>
                 </div>
-              </div>
-            </div>
-            
-            {/* Quick Three-Step Guideline (Moved here) */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
-              <div className="flex items-center gap-1.5 border-b pb-3.5 border-slate-100 mb-5 text-[#0055A5]">
-                <LayoutDashboard className="w-4.5 h-4.5" />
-                <h3 className="text-xs font-black uppercase tracking-wider">
-                  HƯỚNG DẪN TRA CỨU KẾT QUẢ
-                </h3>
-              </div>
-              
-              <div className="flex flex-col gap-5">
-                {/* Step 1 */}
-                <div className="flex items-start gap-4 p-1">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">1</div>
-                  <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP THÔNG TIN</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ tên học sinh hoặc nhập số căn cước công dân (CCCD).</p>
-                  </div>
-                </div>
-
-                {/* Step 2 */}
-                <div className="flex items-start gap-4 p-1">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">2</div>
-                  <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP NGÀY SINH</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Điền chính xác ngày sinh (Ví dụ: 15/05/2011) như trong khai sinh.</p>
-                  </div>
-                </div>
-
-                {/* Step 3 */}
-                <div className="flex items-start gap-4 p-1">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E53935] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
-                  <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#E53935] tracking-tight">TRA CỨU KẾT QUẢ</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để xem chi tiết kết quả học tập và kết quả rèn luyện của các em</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Official Bulletin / Notifications */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
-              <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <Bell className="w-5 h-5 text-[#E53935] shrink-0" />
-                    <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wide leading-none">
-                      BẢN TIN MỚI NHẤT CỦA NHÀ TRƯỜNG
-                    </h3>
-                  </div>
-                  <p className="text-[10px] text-slate-500 font-semibold">
-                    Tin cập nhật từ trang thông tin điện tử nhà trường (<a href="https://suoilu.db.edu.vn" target="_blank" referrerPolicy="no-referrer" className="text-blue-600 hover:underline inline-flex items-center gap-0.5 font-bold">suoilu.db.edu.vn <ExternalLink className="w-2.5 h-2.5" /></a>)
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 self-start md:self-center">
-                  <button 
-                    onClick={() => {
-                      setNewsLoading(true);
-                      fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsSourceUrl)}`)
-                        .then(r => r.json())
-                        .then(res => {
-                          if (res && res.data) {
-                            setNewsItems(res.data);
-                            const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
-                            setNewsSource(isFromWebsite ? new URL(newsSourceUrl).hostname : "Hệ thống");
-                          }
-                        })
-                        .finally(() => setNewsLoading(false));
-                    }}
-                    className="p-1.5 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-[#0055A5] cursor-pointer"
-                    title="Lấy tin mới nhất ngay"
-                    disabled={newsLoading}
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${newsLoading ? 'animate-spin' : ''}`} />
-                  </button>
-                  <span className="text-[9px] bg-red-100 text-[#E53935] px-2 py-0.5 rounded font-black uppercase tracking-wider animate-pulse shrink-0">
-                    Trực tuyến
-                  </span>
-                  <span className="text-[9px] font-semibold text-slate-400 italic shrink-0" title="Đã đồng bộ tự động từ trang chủ của PTDTBT TH & THCS Suối Lư">
-                    Nguồn: {newsSource}
-                  </span>
-                </div>
-              </div>
-
-              <div className="divide-y divide-slate-100 text-xs">
-                {newsLoading ? (
-                  // Pulse Skeleton Loaders for modern list with images
-                  <div className="space-y-4 py-2">
-                    {[1, 2, 3].map((n) => (
-                      <div key={n} className="animate-pulse flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                        <div className="w-full sm:w-28 h-20 bg-slate-150 rounded-lg shrink-0"></div>
-                        <div className="flex-1 space-y-2">
-                          <div className="h-3.5 bg-slate-100 rounded w-5/6"></div>
-                          <div className="h-3 bg-slate-50 rounded w-1/3"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : newsItems && newsItems.length > 0 ? (
-                  newsItems.map((item, idx) => (
-                    <a
-                      key={item.id || idx}
-                      href={item.link || "https://suoilu.db.edu.vn"}
-                      target="_blank"
-                      referrerPolicy="no-referrer"
-                      className="py-3.5 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-slate-50/70 p-2 -mx-2 rounded-xl transition duration-200 group cursor-pointer"
-                    >
-                      {/* Left: Beautiful article illustration image */}
-                      <div className="w-full sm:w-28 h-20 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-150 relative">
-                        <img 
-                          src={item.image} 
-                          alt={item.title}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            // Diverse smooth fallbacks on error to prevent same-image bug
-                            const fallbacks = [
-                              "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&auto=format&fit=crop&q=60",
-                              "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60",
-                              "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60",
-                              "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60",
-                              "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500&auto=format&fit=crop&q=60"
-                            ];
-                            (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
-                          }}
-                        />
-                        <div className="absolute top-1 left-1">
-                          <span className="text-[8px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-1.5 py-0.5 rounded leading-none">
-                            {idx === 0 ? "Mới nhất" : `Tin #${idx + 1}`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Right: metadata & title details */}
-                      <div className="flex-1 space-y-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[9px] text-[#0055A5] font-extrabold uppercase bg-[#0055A5]/10 px-1.5 py-0.5 rounded tracking-wide font-sans">
-                            {item.category}
-                          </span>
-                          <span className="text-[9px] font-medium text-slate-300">•</span>
-                          <span className="font-mono text-[9px] text-slate-400 font-bold">
-                            {item.date}
-                          </span>
-                        </div>
-
-                        <p className="font-bold text-slate-800 text-xs leading-snug group-hover:text-[#0055A5] transition-colors flex items-start gap-1">
-                          <span>{item.title}</span>
-                          <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-0.5" />
-                        </p>
-                      </div>
-                    </a>
-                  ))
-                ) : (
-                  <div className="text-center py-6 text-slate-400">
-                    <p className="text-[11px] font-medium mb-2">Không nạp được bản tin từ nguồn Suối Lư.</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewsLoading(true);
-                        fetch(`/api/news?refresh=true&source=${encodeURIComponent(newsSourceUrl)}`)
-                          .then((r) => r.json())
-                          .then((res) => {
-                            if (res && res.data) {
-                              setNewsItems(res.data);
-                              const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(res.source);
-                              setNewsSource(isFromWebsite ? new URL(newsSourceUrl).hostname : "Hệ thống");
-                            }
-                          })
-                          .catch((e) => console.error(e))
-                          .finally(() => setNewsLoading(false));
-                      }}
-                      className="text-[10px] font-black text-blue-600 uppercase hover:underline"
-                    >
-                      Thử tải lại
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
 
