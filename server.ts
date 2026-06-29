@@ -644,6 +644,31 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       }
     }
 
+    // --- CHANNEL 2.5: corsproxy.io (High-resilience Cloudflare edge proxy) ---
+    if (candidates.length === 0) {
+      // Limit to first 2 URLs
+      for (const rssUrl of discoveredRssUrls.slice(0, 2)) {
+        try {
+          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`;
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 1500);
+          const res = await fetch(proxyUrl, { signal: controller.signal });
+          clearTimeout(id);
+          if (res.ok) {
+            const xmlText = await res.text();
+            const parsed = parseRSSXml(xmlText);
+            if (parsed.length > 0) {
+              candidates = parsed;
+              successfulMethod = `corsproxy.io RSS Proxy (${rssUrl})`;
+              break;
+            }
+          }
+        } catch (err: any) {
+          console.log(`Channel 2.5 corsproxy.io RSS Proxy deferred for ${rssUrl}:`, err.message);
+        }
+      }
+    }
+
     // --- CHANNEL 3: AllOrigins CORS Proxy for RSS Feed (Decentralized backup proxy) ---
     if (candidates.length === 0) {
       // Limit to first 2 URLs
