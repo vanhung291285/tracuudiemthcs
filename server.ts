@@ -61,6 +61,16 @@ const FALLBACK_NEWS = [
   }
 ];
 
+function isValidImage(src: string): boolean {
+  if (!src) return false;
+  const s = src.toLowerCase();
+  // Filter out tiny icons, spacers, and tracking pixels
+  if (s.includes("logo") || s.includes("icon") || s.includes("avatar") || s.includes("spacer") || s.includes("pixel") || s.includes("statscounter")) return false;
+  if (s.includes("data:image")) return false;
+  if (s.endsWith(".gif")) return false;
+  return true;
+}
+
 // Fallback thematic image resolution helper based on article keywords
 function getThematicImage(title: string, index: number): string {
   const t = title.toLowerCase();
@@ -159,19 +169,32 @@ async function fetchSuoiluRSS(): Promise<any[]> {
         const desc = $(elem).find("description").first().text();
         const content = $(elem).find("content\\:encoded, encoded").first().text();
         
-        // Try media:content or enclosure first
-        const mediaContent = $(elem).find("media\\:content, content").attr("url");
-        const enclosure = $(elem).find("enclosure").attr("url");
+      // Try media:content, enclosure, or featured image fields first
+      const mediaContent = $(elem).find("media\\:content, content").attr("url");
+      const enclosure = $(elem).find("enclosure").attr("url");
+      const featuredImg = $(elem).find("wp\\:featured_item, featured_item").text();
+      
+      if (mediaContent) {
+        imageSrc = mediaContent;
+      } else if (enclosure) {
+        imageSrc = enclosure;
+      } else if (featuredImg) {
+        imageSrc = featuredImg;
+      } else {
+        const desc = $(elem).find("description").first().text();
+        const content = $(elem).find("content\\:encoded, encoded").first().text();
         
-        if (mediaContent) {
-          imageSrc = mediaContent;
-        } else if (enclosure) {
-          imageSrc = enclosure;
-        } else {
-          const combined = desc + " " + content;
-          const imgMatch = combined.match(/<img[^>]+src=["']([^"']+)["']/i);
-          if (imgMatch) imageSrc = imgMatch[1];
+        const combined = desc + " " + content;
+        // Look for larger images first, skip small icons
+        const imgMatches = [...combined.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)];
+        for (const match of imgMatches) {
+          const src = match[1];
+          if (!src.includes("s.w.org") && !src.includes("emoji") && !src.endsWith(".gif")) {
+            imageSrc = src;
+            break;
+          }
         }
+      }
         
         items.push({ title, href: link, dateText, timestamp, image: imageSrc });
       }
@@ -212,10 +235,21 @@ async function fetchSuoiluNews(): Promise<any[]> {
         const href = aTag.attr("href");
         let title = aTag.text().trim() || $(elem).find(".title, .news-title, .post-title, h2, h3, h4").first().text().trim();
         
-        let imageSrc = $(elem).find("img").first().attr("src") || 
-                       $(elem).find("img").first().attr("data-src") || 
-                       $(elem).find("img").first().attr("data-original") ||
-                       $(elem).find("img").first().attr("data-lazy-src");
+        let imgElem = $(elem).find("img").first();
+        let imageSrc = imgElem.attr("src") || 
+                       imgElem.attr("data-src") || 
+                       imgElem.attr("data-original") ||
+                       imgElem.attr("data-lazy-src") ||
+                       imgElem.attr("data-src-meta");
+        
+        // If image in element is bad/tiny, look for background images or nearby images
+        if (!imageSrc || imageSrc.includes("spacer.png") || imageSrc.includes("data:image")) {
+          const style = $(elem).attr("style");
+          if (style && style.includes("background-image")) {
+            const bgMatch = style.match(/url\(['"]?([^'"]+)['"]?\)/);
+            if (bgMatch) imageSrc = bgMatch[1];
+          }
+        }
 
         if (href && title && title.length > 15) {
           let dateText = "";
@@ -261,11 +295,15 @@ async function fetchSuoiluNews(): Promise<any[]> {
               if (imgElem.length === 0) {
                 imgElem = $(elem).parent().find("img").first();
               }
+              if (imgElem.length === 0) {
+                imgElem = $(elem).closest("section, article, .row").find("img").first();
+              }
               
               let imageSrc = imgElem.attr("src") || 
                              imgElem.attr("data-src") || 
                              imgElem.attr("data-lazy-src") ||
-                             imgElem.attr("data-original");
+                             imgElem.attr("data-original") ||
+                             imgElem.attr("data-src-meta");
               
               // Only add if it likely has a date or is in a list-like structure
               if (timestamp > 0 || href.includes("/202") || href.includes("/tin-tuc/") || href.includes("/bai-viet/")) {
@@ -332,9 +370,12 @@ async function fetchSuoiluNews(): Promise<any[]> {
       }
 
       let finalImage = item.image;
-      if (finalImage) {
+      if (finalImage && isValidImage(finalImage)) {
         finalImage = finalImage.trim();
-        if (finalImage.startsWith("//")) {
+        // Upgrade http to https to avoid browser mixed-content blocks
+        if (finalImage.startsWith("http://")) {
+          finalImage = finalImage.replace("http://", "https://");
+        } else if (finalImage.startsWith("//")) {
           finalImage = `https:${finalImage}`;
         } else if (!absoluteCheck.test(finalImage)) {
           finalImage = finalImage.startsWith("/")
