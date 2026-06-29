@@ -868,7 +868,7 @@ class DatabaseService {
           .eq("id", key)
           .maybeSingle();
 
-        if (!error && data && data.setting_value !== undefined) {
+        if (!error && data && data.setting_value !== undefined && data.setting_value !== null && data.setting_value !== "null" && data.setting_value !== "undefined") {
           localStorage.setItem(key, data.setting_value);
           // Async sync to server to maintain centralized backup
           this.syncSettingToServer(key, data.setting_value);
@@ -884,7 +884,7 @@ class DatabaseService {
       const resp = await fetch("/api/settings");
       if (resp.ok) {
         const result = await resp.json();
-        if (result.status === "success" && result.data && result.data[key] !== undefined && result.data[key] !== null) {
+        if (result.status === "success" && result.data && result.data[key] !== undefined && result.data[key] !== null && result.data[key] !== "null" && result.data[key] !== "undefined") {
           const val = result.data[key];
           localStorage.setItem(key, val);
           return val;
@@ -896,7 +896,7 @@ class DatabaseService {
 
     // 3. Fallback to LocalStorage
     const localVal = localStorage.getItem(key);
-    if (localVal !== null && localVal !== undefined) {
+    if (localVal !== null && localVal !== undefined && localVal !== "null" && localVal !== "undefined") {
       return localVal;
     }
 
