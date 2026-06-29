@@ -47,7 +47,7 @@ export default function Footer() {
     <footer className="w-full bg-slate-50 border-t border-slate-200 no-print mt-auto">
       <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10 pt-12 pb-12">
         <div className="space-y-5">
-          <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider leading-tight">{footerTitle}</h3>
+          <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider leading-tight">{footerTitle || "HỆ THỐNG SUỐI LƯ"}</h3>
           <p className="text-[13px] leading-relaxed text-slate-600 font-medium whitespace-pre-wrap">
             {footerDesc.split("**").map((part, i) => i % 2 === 1 ? <strong key={i} className="text-slate-800 font-black">{part}</strong> : part)}
           </p>
@@ -92,7 +92,7 @@ export default function Footer() {
           {headerMain} CỦA {headerTop.split("•").pop()?.trim()}
         </h4>
         <p className="text-[11px] md:text-[12px] opacity-80 font-medium max-w-4xl leading-relaxed mb-6">
-          Hệ thống quản lý kết quả học tập trực tuyến dành cho toàn thể học sinh Tiểu học và THCS xã Suối Lư. Địa chỉ: Bản Suối Lư - xã Xa Dung - tỉnh Điện Biên
+          {footerDesc ? footerDesc.replace(/\*\*/g, "") : "Hệ thống quản lý kết quả học tập trực tuyến dành cho toàn thể học sinh Tiểu học và THCS xã Suối Lư. Địa chỉ: Bản Suối Lư - xã Xa Dung - tỉnh Điện Biên"}
         </p>
         <div className="w-24 h-px bg-white/20 mb-6" />
         <p className="text-[10px] md:text-[11px] font-black italic tracking-wider opacity-90">
