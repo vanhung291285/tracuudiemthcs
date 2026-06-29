@@ -42,6 +42,13 @@ interface StudentQueryProps {
   onNavigateToAdmin: () => void;
 }
 
+const ZaloIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10s10-4.477 10-10c0-5.523-4.477-10-10-10z" fill="white"/>
+    <path d="M16 16.5H8v-1.144l4.63-5.212H8.384V8.5H16v1.131l-4.629 5.225H16v1.644z" fill="#0068ff"/>
+  </svg>
+);
+
 export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: StudentQueryProps) {
   const [studentCode, setStudentCode] = useState("");
   const [fullName, setFullName] = useState("");
@@ -1042,11 +1049,11 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           rel="noopener noreferrer"
           whileHover={{ scale: 1.1, x: -5 }}
           whileTap={{ scale: 0.9 }}
-          className="group flex items-center gap-3 bg-blue-500 text-white p-3 rounded-full shadow-lg shadow-blue-200 border border-blue-400"
+          className="group flex items-center gap-3 bg-[#0068ff] text-white p-2.5 rounded-full shadow-lg shadow-blue-200 border border-blue-400"
           title="Liên hệ qua Zalo"
         >
           <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-sm">Zalo Nhà Trường</span>
-          <MessageCircle className="w-6 h-6 fill-current" />
+          <ZaloIcon className="w-7 h-7" />
         </motion.a>
 
         <motion.a
