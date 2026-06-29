@@ -448,14 +448,35 @@ async function startServer() {
   // POST /api/settings - Update or create a single config setting
   app.post("/api/settings", (req, res) => {
     const { key, value } = req.body;
-    if (!key) {
-      return res.status(400).json({ status: "error", message: "Key parameter is required" });
-    }
+    if (!key) return res.status(400).json({ status: "error", message: "Key required" });
     const settings = readSettings();
     settings[key] = value || "";
     writeSettings(settings);
-    res.json({ status: "success", data: { key, value } });
+    res.json({ status: "success", message: `Setting ${key} updated` });
   });
+
+  // SEO: robots.txt endpoint
+  app.get("/robots.txt", (req, res) => {
+    res.type("text/plain");
+    res.send("User-agent: *\nAllow: /\nSitemap: https://suoilu.db.edu.vn/sitemap.xml");
+  });
+
+  // SEO: sitemap.xml endpoint
+  app.get("/sitemap.xml", (req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    res.type("application/xml");
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://suoilu.db.edu.vn/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`);
+  });
+
+  // REST endpoints follow
 
   // POST /api/settings/bulk - Bulk update multiple config settings (sync credentials or themes)
   app.post("/api/settings/bulk", (req, res) => {

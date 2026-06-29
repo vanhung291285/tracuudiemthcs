@@ -1,6 +1,6 @@
 {
-  "name": "Tra Cứu Kết Quả Học Tập Học Sinh THCS",
-  "description": "Hệ thống tra cứu trực tuyến kết quả học tập, rèn luyện học bạ điện tử dành cho học sinh trung học cơ sở THCS.",
+  "name": "Suối Lư - Tra Cứu Kết Quả Học Tập & Học Bạ Điện Tử",
+  "description": "Cổng thông tin chính thức của Trường PTDTBT TH & THCS Suối Lư. Tra cứu kết quả học tập, học bạ điện tử và cập nhật tin tức mới nhất từ nhà trường.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
