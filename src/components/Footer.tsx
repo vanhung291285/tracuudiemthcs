@@ -2,41 +2,52 @@ import React, { useState, useEffect } from "react";
 import dbService from "../lib/supabase";
 
 export default function Footer() {
-  const [footerTitle, setFooterTitle] = useState(() =>
-    localStorage.getItem("portal_footer_title") || "HỆ THỐNG SUỐI LƯ"
-  );
-  const [footerDesc, setFooterDesc] = useState(() =>
-    localStorage.getItem("portal_footer_desc") || "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh."
-  );
-  const [footerKeywords, setFooterKeywords] = useState(() =>
-    localStorage.getItem("portal_footer_keywords") || "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên"
-  );
-  const [footerContact, setFooterContact] = useState(() =>
-    localStorage.getItem("portal_footer_contact") || "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư"
-  );
-  const [headerTop, setHeaderTop] = useState(() =>
-    localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ"
-  );
-  const [headerMain, setHeaderMain] = useState(() =>
-    localStorage.getItem("portal_header_main") || "TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS"
-  );
+  const [footerTitle, setFooterTitle] = useState(() => {
+    const val = localStorage.getItem("portal_footer_title");
+    return (val && val !== "null" && val !== "undefined") ? val : "HỆ THỐNG SUỐI LƯ";
+  });
+  const [footerDesc, setFooterDesc] = useState(() => {
+    const val = localStorage.getItem("portal_footer_desc");
+    return (val && val !== "null" && val !== "undefined") ? val : "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.";
+  });
+  const [footerKeywords, setFooterKeywords] = useState(() => {
+    const val = localStorage.getItem("portal_footer_keywords");
+    return (val && val !== "null" && val !== "undefined") ? val : "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên";
+  });
+  const [footerContact, setFooterContact] = useState(() => {
+    const val = localStorage.getItem("portal_footer_contact");
+    return (val && val !== "null" && val !== "undefined") ? val : "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư";
+  });
+  const [headerTop, setHeaderTop] = useState(() => {
+    const val = localStorage.getItem("portal_header_top");
+    return (val && val !== "null" && val !== "undefined") ? val : "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
+  });
+  const [headerMain, setHeaderMain] = useState(() => {
+    const val = localStorage.getItem("portal_header_main");
+    return (val && val !== "null" && val !== "undefined") ? val : "TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS";
+  });
 
   useEffect(() => {
     let active = true;
     const loadSettings = async () => {
       try {
         const title = await dbService.getPortalSetting("portal_footer_title", "HỆ THỐNG SUỐI LƯ");
-        if (active) setFooterTitle(title);
+        if (active && title && title !== "null" && title !== "undefined") setFooterTitle(title);
+        
         const desc = await dbService.getPortalSetting("portal_footer_desc", "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.");
-        if (active) setFooterDesc(desc);
+        if (active && desc && desc !== "null" && desc !== "undefined") setFooterDesc(desc);
+        
         const key = await dbService.getPortalSetting("portal_footer_keywords", "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên");
-        if (active) setFooterKeywords(key);
+        if (active && key && key !== "null" && key !== "undefined") setFooterKeywords(key);
+        
         const con = await dbService.getPortalSetting("portal_footer_contact", "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư");
-        if (active) setFooterContact(con);
+        if (active && con && con !== "null" && con !== "undefined") setFooterContact(con);
+        
         const hTop = await dbService.getPortalSetting("portal_header_top", "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ");
-        if (active) setHeaderTop(hTop);
+        if (active && hTop && hTop !== "null" && hTop !== "undefined") setHeaderTop(hTop);
+        
         const hMain = await dbService.getPortalSetting("portal_header_main", "TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS");
-        if (active) setHeaderMain(hMain);
+        if (active && hMain && hMain !== "null" && hMain !== "undefined") setHeaderMain(hMain);
       } catch (err) { }
     };
     loadSettings();
@@ -49,34 +60,39 @@ export default function Footer() {
         <div className="space-y-5">
           <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider leading-tight">{footerTitle || "HỆ THỐNG SUỐI LƯ"}</h3>
           <p className="text-[13px] leading-relaxed text-slate-600 font-medium whitespace-pre-wrap">
-            {footerDesc.split("**").map((part, i) => i % 2 === 1 ? <strong key={i} className="text-slate-800 font-black">{part}</strong> : part)}
+            {(footerDesc || "").split("**").map((part, i) => i % 2 === 1 ? <strong key={i} className="text-slate-800 font-black">{part}</strong> : part)}
           </p>
         </div>
         
         <div className="space-y-5">
           <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider">TỪ KHÓA PHỔ BIẾN</h3>
           <div className="flex flex-wrap gap-2.5">
-            {footerKeywords.split(",").map(tag => (
-              <span key={tag.trim()} className="text-[12px] bg-white border border-slate-200 px-3 py-1.5 rounded-md text-slate-600 font-bold shadow-sm hover:border-[#0055A5] transition-colors cursor-default">
-                {tag.trim()}
-              </span>
-            ))}
+            {(footerKeywords || "").split(",").map((tag, idx) => {
+              const cleanTag = (tag || "").trim();
+              if (!cleanTag) return null;
+              return (
+                <span key={idx} className="text-[12px] bg-white border border-slate-200 px-3 py-1.5 rounded-md text-slate-600 font-bold shadow-sm hover:border-[#0055A5] transition-colors cursor-default">
+                  {cleanTag}
+                </span>
+              );
+            })}
           </div>
         </div>
 
         <div className="space-y-5">
           <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider">THÔNG TIN LIÊN HỆ</h3>
           <ul className="text-[13px] space-y-3 text-slate-600 font-medium">
-            {footerContact.split("\n").map((line, i) => {
+            {(footerContact || "").split("\n").map((line, i) => {
+              if (!line) return null;
               if (line.includes("http")) {
                 const parts = line.split(": ");
                 const label = parts[0];
-                const url = parts[1];
+                const url = parts.slice(1).join(": ");
                 const displayUrl = url ? url.replace("https://", "").replace("http://", "") : "";
                 return (
                   <li key={i} className="flex items-start gap-1.5">
                     <span className="shrink-0">{label}:</span>
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">{displayUrl}</a>
+                    <a href={url || "#"} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">{displayUrl || url}</a>
                   </li>
                 );
               }
@@ -89,7 +105,7 @@ export default function Footer() {
       {/* Blue Bottom Bar */}
       <div className="w-full bg-[#0055A5] py-10 px-4 flex flex-col items-center text-center text-white">
         <h4 className="text-[14px] md:text-[16px] font-black uppercase tracking-[0.05em] mb-3 max-w-3xl">
-          {headerMain} CỦA {headerTop.split("•").pop()?.trim()}
+          {headerMain} CỦA {(headerTop || "").split("•").pop()?.trim() || "TRƯỜNG"}
         </h4>
         <p className="text-[11px] md:text-[12px] opacity-80 font-medium max-w-4xl leading-relaxed mb-6">
           {footerDesc ? footerDesc.replace(/\*\*/g, "") : "Hệ thống quản lý kết quả học tập trực tuyến dành cho toàn thể học sinh Tiểu học và THCS xã Suối Lư. Địa chỉ: Bản Suối Lư - xã Xa Dung - tỉnh Điện Biên"}
