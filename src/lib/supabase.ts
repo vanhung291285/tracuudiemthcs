@@ -113,18 +113,12 @@ class DatabaseService {
           }
 
           // Populate student portal header and footer configurations from centralized settings
-          const portalKeys = [
-            "portal_header_top",
-            "portal_header_main",
-            "portal_school_year",
-            "portal_footer_title",
-            "portal_footer_desc",
-            "portal_footer_copy"
-          ];
-          for (const key of portalKeys) {
-            const serverVal = result.data[key];
-            if (serverVal !== undefined && serverVal !== null && localStorage.getItem(key) !== serverVal) {
-              localStorage.setItem(key, serverVal);
+          for (const key in result.data) {
+            if (key.startsWith("portal_")) {
+              const serverVal = result.data[key];
+              if (serverVal !== undefined && serverVal !== null && localStorage.getItem(key) !== serverVal) {
+                localStorage.setItem(key, serverVal);
+              }
             }
           }
           
@@ -885,25 +879,25 @@ class DatabaseService {
       }
     }
 
-    // 2. Fallback to LocalStorage first (as it was pre-synchronized on startup)
-    const localVal = localStorage.getItem(key);
-    if (localVal !== null && localVal !== undefined) {
-      return localVal;
-    }
-
-    // 3. Try to fetch from central Server API only if not in localStorage
+    // 2. Try to fetch from central Server API first to ensure real-time synchronization
     try {
       const resp = await fetch("/api/settings");
       if (resp.ok) {
         const result = await resp.json();
-        if (result.status === "success" && result.data && result.data[key] !== undefined) {
+        if (result.status === "success" && result.data && result.data[key] !== undefined && result.data[key] !== null) {
           const val = result.data[key];
           localStorage.setItem(key, val);
           return val;
         }
       }
     } catch (err) {
-      // Fallback
+      // Fallback to local storage if server is unreachable
+    }
+
+    // 3. Fallback to LocalStorage
+    const localVal = localStorage.getItem(key);
+    if (localVal !== null && localVal !== undefined) {
+      return localVal;
     }
 
     return defaultValue;
