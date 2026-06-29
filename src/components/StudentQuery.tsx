@@ -90,90 +90,81 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
            d.getFullYear() === now.getFullYear();
   };
 
-  useEffect(() => {
-    let active = true;
-
-    const fetchRecentActivities = async () => {
-      try {
-        const activities = await dbService.getRecentActivities();
-        if (active) {
-          if (activities.length === 0) {
-            // Provide sample activities with accents if empty
-            setRecentActivities([
-              { id: 'm1', studentName: "Nguyễn Văn Hùng", className: "9A1", queriedAt: new Date().toISOString(), count: 5 },
-              { id: 'm2', studentName: "Phạm Thị Mai Chi", className: "8B2", queriedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), count: 3 },
-              { id: 'm3', studentName: "Lê Hoàng Bảo", className: "7C3", queriedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), count: 1 }
-            ]);
-          } else {
-            setRecentActivities(activities);
-          }
-        }
-      } catch (err) { }
-    };
-
-    const fetchNews = async (url?: string) => {
-      try {
-        const targetUrl = url || newsSourceUrl;
-        const response = await fetch(`/api/news?source=${encodeURIComponent(targetUrl)}`);
-        if (!response.ok) throw new Error("Server error");
-        const result = await response.json();
-        if (active && result && result.data) {
-          setNewsItems(result.data);
-          const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(result.source);
-          setNewsSource(isFromWebsite ? new URL(targetUrl).hostname : "Hệ thống");
-        }
-      } catch (err) {
-        // Reduced news loading log severity
-        console.log("Automatic news feed loading deferred:", (err as any).message);
-      } finally {
-        if (active) setNewsLoading(false);
+  const fetchRecentActivities = async () => {
+    try {
+      const activities = await dbService.getRecentActivities();
+      if (activities.length === 0) {
+        // Provide sample activities with accents if empty
+        setRecentActivities([
+          { id: 'm1', studentName: "Nguyễn Văn Hùng", className: "9A1", queriedAt: new Date().toISOString(), count: 5 },
+          { id: 'm2', studentName: "Phạm Thị Mai Chi", className: "8B2", queriedAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), count: 3 },
+          { id: 'm3', studentName: "Lê Hoàng Bảo", className: "7C3", queriedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), count: 1 }
+        ]);
+      } else {
+        setRecentActivities(activities);
       }
-    };
+    } catch (err) { }
+  };
 
-    const fetchTopStudents = async () => {
-      try {
-        const all = await dbService.getAllStudents();
-        const targetStudents = all.filter(s => {
-          // Robust score check: counts subjects with actual numeric or valid string evaluations
-          const scoredCount = (s.subjects || []).filter(sub => {
-            const hasS1 = (typeof sub.semester1 === "number") || (sub.semester1 === "Đạt" || sub.semester1 === "Chưa đạt");
-            const hasS2 = (typeof sub.semester2 === "number") || (sub.semester2 === "Đạt" || sub.semester2 === "Chưa đạt");
-            const hasAvg = (typeof sub.yearAvg === "number") || (sub.yearAvg === "Đạt" || sub.yearAvg === "Chưa đạt");
-            return hasS1 || hasS2 || hasAvg;
-          }).length;
-          
-          const isExempt = scoredCount === 0 && (s.notes?.toLowerCase().includes("khuyết tật") || s.notes?.toLowerCase().includes("miễn"));
-          const hasNoScoresAtAll = scoredCount === 0;
+  const fetchNews = async (url?: string) => {
+    try {
+      const targetUrl = url || newsSourceUrl;
+      const response = await fetch(`/api/news?source=${encodeURIComponent(targetUrl)}`);
+      if (!response.ok) throw new Error("Server error");
+      const result = await response.json();
+      if (result && result.data) {
+        setNewsItems(result.data);
+        const isFromWebsite = ["scraped", "cache", "cache_stale"].includes(result.source);
+        setNewsSource(isFromWebsite ? new URL(targetUrl).hostname : "Hệ thống");
+      }
+    } catch (err) {
+      // Reduced news loading log severity
+      console.log("Automatic news feed loading deferred:", (err as any).message);
+    } finally {
+      setNewsLoading(false);
+    }
+  };
 
-          if (isExempt || hasNoScoresAtAll) return false;
-
-          // Only include Xuất sắc and Giỏi as per user request
-          return s.distinction === "Học sinh Xuất sắc" || 
-                 s.distinction === "Học sinh Giỏi";
-        });
+  const fetchTopStudents = async () => {
+    try {
+      const all = await dbService.getAllStudents();
+      const targetStudents = all.filter(s => {
+        // Robust score check: counts subjects with actual numeric or valid string evaluations
+        const scoredCount = (s.subjects || []).filter(sub => {
+          const hasS1 = (typeof sub.semester1 === "number") || (sub.semester1 === "Đạt" || sub.semester1 === "Chưa đạt");
+          const hasS2 = (typeof sub.semester2 === "number") || (sub.semester2 === "Đạt" || sub.semester2 === "Chưa đạt");
+          const hasAvg = (typeof sub.yearAvg === "number") || (sub.yearAvg === "Đạt" || sub.yearAvg === "Chưa đạt");
+          return hasS1 || hasS2 || hasAvg;
+        }).length;
         
-        targetStudents.sort((a, b) => {
-          const rankA = a.distinction === "Học sinh Xuất sắc" ? 1 : 2;
-          const rankB = b.distinction === "Học sinh Xuất sắc" ? 1 : 2;
-          if (rankA !== rankB) return rankA - rankB;
-          return a.fullName.localeCompare(b.fullName, "vi");
-        });
+        const isExempt = scoredCount === 0 && (s.notes?.toLowerCase().includes("khuyết tật") || s.notes?.toLowerCase().includes("miễn"));
+        const hasNoScoresAtAll = scoredCount === 0;
 
-        if (active) {
-          setTopStudents(targetStudents);
-          setStudentCount(all.length);
-        }
-      } catch (err) {
-        console.warn("Could not load top students:", err);
-      }
-    };
+        if (isExempt || hasNoScoresAtAll) return false;
 
+        // Only include Xuất sắc and Giỏi as per user request
+        return s.distinction === "Học sinh Xuất sắc" || 
+               s.distinction === "Học sinh Giỏi";
+      });
+      
+      targetStudents.sort((a, b) => {
+        const rankA = a.distinction === "Học sinh Xuất sắc" ? 1 : 2;
+        const rankB = b.distinction === "Học sinh Xuất sắc" ? 1 : 2;
+        if (rankA !== rankB) return rankA - rankB;
+        return a.fullName.localeCompare(b.fullName, "vi");
+      });
+
+      setTopStudents(targetStudents);
+      setStudentCount(all.length);
+    } catch (err) {
+      console.warn("Could not load top students:", err);
+    }
+  };
+
+  useEffect(() => {
     fetchNews();
     fetchTopStudents();
     fetchRecentActivities();
-    return () => {
-      active = false;
-    };
   }, []);
 
   const [headerTop, setHeaderTop] = useState(() => 

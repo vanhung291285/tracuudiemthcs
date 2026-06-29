@@ -456,67 +456,69 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
 }
 
 async function startServer() {
-  const app = express();
-  const PORT = 3000;
+  // Deprecated startServer: setup registered on module level below
+}
 
-  // Support JSON request processing
-  app.use(express.json());
+const app = express();
 
-  // Filesystem persistence path for central configuration and portal settings
-  const SETTINGS_FILE = path.join(process.cwd(), "portal_settings.json");
+// Support JSON request processing
+app.use(express.json());
 
-  // Read settings from JSON file database
-  function readSettings(): Record<string, string> {
-    try {
-      if (fs.existsSync(SETTINGS_FILE)) {
-        const content = fs.readFileSync(SETTINGS_FILE, "utf-8");
-        if (!content || content.trim() === "") {
-          return {};
-        }
-        return JSON.parse(content);
+// Filesystem persistence path for central configuration and portal settings
+const SETTINGS_FILE = path.join(process.cwd(), "portal_settings.json");
+
+// Read settings from JSON file database
+function readSettings(): Record<string, string> {
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      const content = fs.readFileSync(SETTINGS_FILE, "utf-8");
+      if (!content || content.trim() === "") {
+        return {};
       }
-    } catch (e) {
-      console.error("Failed to read settings file:", e);
+      return JSON.parse(content);
     }
-    return {};
+  } catch (e) {
+    console.error("Failed to read settings file:", e);
   }
+  return {};
+}
 
-  // Write settings to JSON file database
-  function writeSettings(settings: Record<string, string>) {
-    try {
-      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf-8");
-    } catch (e) {
-      console.error("Failed to write settings file:", e);
-    }
+// Write settings to JSON file database
+function writeSettings(settings: Record<string, string>) {
+  try {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), "utf-8");
+  } catch (e) {
+    console.error("Failed to write settings file:", e);
   }
+}
 
-  // GET /api/settings - Retrieve all central portal configurations
-  app.get("/api/settings", (req, res) => {
-    const settings = readSettings();
-    res.json({ status: "success", data: settings });
-  });
+// GET /api/settings - Retrieve all central portal configurations
+app.get("/api/settings", (req, res) => {
+  const settings = readSettings();
+  res.json({ status: "success", data: settings });
+});
 
-  // POST /api/settings - Update or create a single config setting
-  app.post("/api/settings", (req, res) => {
-    const { key, value } = req.body;
-    if (!key) return res.status(400).json({ status: "error", message: "Key required" });
-    const settings = readSettings();
-    settings[key] = value || "";
-    writeSettings(settings);
-    res.json({ status: "success", message: `Setting ${key} updated` });
-  });
+// POST /api/settings - Update or create a single config setting
+app.post("/api/settings", (req, res) => {
+  const { key, value } = req.body;
+  if (!key) return res.status(400).json({ status: "error", message: "Key required" });
+  const settings = readSettings();
+  settings[key] = value || "";
+  writeSettings(settings);
+  res.json({ status: "success", message: `Setting ${key} updated` });
+});
 
-  // SEO: robots.txt endpoint
-  app.get("/robots.txt", (req, res) => {
-    res.type("text/plain");
-    res.send("User-agent: *\nAllow: /\nSitemap: https://suoilu.db.edu.vn/sitemap.xml");
-  });
+// SEO: robots.txt endpoint
+app.get("/robots.txt", (req, res) => {
+  res.type("text/plain");
+  res.send("User-agent: *\nAllow: /\nSitemap: https://suoilu.db.edu.vn/sitemap.xml");
+});
 
-  // SEO: sitemap.xml endpoint
-  app.get("/sitemap.xml", (req, res) => {
-    const today = new Date().toISOString().split('T')[0];
-    res.type("application/xml");
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+// SEO: sitemap.xml endpoint
+app.get("/sitemap.xml", (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  res.type("application/xml");
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://suoilu.db.edu.vn/</loc>
@@ -525,78 +527,83 @@ async function startServer() {
     <priority>1.0</priority>
   </url>
 </urlset>`);
-  });
+});
 
-  // REST endpoints follow
+// REST endpoints follow
 
-  // POST /api/settings/bulk - Bulk update multiple config settings (sync credentials or themes)
-  app.post("/api/settings/bulk", (req, res) => {
-    const bulkData = req.body;
-    if (!bulkData || typeof bulkData !== "object") {
-      return res.status(400).json({ status: "error", message: "Invalid settings object payload" });
-    }
-    const settings = readSettings();
-    Object.assign(settings, bulkData);
-    writeSettings(settings);
-    res.json({ status: "success", data: settings });
-  });
+// POST /api/settings/bulk - Bulk update multiple config settings (sync credentials or themes)
+app.post("/api/settings/bulk", (req, res) => {
+  const bulkData = req.body;
+  if (!bulkData || typeof bulkData !== "object") {
+    return res.status(400).json({ status: "error", message: "Invalid settings object payload" });
+  }
+  const settings = readSettings();
+  Object.assign(settings, bulkData);
+  writeSettings(settings);
+  res.json({ status: "success", data: settings });
+});
 
-  // Endpoint to serve scrapped live news automatically
-  app.get("/api/news", async (req, res) => {
-    const bypassCache = req.query.refresh === "true";
-    const sourceUrl = req.query.source as string;
-    const now = Date.now();
-    
-    // If we have a custom source and it's different from the one used for cache, bypass cache
-    const isDifferentSource = sourceUrl && newsCache.length > 0 && !newsCache[0].link.startsWith(sourceUrl.split('?')[0]);
+// Endpoint to serve scrapped live news automatically
+app.get("/api/news", async (req, res) => {
+  const bypassCache = req.query.refresh === "true";
+  const sourceUrl = req.query.source as string;
+  const now = Date.now();
+  
+  // If we have a custom source and it's different from the one used for cache, bypass cache
+  const isDifferentSource = sourceUrl && newsCache.length > 0 && !newsCache[0].link.startsWith(sourceUrl.split('?')[0]);
 
-    if (!bypassCache && !isDifferentSource && newsCache.length > 0 && (now - lastCacheTime < CACHE_DURATION)) {
-      return res.json({ status: "success", source: "cache", data: newsCache });
-    }
-
-    const liveNews = await fetchSuoiluNews(sourceUrl);
-    if (liveNews && liveNews.length > 0) {
-      newsCache = liveNews;
-      lastCacheTime = now;
-      return res.json({ status: "success", source: "scraped", data: newsCache });
-    }
-
-    // If scraping failed but we have cache, return it even if expired
-    if (newsCache.length > 0) {
-      return res.json({ status: "success", source: "cache_stale", data: newsCache });
-    }
-
-    // fallback gracefully
-    return res.json({ 
-      status: "fallback", 
-      source: "fallback_static", 
-      data: FALLBACK_NEWS 
-    });
-  });
-
-  // Health endpoint
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
-  });
-
-  // Vite Integration context check
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
+  if (!bypassCache && !isDifferentSource && newsCache.length > 0 && (now - lastCacheTime < CACHE_DURATION)) {
+    return res.json({ status: "success", source: "cache", data: newsCache });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server starting on port ${PORT}`);
+  const liveNews = await fetchSuoiluNews(sourceUrl);
+  if (liveNews && liveNews.length > 0) {
+    newsCache = liveNews;
+    lastCacheTime = now;
+    return res.json({ status: "success", source: "scraped", data: newsCache });
+  }
+
+  // If scraping failed but we have cache, return it even if expired
+  if (newsCache.length > 0) {
+    return res.json({ status: "success", source: "cache_stale", data: newsCache });
+  }
+
+  // fallback gracefully
+  return res.json({ 
+    status: "fallback", 
+    source: "fallback_static", 
+    data: FALLBACK_NEWS 
   });
+});
+
+// Health endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+// Local starting logic
+if (!process.env.VERCEL) {
+  async function startLocalServer() {
+    if (process.env.NODE_ENV !== "production") {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } else {
+      const distPath = path.join(process.cwd(), "dist");
+      app.use(express.static(distPath));
+      app.get("*", (req, res) => {
+        res.sendFile(path.join(distPath, "index.html"));
+      });
+    }
+
+    const PORT = 3000;
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server starting on port ${PORT}`);
+    });
+  }
+  startLocalServer();
 }
 
-startServer();
+export default app;
