@@ -180,6 +180,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [schoolYear, setSchoolYear] = useState(() => 
     localStorage.getItem("portal_school_year") || "NĂM HỌC 2025 - 2026"
   );
+  const [footerTitle, setFooterTitle] = useState("HỆ THỐNG SUỐI LƯ");
+  const [footerDesc, setFooterDesc] = useState("Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.");
+  const [footerKeywords, setFooterKeywords] = useState("Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên");
+  const [footerContact, setFooterContact] = useState("• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư");
   const [zaloUrl, setZaloUrl] = useState("https://zalo.me/0333333333");
   const [facebookUrl, setFacebookUrl] = useState("https://facebook.com/suoilu");
   const [websiteUrl, setWebsiteUrl] = useState("https://suoilu.db.edu.vn");
@@ -193,6 +197,15 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         setHeaderMain(main);
         const year = await dbService.getPortalSetting("portal_school_year", "NĂM HỌC 2025 - 2026");
         setSchoolYear(year);
+
+        const fTitle = await dbService.getPortalSetting("portal_footer_title", "HỆ THỐNG SUỐI LƯ");
+        setFooterTitle(fTitle);
+        const fDesc = await dbService.getPortalSetting("portal_footer_desc", "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.");
+        setFooterDesc(fDesc);
+        const fKey = await dbService.getPortalSetting("portal_footer_keywords", "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên");
+        setFooterKeywords(fKey);
+        const fCon = await dbService.getPortalSetting("portal_footer_contact", "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư");
+        setFooterContact(fCon);
 
         const z = await dbService.getPortalSetting("portal_zalo_url", "https://zalo.me/0333333333");
         setZaloUrl(z);
@@ -1019,33 +1032,44 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       </main>
       
       {/* Footer / SEO Section */}
-      <footer className="w-full bg-slate-50 border-t border-slate-200 py-10 mt-8">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-4">
-            <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wider">Hệ thống Suối Lư</h3>
-            <p className="text-[11px] leading-relaxed text-slate-600 font-medium">
-              Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. 
-              Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.
+      <footer className="w-full bg-slate-50 border-t border-slate-200 py-12 mt-12 no-print">
+        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="space-y-5">
+            <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider">{footerTitle}</h3>
+            <p className="text-[13px] leading-relaxed text-slate-600 font-medium whitespace-pre-wrap">
+              {footerDesc.split("**").map((part, i) => i % 2 === 1 ? <strong key={i} className="text-slate-800 font-black">{part}</strong> : part)}
             </p>
           </div>
           
-          <div className="space-y-4">
-            <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wider">Từ khóa phổ biến</h3>
-            <div className="flex flex-wrap gap-2">
-              {["Suối Lư", "THCS Suối Lư", "Tiểu học Suối Lư", "Học bạ điện tử", "Tra cứu điểm", "Điện Biên"].map(tag => (
-                <span key={tag} className="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded text-slate-500 font-bold">
-                  {tag}
+          <div className="space-y-5">
+            <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider">TỪ KHÓA PHỔ BIẾN</h3>
+            <div className="flex flex-wrap gap-2.5">
+              {footerKeywords.split(",").map(tag => (
+                <span key={tag.trim()} className="text-[12px] bg-white border border-slate-200 px-3 py-1.5 rounded-md text-slate-600 font-bold shadow-sm hover:border-[#0055A5] transition-colors cursor-default">
+                  {tag.trim()}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-sm font-black text-[#0055A5] uppercase tracking-wider">Thông tin liên hệ</h3>
-            <ul className="text-[11px] space-y-2 text-slate-600 font-medium">
-              <li>• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên</li>
-              <li>• Website gốc: <a href="https://suoilu.db.edu.vn" className="text-blue-600 hover:underline">suoilu.db.edu.vn</a></li>
-              <li>• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư</li>
+          <div className="space-y-5">
+            <h3 className="text-[15px] font-black text-[#0055A5] uppercase tracking-wider">THÔNG TIN LIÊN HỆ</h3>
+            <ul className="text-[13px] space-y-3 text-slate-600 font-medium">
+              {footerContact.split("\n").map((line, i) => {
+                if (line.includes("http")) {
+                  const parts = line.split(": ");
+                  const label = parts[0];
+                  const url = parts[1];
+                  const displayUrl = url.replace("https://", "").replace("http://", "");
+                  return (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="shrink-0">{label}:</span>
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-bold">{displayUrl}</a>
+                    </li>
+                  );
+                }
+                return <li key={i}>{line}</li>;
+              })}
             </ul>
           </div>
         </div>
