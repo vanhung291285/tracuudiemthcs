@@ -19,6 +19,7 @@ class DatabaseService {
   // Schema state indicators for maximum compatibility
   private mapFormatChecked = false;
   private isSnakeCaseSchema = false;
+  private isModernSchema = false;
   private classesFormatChecked = false;
   private isSnakeCaseClasses = false;
 
@@ -201,15 +202,29 @@ class DatabaseService {
   private async checkSchemaCase() {
     if (this.mapFormatChecked || !this.supabase) return;
     try {
-      const { error } = await this.supabase
+      // 1. Check for modern snake_case schema (all columns present)
+      const { data, error } = await this.supabase
         .from("students")
-        .select("student_code")
+        .select("student_code, academic_grade")
         .limit(1);
       
-      this.isSnakeCaseSchema = !error;
+      if (!error) {
+        this.isSnakeCaseSchema = true;
+        this.isModernSchema = true;
+      } else {
+        // 2. Check for legacy snake_case (only core columns)
+        const { error: legacyError } = await this.supabase
+          .from("students")
+          .select("student_code")
+          .limit(1);
+        
+        this.isSnakeCaseSchema = !legacyError;
+        this.isModernSchema = false;
+      }
       this.mapFormatChecked = true;
     } catch {
       this.isSnakeCaseSchema = false;
+      this.isModernSchema = false;
     }
   }
 
@@ -255,26 +270,28 @@ class DatabaseService {
       school,
       className,
       gradeLevel,
-      academicYear: row.academicYear || extra.academicYear || "2025-2026",
-      academicGrade: row.academicGrade || extra.academicGrade || "Tốt",
-      academicGradeHK1: row.academicGradeHK1 || extra.academicGradeHK1 || "",
-      academicGradeHK2: row.academicGradeHK2 || extra.academicGradeHK2 || "",
-      behaviorGrade: row.behaviorGrade || extra.behaviorGrade || "Tốt",
-      behaviorGradeHK1: row.behaviorGradeHK1 || extra.behaviorGradeHK1 || "",
-      behaviorGradeHK2: row.behaviorGradeHK2 || extra.behaviorGradeHK2 || "",
-      behaviorGradeSummer: row.behaviorGradeSummer || extra.behaviorGradeSummer || "Không",
-      daysAbsent: typeof row.daysAbsent === "number" ? row.daysAbsent : (typeof extra.daysAbsent === "number" ? extra.daysAbsent : 0),
-      daysAbsentUnexcused: typeof row.daysAbsentUnexcused === "number" ? row.daysAbsentUnexcused : (typeof extra.daysAbsentUnexcused === "number" ? extra.daysAbsentUnexcused : 0),
+      academicYear: row.academicYear || row.academic_year || extra.academicYear || "2025-2026",
+      academicGrade: row.academicGrade || row.academic_grade || extra.academicGrade || "Tốt",
+      academicGradeHK1: row.academicGradeHK1 || row.academic_grade_hk1 || extra.academicGradeHK1 || "",
+      academicGradeHK2: row.academicGradeHK2 || row.academic_grade_hk2 || extra.academicGradeHK2 || "",
+      behaviorGrade: row.behaviorGrade || row.behavior_grade || extra.behaviorGrade || "Tốt",
+      behaviorGradeHK1: row.behaviorGradeHK1 || row.behavior_grade_hk1 || extra.behavior_grade_hk1 || "",
+      behaviorGradeHK2: row.behaviorGradeHK2 || row.behavior_grade_hk2 || extra.behavior_grade_hk2 || "",
+      behaviorGradeSummer: row.behaviorGradeSummer || row.behavior_grade_summer || extra.behaviorGradeSummer || "Không",
+      daysAbsent: typeof row.daysAbsent === "number" ? row.daysAbsent : (typeof row.days_absent === "number" ? row.days_absent : (typeof extra.daysAbsent === "number" ? extra.daysAbsent : 0)),
+      daysAbsentUnexcused: typeof row.daysAbsentUnexcused === "number" ? row.daysAbsentUnexcused : (typeof row.days_absent_unexcused === "number" ? row.days_absent_unexcused : (typeof extra.daysAbsentUnexcused === "number" ? extra.daysAbsentUnexcused : 0)),
       distinction: row.distinction || extra.distinction || "Không",
       notes: row.notes || extra.notes || "",
-      verificationToken: row.verificationToken || extra.verificationToken || `VERIFY-NEW-${studentCode}`,
+      verificationToken: row.verificationToken || row.verification_token || extra.verificationToken || `VERIFY-NEW-${studentCode}`,
+      teacher: row.teacher || extra.teacher || "",
       subjects: subjectsList
     };
   }
 
   // Bidirectional mapping from React Student to target DB columns
   private mapStudentToDb(student: Student): any {
-    if (this.isSnakeCaseSchema) {
+    // 1. Modern Schema: Top-level columns
+    if (this.isSnakeCaseSchema && this.isModernSchema) {
       return {
         id: student.id,
         student_code: student.studentCode,
@@ -300,33 +317,41 @@ class DatabaseService {
         teacher: student.teacher || "",
         subjects: student.subjects
       };
-    } else {
+    } 
+    
+    // 2. Legacy Schema (Fallback): Pack extra fields into JSONB column 'subjects'
+    if (this.isSnakeCaseSchema) {
       return {
         id: student.id,
-        studentCode: student.studentCode,
-        fullName: student.fullName,
-        dob: student.dob,
+        student_code: student.studentCode,
+        full_name: student.fullName,
+        date_of_birth: student.dob,
         gender: student.gender,
-        school: student.school,
-        className: student.className,
-        gradeLevel: student.gradeLevel,
-        academicYear: student.academicYear,
-        academicGrade: student.academicGrade,
-        academicGradeHK1: student.academicGradeHK1 || "",
-        academicGradeHK2: student.academicGradeHK2 || "",
-        behaviorGrade: student.behaviorGrade,
-        behaviorGradeHK1: student.behaviorGradeHK1 || "",
-        behaviorGradeHK2: student.behaviorGradeHK2 || "",
-        behaviorGradeSummer: student.behaviorGradeSummer || "Không",
-        daysAbsent: student.daysAbsent,
-        daysAbsentUnexcused: student.daysAbsentUnexcused,
-        distinction: student.distinction,
-        notes: student.notes || "",
-        verificationToken: student.verificationToken,
-        teacher: student.teacher || "",
-        subjects: student.subjects
+        class_name: student.className,
+        grade_level: student.gradeLevel,
+        subjects: {
+          subjectsList: student.subjects,
+          school: student.school,
+          academicYear: student.academicYear,
+          academicGrade: student.academicGrade,
+          academicGradeHK1: student.academicGradeHK1,
+          academicGradeHK2: student.academicGradeHK2,
+          behaviorGrade: student.behaviorGrade,
+          behaviorGradeHK1: student.behaviorGradeHK1,
+          behaviorGradeHK2: student.behaviorGradeHK2,
+          behaviorGradeSummer: student.behaviorGradeSummer,
+          daysAbsent: student.daysAbsent,
+          daysAbsentUnexcused: student.daysAbsentUnexcused,
+          distinction: student.distinction,
+          notes: student.notes,
+          verificationToken: student.verificationToken,
+          teacher: student.teacher
+        }
       };
     }
+    
+    // 3. Default (CamelCase or others)
+    return student;
   }
 
   private removeDiacritics(str: string): string {
@@ -600,7 +625,7 @@ class DatabaseService {
     if (this.supabase) {
       try {
         const timeoutPromise = new Promise<{data: any, error: any}>((_, resolve) => 
-          setTimeout(() => resolve({ data: null, error: { message: "Timeout" } }), 3000)
+          setTimeout(() => resolve({ data: null, error: { message: "Timeout" } }), 10000)
         );
         await Promise.race([this.checkSchemaCase(), new Promise(r => setTimeout(r, 1000))]);
         

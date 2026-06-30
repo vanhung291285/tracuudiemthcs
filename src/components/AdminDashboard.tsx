@@ -234,9 +234,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   };
 
   const loadStudents = async () => {
-    const list = await dbService.getAllStudents();
-    setStudents(list);
-    setIsInitialLoadDone(true);
+    try {
+      const list = await dbService.getAllStudents();
+      setStudents(list);
+    } catch (err) {
+      console.error("Critical: Failed to sync students list from server:", err);
+    } finally {
+      setIsInitialLoadDone(true);
+    }
   };
 
   const loadPortalConfig = async () => {
@@ -2453,6 +2458,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset input value to allow re-selecting the same file if needed
+    e.target.value = "";
+
     setImportStatus(`Đang đọc tệp "${file.name}"...`);
     const reader = new FileReader();
     reader.onload = (evt) => {
@@ -2537,8 +2545,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       alert(`Hoàn thành! Đã nhập thành công ${successfullySaved} học sinh mới vào cơ sở dữ liệu học tịch.`);
     } else {
       const uniqueErrors = Array.from(new Set(errors));
-      const errorMsg = uniqueErrors.length > 0 ? `\nChi tiết lỗi từ Supabase: ${uniqueErrors.join(", ")}` : "";
-      alert(`Đăng ký không thành công trọn vẹn!\n- Đã nhập thành công: ${successfullySaved}/${importPreview.length} học sinh.${errorMsg}\n\nGợi ý khắc phục: Đảm bảo bạn đã cấu hình đúng kết nối trong tab Cấu hình hệ thống, và đã thực thi câu lệnh SQL khởi tạo bảng "students" trên Supabase Dashboard.`);
+      let specificTip = "Đảm bảo bạn đã cấu hình đúng kết nối trong tab Cấu hình hệ thống, và đã thực thi câu lệnh SQL khởi tạo bảng \"students\" trên Supabase Dashboard.";
+      
+      const errorMsgText = uniqueErrors.join(", ");
+      if (errorMsgText.includes("column") || errorMsgText.includes("schema cache")) {
+        specificTip = "Hệ thống phát hiện Cấu trúc bảng Students của bạn đã CŨ hoặc lỗi Cache. \n\n👉 CÁCH SỬA: Bạn hãy vào tab 'Supabase & Database' trong Cài đặt, COPY toàn bộ Mã SQL và CHẠY LẠI trên SQL Editor của Supabase để cập nhật các cột mới (như academic_grade), sau đó thử nhập lại.";
+      }
+
+      const errorMsg = uniqueErrors.length > 0 ? `\nChi tiết lỗi từ Supabase: ${errorMsgText}` : "";
+      alert(`Đăng ký không thành công trọn vẹn!\n- Đã nhập thành công: ${successfullySaved}/${importPreview.length} học sinh.${errorMsg}\n\nGợi ý khắc phục: ${specificTip}`);
     }
 
     setImportPreview([]);
@@ -4050,6 +4065,23 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
 {`-- [MẪU 1] TẠO 6 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
 
+-- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng students nhưng thiếu cột, hãy chạy đoạn này trước)
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade TEXT DEFAULT 'Tốt';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade_hk1 TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade_hk2 TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade TEXT DEFAULT 'Tốt';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_hk1 TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_hk2 TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_summer TEXT DEFAULT 'Không';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS days_absent INTEGER DEFAULT 0;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS days_absent_unexcused INTEGER DEFAULT 0;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS distinction TEXT DEFAULT 'Không';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS verification_token TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
+
 -- 1. Tạo bảng học sinh (students)
 CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,
@@ -4057,8 +4089,23 @@ CREATE TABLE IF NOT EXISTS students (
   full_name TEXT NOT NULL,
   date_of_birth TEXT NOT NULL,
   gender TEXT NOT NULL,
+  school TEXT NOT NULL,
   class_name TEXT NOT NULL,
   grade_level TEXT NOT NULL,
+  academic_year TEXT NOT NULL,
+  academic_grade TEXT NOT NULL,
+  academic_grade_hk1 TEXT,
+  academic_grade_hk2 TEXT,
+  behavior_grade TEXT NOT NULL,
+  behavior_grade_hk1 TEXT,
+  behavior_grade_hk2 TEXT,
+  behavior_grade_summer TEXT,
+  days_absent INTEGER NOT NULL,
+  days_absent_unexcused INTEGER NOT NULL,
+  distinction TEXT NOT NULL,
+  notes TEXT,
+  verification_token TEXT NOT NULL,
+  teacher TEXT,
   subjects JSONB NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -4155,6 +4202,23 @@ NOTIFY pgrst, 'reload schema';`}
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
 {`-- [MẪU 2] TẠO 6 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
 
+-- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng students nhưng thiếu cột, hãy chạy đoạn này trước)
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGrade" TEXT DEFAULT 'Tốt';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGradeHK1" TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGradeHK2" TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGrade" TEXT DEFAULT 'Tốt';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeHK1" TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeHK2" TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeSummer" TEXT DEFAULT 'Không';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "daysAbsent" INTEGER DEFAULT 0;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "daysAbsentUnexcused" INTEGER DEFAULT 0;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS distinction TEXT DEFAULT 'Không';
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS "verificationToken" TEXT;
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
+
 -- 1. Tạo bảng học sinh (students)
 CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,
@@ -4167,13 +4231,18 @@ CREATE TABLE IF NOT EXISTS students (
   "gradeLevel" TEXT NOT NULL,
   "academicYear" TEXT NOT NULL,
   "academicGrade" TEXT NOT NULL,
+  "academicGradeHK1" TEXT,
+  "academicGradeHK2" TEXT,
   "behaviorGrade" TEXT NOT NULL,
+  "behaviorGradeHK1" TEXT,
+  "behaviorGradeHK2" TEXT,
   "behaviorGradeSummer" TEXT,
   "daysAbsent" INTEGER NOT NULL,
   "daysAbsentUnexcused" INTEGER NOT NULL,
   distinction TEXT NOT NULL,
   notes TEXT,
   "verificationToken" TEXT NOT NULL,
+  teacher TEXT,
   subjects JSONB NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
