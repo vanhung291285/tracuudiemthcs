@@ -318,7 +318,7 @@ async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
   const urls: string[] = [];
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 5000); // Increased timeout to 5s for better reliability on slow servers
+    const id = setTimeout(() => controller.abort(), 8000); // Increased timeout to 8s for better reliability on slow servers
     const response = await fetch(targetUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
@@ -346,7 +346,11 @@ async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
       });
     }
   } catch (err) {
-    console.log("Failed to dynamically auto-discover RSS feeds:", err.message || err);
+    if (err.name === "AbortError") {
+      console.log("RSS discovery timed out (expected for slow target servers)");
+    } else {
+      console.log("Failed to dynamically auto-discover RSS feeds:", err.message || err);
+    }
   }
 
   // Always append standard Nukeviet and WordPress fallback patterns for high availability
@@ -377,7 +381,7 @@ async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
 async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 8000);
+    const id = setTimeout(() => controller.abort(), 12000);
 
     const response = await fetch(targetUrl, {
       headers: {

@@ -129,12 +129,21 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   }
 
   // Days absent
-  let activeDaysAbsent = student.daysAbsent;
+  let activeDaysAbsent = student.daysAbsent || 0;
+  let activeDaysAbsentUnexcused = student.daysAbsentUnexcused || 0;
+  let activeSkippedPeriods = student.skippedPeriods || 0;
+  
   if (term === "hk1") {
-    activeDaysAbsent = Math.ceil(student.daysAbsent * 0.4);
+    activeDaysAbsent = Math.ceil(activeDaysAbsent * 0.4);
+    activeDaysAbsentUnexcused = Math.ceil(activeDaysAbsentUnexcused * 0.4);
+    activeSkippedPeriods = Math.ceil(activeSkippedPeriods * 0.4);
   } else if (term === "hk2") {
-    activeDaysAbsent = Math.floor(student.daysAbsent * 0.6);
+    activeDaysAbsent = Math.floor(activeDaysAbsent * 0.6);
+    activeDaysAbsentUnexcused = Math.floor(activeDaysAbsentUnexcused * 0.6);
+    activeSkippedPeriods = Math.floor(activeSkippedPeriods * 0.6);
   }
+
+  const excusedDays = Math.max(0, activeDaysAbsent - activeDaysAbsentUnexcused);
 
   return (
     <div className="w-full max-w-3xl mx-auto" id="student-result-container">
@@ -317,7 +326,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                   </div>
                 </td>
                 <td className="p-1 border border-slate-700 text-center whitespace-normal text-[11px] sm:text-[13px]" colSpan={term === "canam" ? 5 : 4}>
-                  Vắng: {activeDaysAbsent} (phép), 0 (không), 0 (bỏ tiết)
+                  Vắng: {excusedDays} (phép), {activeDaysAbsentUnexcused} (không), {activeSkippedPeriods} (bỏ tiết)
                 </td>
               </tr>
               <tr className="bg-white text-[10px] sm:text-[13px]">

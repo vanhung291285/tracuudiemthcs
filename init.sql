@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS students (
   gender TEXT NOT NULL,
   class_name TEXT NOT NULL,
   grade_level TEXT NOT NULL,
+  skipped_periods INTEGER DEFAULT 0,
   subjects JSONB NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

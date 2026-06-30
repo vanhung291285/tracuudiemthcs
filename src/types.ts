@@ -44,6 +44,7 @@ export interface Student {
   behaviorGradeSummer?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "Không"; // KQRL sau hè
   daysAbsent: number; // Buổi nghỉ
   daysAbsentUnexcused: number; // Trong đó không phép
+  skippedPeriods?: number; // Bỏ tiết
   distinction: "Học sinh Xuất sắc" | "Học sinh Giỏi" | "Không"; // Danh hiệu
   notes: string; // Ghi chú
   

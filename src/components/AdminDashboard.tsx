@@ -724,6 +724,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         behaviorGradeSummer: "Không",
         daysAbsent: 0,
         daysAbsentUnexcused: 0,
+        skippedPeriods: 0,
         distinction: "Không",
         notes: "Hoàn thành tốt nhiệm vụ học tập.",
         verificationToken: `VERIFY-NEW-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
@@ -1250,6 +1251,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
              let parsedBehav = '';
              let parsedAbsent = 0;
              let parsedAbsentUnexcused = 0;
+             let parsedSkippedPeriods = 0;
 
              for (let b = r + 14; b <= Math.min(r + 30, rows.length - 1); b++) {
                const rowText = (rows[b] || []).slice(c, c + 15).join(' ').toLowerCase();
@@ -1272,11 +1274,20 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                  else if (v === 'cd' || v === 'cđ' || v.includes('chưa')) parsedBehav = 'Chưa đạt';
                }
 
-               const absentMatch = rowText.match(/số ngày nghỉ học:\s*(\d+)/i) || rowText.match(/vắng:[^\d]*(\d+)\s*(phép)/i);
-               if (absentMatch) parsedAbsent = parseInt(absentMatch[1], 10);
+               const absentMatch = rowText.match(/số ngày nghỉ học:\s*(\d+)/i) || rowText.match(/vắng:\s*(\d+)\s*\(?phép\)?/i);
+               if (absentMatch) {
+                 parsedAbsent = parseInt(absentMatch[1], 10);
+               }
 
-               const absentKpMatch = rowText.match(/số ngày nghỉ học k.?p.?:\s*(\d+)/i) || rowText.match(/vắng:[^\d]*\d+\s*(phép)[^\d]*(\d+)\s*(không)/i);
-               if (absentKpMatch) parsedAbsentUnexcused = parseInt(absentKpMatch[1], 10);
+               const absentKpMatch = rowText.match(/số ngày nghỉ học k.?p.?:\s*(\d+)/i) || rowText.match(/không phép:\s*(\d+)/i) || rowText.match(/vắng:[^\d]*\d+\s*\(?phép\)?\s*(\d+)\s*\(?không\)?/i);
+               if (absentKpMatch) {
+                 parsedAbsentUnexcused = parseInt(absentKpMatch[1], 10);
+               }
+
+               const skippedMatch = rowText.match(/bỏ tiết:\s*(\d+)/i) || rowText.match(/số tiết bỏ:\s*(\d+)/i);
+               if (skippedMatch) {
+                 parsedSkippedPeriods = parseInt(skippedMatch[1], 10);
+               }
              }
 
              // 5. Parse subjects
@@ -1451,6 +1462,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
              let behaviorGradeSummer = existing?.behaviorGradeSummer || "Không";
              let daysAbsent = existing?.daysAbsent || 0;
              let daysAbsentUnexcused = existing?.daysAbsentUnexcused || 0;
+             let skippedPeriods = existing?.skippedPeriods || 0;
              let distinction = existing?.distinction || "Không";
              let notes = existing?.notes || "Nhập từ học bạ gốc";
 
@@ -1480,6 +1492,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
              if (parsedAbsent) daysAbsent = parsedAbsent;
              if (parsedAbsentUnexcused) daysAbsentUnexcused = parsedAbsentUnexcused;
+             if (parsedSkippedPeriods) skippedPeriods = parsedSkippedPeriods;
              
              // Force recalculate academic grade if scores are present
              if (!parsedAcad && cardSubjects.length > 0) {
@@ -1544,6 +1557,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                behaviorGradeSummer,
                daysAbsent,
                daysAbsentUnexcused,
+               skippedPeriods,
                distinction,
                notes,
                verificationToken: existing?.verificationToken || `VERIFY-CCCD-${studentCode}-${className}`,
@@ -1576,6 +1590,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       let behaviorSummerCol = importTerm === "canam" ? 18 : -1;
       let absentPCol = importTerm === "canam" ? 19 : 18;
       let absentKCol = importTerm === "canam" ? 20 : 19;
+      let skippedPeriodsCol = importTerm === "canam" ? 21 : 20;
       let distinctionCol = importTerm === "canam" ? 22 : -1;
       let notesCol = importTerm === "canam" ? 23 : 21;
 
@@ -1656,6 +1671,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
         const dkIdx = headerParts.findIndex(p => (p.includes("vắng") || p.includes("nghỉ")) && p.includes("không"));
         if (dkIdx !== -1) absentKCol = dkIdx;
+
+        const skipIdx = headerParts.findIndex(p => p.includes("bỏ tiết") || p.includes("skipped") || p.includes("bỏ tiết"));
+        if (skipIdx !== -1) skippedPeriodsCol = skipIdx;
 
         const distIdx = headerParts.findIndex(p => p.includes("danh hiệu") || p.includes("khen thưởng") || p.includes("tiêu biểu"));
         if (distIdx !== -1) distinctionCol = distIdx;
@@ -2038,6 +2056,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           let behaviorGradeSummer: any = existing?.behaviorGradeSummer || "Không";
           let daysAbsent = existing?.daysAbsent || 0;
           let daysAbsentUnexcused = existing?.daysAbsentUnexcused || 0;
+          let skippedPeriods = existing?.skippedPeriods || 0;
           let distinction: any = existing?.distinction || "Không";
           let notes = existing?.notes || "";
 
@@ -2075,6 +2094,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             
             daysAbsent = (absentPCol !== -1 && absentPCol < parts.length) ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
             daysAbsentUnexcused = (absentKCol !== -1 && absentKCol < parts.length) ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            skippedPeriods = (skippedPeriodsCol !== -1 && skippedPeriodsCol < parts.length) ? (parseInt(parts[skippedPeriodsCol]) || 0) : skippedPeriods;
             notes = (notesCol !== -1 && notesCol < parts.length) ? (parts[notesCol]?.trim() || "Nhập từ Excel HK1") : notes;
           } else if (importTerm === "hk2") {
             const ac = (academicCol !== -1 && academicCol < parts.length) ? parseAcademic(parts[academicCol]) : "";
@@ -2091,6 +2111,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             
             daysAbsent = (absentPCol !== -1 && absentPCol < parts.length) ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
             daysAbsentUnexcused = (absentKCol !== -1 && absentKCol < parts.length) ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            skippedPeriods = (skippedPeriodsCol !== -1 && skippedPeriodsCol < parts.length) ? (parseInt(parts[skippedPeriodsCol]) || 0) : skippedPeriods;
             notes = (notesCol !== -1 && notesCol < parts.length) ? (parts[notesCol]?.trim() || "Nhập từ Excel HK2") : notes;
           } else if (importTerm === "canam") {
             const ac = (academicCol !== -1 && academicCol < parts.length) ? parseAcademic(parts[academicCol]) : "";
@@ -2192,6 +2213,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             behaviorGradeSummer,
             daysAbsent,
             daysAbsentUnexcused,
+            skippedPeriods,
             distinction,
             notes,
             verificationToken: existing?.verificationToken || `VERIFY-CCCD-${studentCode}-${importClass}`,
@@ -2401,7 +2423,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         rows[rowOffset + 22][colOffset + 3] = `Đánh giá KQ rèn luyện: ${currentBehav}`;
         
         rows[rowOffset + 23][colOffset + 1] = `Số ngày nghỉ học: ${s.daysAbsent || 0}`;
-        rows[rowOffset + 23][colOffset + 3] = `Số ngày nghỉ học k.p: ${s.daysAbsentUnexcused || 0}`;
+        rows[rowOffset + 23][colOffset + 3] = `K.p: ${s.daysAbsentUnexcused || 0}, Bỏ tiết: ${s.skippedPeriods || 0}`;
 
         rows[rowOffset + 25][colOffset + 1] = "Ý kiến của phụ huynh học sinh";
         rows[rowOffset + 25][colOffset + 3] = "Nhận xét của GVCN";
@@ -5074,7 +5096,7 @@ NOTIFY pgrst, 'reload schema';`}
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 uppercase mb-1">Vắng có phép / không phép</label>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Vắng (P / KP / Bỏ tiết)</label>
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -5089,6 +5111,13 @@ NOTIFY pgrst, 'reload schema';`}
                         onChange={(e) => setFormStudent({ ...formStudent, daysAbsentUnexcused: parseInt(e.target.value) || 0 })}
                         className="w-full border p-2 rounded"
                         placeholder="Không phép"
+                      />
+                      <input
+                        type="number"
+                        value={formStudent.skippedPeriods || 0}
+                        onChange={(e) => setFormStudent({ ...formStudent, skippedPeriods: parseInt(e.target.value) || 0 })}
+                        className="w-full border p-2 rounded"
+                        placeholder="Bỏ tiết"
                       />
                     </div>
                   </div>
