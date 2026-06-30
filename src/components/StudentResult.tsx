@@ -143,7 +143,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     activeSkippedPeriods = Math.floor(activeSkippedPeriods * 0.6);
   }
 
-  const excusedDays = Math.max(0, activeDaysAbsent - activeDaysAbsentUnexcused);
+  const excusedDays = activeDaysAbsent;
 
   return (
     <div className="w-full max-w-3xl mx-auto" id="student-result-container">
