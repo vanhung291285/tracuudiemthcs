@@ -276,32 +276,56 @@ class DatabaseService {
   private mapStudentToDb(student: Student): any {
     if (this.isSnakeCaseSchema) {
       return {
+        id: student.id,
         student_code: student.studentCode,
         full_name: student.fullName,
         date_of_birth: student.dob,
         gender: student.gender,
+        school: student.school,
         class_name: student.className,
         grade_level: student.gradeLevel,
-        subjects: {
-          subjectsList: student.subjects,
-          school: student.school,
-          academicYear: student.academicYear,
-          academicGrade: student.academicGrade,
-          academicGradeHK1: student.academicGradeHK1,
-          academicGradeHK2: student.academicGradeHK2,
-          behaviorGrade: student.behaviorGrade,
-          behaviorGradeHK1: student.behaviorGradeHK1,
-          behaviorGradeHK2: student.behaviorGradeHK2,
-          behaviorGradeSummer: student.behaviorGradeSummer,
-          daysAbsent: student.daysAbsent,
-          daysAbsentUnexcused: student.daysAbsentUnexcused,
-          distinction: student.distinction,
-          notes: student.notes,
-          verificationToken: student.verificationToken
-        }
+        academic_year: student.academicYear,
+        academic_grade: student.academicGrade,
+        academic_grade_hk1: student.academicGradeHK1 || "",
+        academic_grade_hk2: student.academicGradeHK2 || "",
+        behavior_grade: student.behaviorGrade,
+        behavior_grade_hk1: student.behaviorGradeHK1 || "",
+        behavior_grade_hk2: student.behaviorGradeHK2 || "",
+        behavior_grade_summer: student.behaviorGradeSummer || "Không",
+        days_absent: student.daysAbsent,
+        days_absent_unexcused: student.daysAbsentUnexcused,
+        distinction: student.distinction,
+        notes: student.notes || "",
+        verification_token: student.verificationToken,
+        teacher: student.teacher || "",
+        subjects: student.subjects
       };
     } else {
-      return student;
+      return {
+        id: student.id,
+        studentCode: student.studentCode,
+        fullName: student.fullName,
+        dob: student.dob,
+        gender: student.gender,
+        school: student.school,
+        className: student.className,
+        gradeLevel: student.gradeLevel,
+        academicYear: student.academicYear,
+        academicGrade: student.academicGrade,
+        academicGradeHK1: student.academicGradeHK1 || "",
+        academicGradeHK2: student.academicGradeHK2 || "",
+        behaviorGrade: student.behaviorGrade,
+        behaviorGradeHK1: student.behaviorGradeHK1 || "",
+        behaviorGradeHK2: student.behaviorGradeHK2 || "",
+        behaviorGradeSummer: student.behaviorGradeSummer || "Không",
+        daysAbsent: student.daysAbsent,
+        daysAbsentUnexcused: student.daysAbsentUnexcused,
+        distinction: student.distinction,
+        notes: student.notes || "",
+        verificationToken: student.verificationToken,
+        teacher: student.teacher || "",
+        subjects: student.subjects
+      };
     }
   }
 
