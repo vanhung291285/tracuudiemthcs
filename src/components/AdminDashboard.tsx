@@ -12,6 +12,8 @@ import {
   RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet, UserX, SortAsc
 } from "lucide-react";
 
+import { evaluateTT22, evaluateDistinctionTT22 } from "../lib/tt22";
+
 interface AdminDashboardProps {
   onBackToPortal: () => void;
 }
@@ -43,6 +45,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   // States
   const [students, setStudents] = useState<Student[]>([]);
+  const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
   const [activeTab, setActiveTab] = useState<"students" | "grades" | "import" | "stats" | "supabase" | "settings" | "classes">("students");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
@@ -123,30 +126,38 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [classFormError, setClassFormError] = useState("");
 
   // Portal Title Config States
-  const [headerTop, setHeaderTop] = useState(() => 
-    localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ"
-  );
-  const [headerMain, setHeaderMain] = useState(() => 
-    localStorage.getItem("portal_header_main") || "TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS"
-  );
-  const [schoolYear, setSchoolYear] = useState(() => 
-    localStorage.getItem("portal_school_year") || "NĂM HỌC 2025 - 2026"
-  );
-  const [footerTitle, setFooterTitle] = useState(() =>
-    localStorage.getItem("portal_footer_title") || "HỆ THỐNG SUỐI LƯ"
-  );
-  const [footerDesc, setFooterDesc] = useState(() =>
-    localStorage.getItem("portal_footer_desc") || "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh."
-  );
-  const [footerCopy, setFooterCopy] = useState(() =>
-    localStorage.getItem("portal_footer_copy") || "• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư"
-  );
-  const [footerKeywords, setFooterKeywords] = useState(() =>
-    localStorage.getItem("portal_footer_keywords") || "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên"
-  );
-  const [footerContact, setFooterContact] = useState(() =>
-    localStorage.getItem("portal_footer_contact") || "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư"
-  );
+  const [headerTop, setHeaderTop] = useState(() => {
+    const val = localStorage.getItem("portal_header_top");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
+  });
+  const [headerMain, setHeaderMain] = useState(() => {
+    const val = localStorage.getItem("portal_header_main");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS";
+  });
+  const [schoolYear, setSchoolYear] = useState(() => {
+    const val = localStorage.getItem("portal_school_year");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "NĂM HỌC 2025 - 2026";
+  });
+  const [footerTitle, setFooterTitle] = useState(() => {
+    const val = localStorage.getItem("portal_footer_title");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "HỆ THỐNG SUỐI LƯ";
+  });
+  const [footerDesc, setFooterDesc] = useState(() => {
+    const val = localStorage.getItem("portal_footer_desc");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.";
+  });
+  const [footerCopy, setFooterCopy] = useState(() => {
+    const val = localStorage.getItem("portal_footer_copy");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư";
+  });
+  const [footerKeywords, setFooterKeywords] = useState(() => {
+    const val = localStorage.getItem("portal_footer_keywords");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên";
+  });
+  const [footerContact, setFooterContact] = useState(() => {
+    const val = localStorage.getItem("portal_footer_contact");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "• Địa chỉ: Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên\n• Website gốc: https://suoilu.db.edu.vn\n• Bản quyền © 2026 PTDTBT TH & THCS Suối Lư";
+  });
   
   const [searchByCccd, setSearchByCccd] = useState(() => {
     const val = localStorage.getItem("portal_search_cccd");
@@ -172,6 +183,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [editingStudentCode, setEditingStudentCode] = useState<string | null>(null);
   const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
   const [tempGradeValue, setTempGradeValue] = useState("");
+  const [tempTx, setTempTx] = useState("");
+  const [tempMid, setTempMid] = useState("");
+  const [tempEnd, setTempEnd] = useState("");
   const [gradesTerm, setGradesTerm] = useState<"hk1" | "hk2" | "canam">("hk1");
 
   // Supabase dynamic config
@@ -222,6 +236,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const loadStudents = async () => {
     const list = await dbService.getAllStudents();
     setStudents(list);
+    setIsInitialLoadDone(true);
   };
 
   const loadPortalConfig = async () => {
@@ -805,8 +820,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         if (academicGrade === "Tốt" && behaviorGrade === "Tốt") {
           const num9Plus = scoreSubjects.filter(s => (s.yearAvg as number) >= 9.0).length;
           distinction = num9Plus >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
-        } else if (academicGrade === "Khá" && behaviorGrade === "Tốt") {
-          distinction = "Học sinh Tiêu biểu";
         } else {
           distinction = "Không";
         }
@@ -856,10 +869,34 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   };
 
   // Grade Edit Cells
-  const startEditingGrade = (studentCode: string, subId: string, currentVal: string | number) => {
-    setEditingStudentCode(studentCode);
+  const startEditingGrade = (student: Student, subId: string) => {
+    setEditingStudentCode(student.studentCode);
     setEditingSubjectId(subId);
-    setTempGradeValue(currentVal.toString());
+    
+    const sub = student.subjects.find(s => s.subjectId === subId);
+    if (sub) {
+      if (gradesTerm === "hk1") {
+        setTempTx(sub.tx1 || "");
+        setTempMid(sub.mid1 !== undefined && sub.mid1 !== null && sub.mid1 !== "" ? sub.mid1.toString() : "");
+        setTempEnd(sub.end1 !== undefined && sub.end1 !== null && sub.end1 !== "" ? sub.end1.toString() : "");
+        setTempGradeValue(sub.semester1 !== undefined && sub.semester1 !== null && sub.semester1 !== "" ? sub.semester1.toString() : "");
+      } else if (gradesTerm === "hk2") {
+        setTempTx(sub.tx2 || "");
+        setTempMid(sub.mid2 !== undefined && sub.mid2 !== null && sub.mid2 !== "" ? sub.mid2.toString() : "");
+        setTempEnd(sub.end2 !== undefined && sub.end2 !== null && sub.end2 !== "" ? sub.end2.toString() : "");
+        setTempGradeValue(sub.semester2 !== undefined && sub.semester2 !== null && sub.semester2 !== "" ? sub.semester2.toString() : "");
+      } else {
+        // canam
+        setTempTx(sub.semester1 !== undefined && sub.semester1 !== null && sub.semester1 !== "" ? sub.semester1.toString() : "");
+        setTempMid(sub.semester2 !== undefined && sub.semester2 !== null && sub.semester2 !== "" ? sub.semester2.toString() : "");
+        setTempGradeValue(sub.yearAvg !== undefined && sub.yearAvg !== null && sub.yearAvg !== "" ? sub.yearAvg.toString() : "");
+      }
+    } else {
+      setTempTx("");
+      setTempMid("");
+      setTempEnd("");
+      setTempGradeValue("");
+    }
   };
 
   const saveEditedGrade = async (student: Student) => {
@@ -868,23 +905,71 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         let updatedSub = { ...sub };
         if (sub.subjectId === editingSubjectId) {
           if (sub.isEvaluatedByScore) {
-            const numVal = parseFloat(tempGradeValue.replace(",", "."));
-            if (isNaN(numVal) || numVal < 0 || numVal > 10) {
-              alert("Điểm số phải chạy từ 0 đến 10.");
-              return sub;
+            const parseNum = (val: string): number | "" => {
+              const cleaned = val.trim().replace(",", ".");
+              if (!cleaned) return "";
+              const num = parseFloat(cleaned);
+              return isNaN(num) ? "" : num;
+            };
+
+            const parseTx = (val: string): string => {
+              let str = val.trim();
+              if (!str.includes(" ") && !str.includes(";")) {
+                if ((str.match(/,/g) || []).length > 1) {
+                  str = str.replace(/,/g, " ");
+                } else if ((str.match(/\./g) || []).length > 1) {
+                  str = str.replace(/\./g, " ");
+                }
+              }
+              const parts = str.replace(/,/g, ".").split(/[\s;]+/).map(p => p.trim()).filter(Boolean);
+              const validParts = parts.map(p => {
+                const num = parseFloat(p);
+                return isNaN(num) ? "" : num.toString();
+              }).filter(Boolean);
+              return validParts.join(" ");
+            };
+
+            if (gradesTerm === "hk1") {
+              updatedSub.tx1 = parseTx(tempTx);
+              updatedSub.mid1 = parseNum(tempMid);
+              updatedSub.end1 = parseNum(tempEnd);
+              updatedSub.semester1 = parseNum(tempGradeValue);
+            } else if (gradesTerm === "hk2") {
+              updatedSub.tx2 = parseTx(tempTx);
+              updatedSub.mid2 = parseNum(tempMid);
+              updatedSub.end2 = parseNum(tempEnd);
+              updatedSub.semester2 = parseNum(tempGradeValue);
+            } else {
+              // canam
+              updatedSub.semester1 = parseNum(tempTx);
+              updatedSub.semester2 = parseNum(tempMid);
+              updatedSub.yearAvg = parseNum(tempGradeValue);
             }
-            if (gradesTerm === "hk1") updatedSub.semester1 = numVal;
-            else if (gradesTerm === "hk2") updatedSub.semester2 = numVal;
-            else updatedSub.yearAvg = numVal;
           } else {
             let cleanVal = "";
             const t = tempGradeValue.trim().toLowerCase();
             if (t === "đạt" || t === "dat" || t === "đ" || t === "d") cleanVal = "Đạt";
             else if (t === "chưa đạt" || t === "cd" || t.includes("chưa")) cleanVal = "Chưa đạt";
             
-            if (gradesTerm === "hk1") updatedSub.semester1 = cleanVal;
-            else if (gradesTerm === "hk2") updatedSub.semester2 = cleanVal;
-            else updatedSub.yearAvg = cleanVal;
+            const cleanComments = (val: string): string => {
+              const parts = val.split(/[\s,;]+/).map(p => p.trim().toLowerCase()).filter(Boolean);
+              const cleaned = parts.map(p => {
+                if (p === "đ" || p === "d" || p === "đạt" || p === "dat") return "Đ";
+                if (p === "cd" || p === "cđ" || p === "chưa đạt" || p.includes("chưa") || p === "kđ" || p === "kd" || p === "không đạt" || p === "chua") return "CĐ";
+                return "";
+              }).filter(Boolean);
+              return cleaned.join(" ");
+            };
+
+            if (gradesTerm === "hk1") {
+              updatedSub.tx1 = cleanComments(tempTx);
+              updatedSub.semester1 = cleanVal;
+            } else if (gradesTerm === "hk2") {
+              updatedSub.tx2 = cleanComments(tempTx);
+              updatedSub.semester2 = cleanVal;
+            } else {
+              updatedSub.yearAvg = cleanVal;
+            }
           }
         }
 
@@ -913,28 +998,28 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const validScoreSubjects = scoreSubjects.filter(s => typeof s.yearAvg === "number");
       const newGpa = validScoreSubjects.length > 0 ? (totalScore / validScoreSubjects.length) : 0.0;
 
-      let academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" = student.academicGrade;
+      let academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "" = student.academicGrade as any;
       let academicGradeHK1 = student.academicGradeHK1;
       let academicGradeHK2 = student.academicGradeHK2;
       
-      const calculateTermGrade = (term: "hk1" | "hk2") => {
+      const calculateTermGrade = (term: "hk1" | "hk2" | "canam") => {
         const termSubjects = updatedSubjects.filter(s => s.isEvaluatedByScore);
-        const termScores = termSubjects.map(s => term === "hk1" ? s.semester1 : s.semester2).filter(v => typeof v === "number") as number[];
+        const termScores = termSubjects.map(s => {
+          if (term === "canam") {
+             if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
+                return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
+             }
+             return typeof s.yearAvg === "number" ? s.yearAvg : null;
+          }
+          return term === "hk1" ? s.semester1 : s.semester2;
+        }).filter(v => typeof v === "number") as number[];
         
-        if (termScores.length === 0) return "";
-        
-        const nonScorePassed = updatedSubjects.filter(s => !s.isEvaluatedByScore).every(s => (term === "hk1" ? s.semester1 : s.semester2) === "Đạt" || !(term === "hk1" ? s.semester1 : s.semester2));
-        
-        const countAbove8 = termScores.filter(v => v >= 8.0).length;
-        const countAbove65 = termScores.filter(v => v >= 6.5).length;
-        const countAbove50 = termScores.filter(v => v >= 5.0).length;
-        const allAbove50 = termScores.every(v => v >= 5.0);
-        const allAbove35 = termScores.every(v => v >= 3.5);
+        const termComments = updatedSubjects.filter(s => !s.isEvaluatedByScore).map(s => {
+          const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
+          return val === "Đạt" || val === "Chưa đạt" ? val : null;
+        }).filter(v => v !== null) as string[];
 
-        if (nonScorePassed && allAbove50 && countAbove8 >= 6) return "Tốt";
-        if (nonScorePassed && allAbove35 && countAbove65 >= 6) return "Khá";
-        if (nonScorePassed && countAbove50 >= 6 && allAbove35) return "Đạt";
-        return "Chưa đạt";
+        return evaluateTT22(termScores, termComments);
       };
 
       if (gradesTerm === "hk1") {
@@ -955,39 +1040,21 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
       // Only recalculate overall year-end grade if we are in HK2 or All-Year editing mode AND they have results
       if (hasAnyScore && validScoreSubjects.length > 0 && gradesTerm !== "hk1") {
-        const nonScorePassed = updatedSubjects
-          .filter(s => !s.isEvaluatedByScore)
-          .every(sub => sub.yearAvg === "Đạt" || !sub.yearAvg);
-
-        const yearScores = validScoreSubjects.map(s => s.yearAvg as number);
-        const countAbove9 = yearScores.filter(v => v >= 9.0).length;
-        const countAbove8 = yearScores.filter(v => v >= 8.0).length;
-        const countAbove65 = yearScores.filter(v => v >= 6.5).length;
-        const countAbove50 = yearScores.filter(v => v >= 5.0).length;
-        const allAbove50 = yearScores.every(v => v >= 5.0);
-        const allAbove35 = yearScores.every(v => v >= 3.5);
-
-        if (nonScorePassed && allAbove50 && countAbove8 >= 6) {
-          academicGrade = "Tốt";
-        } else if (nonScorePassed && allAbove35 && countAbove65 >= 6) {
-          academicGrade = "Khá";
-        } else if (nonScorePassed && countAbove50 >= 6 && allAbove35) {
-          academicGrade = "Đạt";
-        } else if (validScoreSubjects.length > 0) {
-          academicGrade = "Chưa đạt";
-        }
-      } else if (!hasAnyScore) {
-        // If no scores at all, default or keep current
+        const newCaNam = calculateTermGrade("canam");
+        if (newCaNam) academicGrade = newCaNam as any;
       }
 
       const behaviorGrade = student.behaviorGrade;
-      let distinction = "Không";
-      if (academicGrade === "Tốt" && behaviorGrade === "Tốt") {
-        const yearScores = scoreSubjects.map(s => typeof s.yearAvg === "number" ? s.yearAvg : 0);
-        const countAbove9 = yearScores.filter(v => v >= 9.0).length;
-        distinction = countAbove9 >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
-      } else if (academicGrade === "Khá" && behaviorGrade === "Tốt") {
-        distinction = "Học sinh Tiêu biểu";
+      let distinction = student.distinction || "Không";
+      
+      if (academicGrade && behaviorGrade) {
+        const yearScores = scoreSubjects.map(s => {
+             if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
+                return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
+             }
+             return typeof s.yearAvg === "number" ? s.yearAvg : 0;
+        });
+        distinction = evaluateDistinctionTT22(academicGrade, behaviorGrade, yearScores);
       }
 
       const updatedStudent: Student = {
@@ -1024,7 +1091,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
     // Safety check: ensure students list is loaded if we've been authenticated
     // This prevents overwriting existing data with partial rows due to failed merging
-    if (isAuthenticated && students.length === 0) {
+    if (isAuthenticated && !isInitialLoadDone) {
        loadStudents(); // Trigger a background refresh
        setImportStatus("Hệ thống đang tải lại danh sách học sinh từ máy chủ. Vui lòng đợi trong giây lát rồi thử lại để đảm bảo việc ghép điểm không bị lỗi.");
        return;
@@ -1036,6 +1103,432 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const targetClassObj = classes.find(c => c.className === importClass);
       const gradeLvl = targetClassObj?.gradeLevel || "9";
       const collectedErrors: string[] = [];
+
+      const cleanSpaceSeparatedScores = (val: string): string => {
+        if (!val) return "";
+        let str = val.trim();
+        if (!str.includes(" ") && !str.includes(";")) {
+          if ((str.match(/,/g) || []).length > 1) {
+            str = str.replace(/,/g, " ");
+          } else if ((str.match(/\./g) || []).length > 1) {
+            str = str.replace(/\./g, " ");
+          }
+        }
+        const parts = str.replace(/,/g, ".").split(/[\s;]+/).map(p => p.trim()).filter(Boolean);
+        const validParts = parts.map(p => {
+          const num = parseFloat(p);
+          return isNaN(num) ? "" : num.toString();
+        }).filter(Boolean);
+        return validParts.join(" ");
+      };
+
+      const cleanSpaceSeparatedComments = (val: string): string => {
+        if (!val) return "";
+        const parts = val.split(/[\s,;]+/).map(p => p.trim().toLowerCase()).filter(Boolean);
+        const cleanedParts = parts.map(p => {
+          if (p === "đ" || p === "d" || p === "đạt" || p === "dat") return "Đ";
+          if (p === "cd" || p === "cđ" || p === "chưa đạt" || p.includes("chưa") || p === "kđ" || p === "kd" || p === "không đạt" || p === "chua") return "CĐ";
+          return "";
+        }).filter(Boolean);
+        return cleanedParts.join(" ");
+      };
+
+      // Detect and run specialized school card parser
+      const isSchoolLayout = lines.some(line => line.includes("KẾT QUẢ HỌC TẬP") || line.includes("Họ và tên:") || line.includes("Mã HS :"));
+      if (isSchoolLayout) {
+        const rows = lines.map(line => line.split("\t"));
+        const studentCardLocations: { r: number, c: number }[] = [];
+        for (let r = 0; r < rows.length; r++) {
+          const row = rows[r];
+          for (let c = 0; c < row.length; c++) {
+            const val = (row[c] || "").trim().toLowerCase();
+            if (val === "họ và tên:" || val === "họ và tên" || val === "ho va ten:" || val === "ho va ten") {
+              studentCardLocations.push({ r, c });
+            }
+          }
+        }
+
+        if (studentCardLocations.length > 0) {
+          studentCardLocations.forEach(({ r, c }) => {
+             // 1. Get full name
+             let fullName = "";
+             for (let offset = 1; offset <= 4; offset++) {
+               const val = (rows[r]?.[c + offset] || "").trim();
+               if (val && !val.toLowerCase().includes("lớp") && !val.toLowerCase().includes("lop")) {
+                 fullName = val;
+                 break;
+               }
+             }
+             if (!fullName) return;
+
+             // 2. Get class name
+             let className = importClass;
+             for (let col = c + 4; col < Math.min(c + 10, rows[r]?.length || 0); col++) {
+               const cellVal = (rows[r]?.[col] || "").trim();
+               if (cellVal.toLowerCase().includes("lớp") || cellVal.toLowerCase().includes("lop")) {
+                 const classMatch = cellVal.match(/Lớp:\s*([A-Za-z0-9_-]+)/i) || cellVal.match(/Lớp\s*([A-Za-z0-9_-]+)/i) || cellVal.match(/Lop:\s*([A-Za-z0-9_-]+)/i) || cellVal.match(/Lop\s*([A-Za-z0-9_-]+)/i);
+                 if (classMatch) {
+                   className = classMatch[1].trim();
+                   break;
+                 }
+               }
+             }
+
+             // 3. Student Code (Mã HS)
+             let studentCode = "";
+             let codeCellRow = r - 1;
+             if (codeCellRow >= 0) {
+               for (let col = c; col < Math.min(c + 4, rows[codeCellRow]?.length || 0); col++) {
+                 const val = (rows[codeCellRow]?.[col] || "").trim();
+                 if (val.toLowerCase().includes("mã hs") || val.toLowerCase().includes("ma hs")) {
+                   for (let offset = 1; offset <= 3; offset++) {
+                     const codeVal = (rows[codeCellRow]?.[col + offset] || "").trim();
+                     if (codeVal && !codeVal.toLowerCase().includes("môn") && !codeVal.toLowerCase().includes("mon")) {
+                       studentCode = codeVal.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
+                       break;
+                     }
+                   }
+                   break;
+                 }
+               }
+             }
+
+             const cleanString = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
+             const rowNameClean = cleanString(fullName);
+             const removeDiacritics = (str: string): string => {
+               return str
+                 .normalize("NFD")
+                 .replace(/[\u0300-\u036f]/g, "")
+                 .replace(/đ/g, "d")
+                 .replace(/Đ/g, "D");
+             };
+
+             let existing = students.find(
+               s => cleanString(s.fullName) === rowNameClean && 
+                    s.className.trim().toUpperCase() === className.trim().toUpperCase()
+             );
+
+             if (existing) {
+               studentCode = existing.studentCode;
+             } else if (!studentCode) {
+               const cleanNameNoSign = removeDiacritics(fullName).replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+               studentCode = `HS-${className.toUpperCase()}-${cleanNameNoSign}`;
+             }
+
+             // 4. Find headers to detect column offsets dynamically
+             let headerR = r + 2;
+             let colSubject = c + 1;
+             let colTxStart = c + 2;
+             let colMid = c + 3;
+             let colEnd = c + 4;
+             let colAvg = c + 5;
+             
+             for (let searchR = r; searchR <= Math.min(r + 8, rows.length - 1); searchR++) {
+               const rowStr = rows[searchR]?.slice(Math.max(0, c - 2), c + 15).join(" ").toLowerCase() || "";
+               if (rowStr.includes("môn") || rowStr.includes("mon") || rowStr.includes("đđgtx") || rowStr.includes("đđggk") || rowStr.includes("tx")) {
+                 headerR = searchR;
+                 let foundSubj = false, foundTx = false, foundMid = false, foundEnd = false, foundAvg = false;
+                 for (let col = Math.max(0, c - 2); col <= Math.min(c + 20, rows[searchR]?.length - 1 || 0); col++) {
+                   const hVal = (rows[searchR]?.[col] || "").trim().toLowerCase();
+                   if (hVal && (hVal.includes("môn") || hVal === "môn học") && !foundSubj) { colSubject = col; foundSubj = true; }
+                   else if (hVal && (hVal.includes("tx") || hVal === "đđgtx") && !foundTx) { colTxStart = col; foundTx = true; }
+                   else if (hVal && (hVal.includes("gk") || hVal === "đđggk") && !foundMid) { colMid = col; foundMid = true; }
+                   else if (hVal && (hVal.includes("ck") || hVal === "đđgck") && !foundEnd) { colEnd = col; foundEnd = true; }
+                   else if (hVal && (hVal.includes("tb") || hVal === "đtb" || hVal.includes("tbm")) && !foundAvg) { colAvg = col; foundAvg = true; }
+                 }
+                 break;
+               }
+             }
+
+             // 4b. Parse bottom stats
+             let parsedAcad = '';
+             let parsedBehav = '';
+             let parsedAbsent = 0;
+             let parsedAbsentUnexcused = 0;
+
+             for (let b = r + 14; b <= Math.min(r + 30, rows.length - 1); b++) {
+               const rowText = (rows[b] || []).slice(c, c + 15).join(' ').toLowerCase();
+               
+               const acadMatch = rowText.match(/đánh giá kq học tập:\s*(tốt|khá|đạt|chưa đạt|t|k|đ|cd|cđ)/i) || rowText.match(/kqht:\s*(tốt|khá|đạt|chưa đạt|t|k|đ|cd|cđ)/i);
+               if (acadMatch) {
+                 const v = acadMatch[1].trim().toLowerCase();
+                 if (v === 't' || v === 'tốt') parsedAcad = 'Tốt';
+                 else if (v === 'k' || v === 'khá') parsedAcad = 'Khá';
+                 else if (v === 'đ' || v === 'đạt') parsedAcad = 'Đạt';
+                 else if (v === 'cd' || v === 'cđ' || v.includes('chưa')) parsedAcad = 'Chưa đạt';
+               }
+
+               const behavMatch = rowText.match(/đánh giá kq rèn luyện:\s*(tốt|khá|đạt|chưa đạt|t|k|đ|cd|cđ)/i) || rowText.match(/kqrl:\s*(tốt|khá|đạt|chưa đạt|t|k|đ|cd|cđ)/i);
+               if (behavMatch) {
+                 const v = behavMatch[1].trim().toLowerCase();
+                 if (v === 't' || v === 'tốt') parsedBehav = 'Tốt';
+                 else if (v === 'k' || v === 'khá') parsedBehav = 'Khá';
+                 else if (v === 'đ' || v === 'đạt') parsedBehav = 'Đạt';
+                 else if (v === 'cd' || v === 'cđ' || v.includes('chưa')) parsedBehav = 'Chưa đạt';
+               }
+
+               const absentMatch = rowText.match(/số ngày nghỉ học:\s*(\d+)/i) || rowText.match(/vắng:[^\d]*(\d+)\s*(phép)/i);
+               if (absentMatch) parsedAbsent = parseInt(absentMatch[1], 10);
+
+               const absentKpMatch = rowText.match(/số ngày nghỉ học k.?p.?:\s*(\d+)/i) || rowText.match(/vắng:[^\d]*\d+\s*(phép)[^\d]*(\d+)\s*(không)/i);
+               if (absentKpMatch) parsedAbsentUnexcused = parseInt(absentKpMatch[1], 10);
+             }
+
+             // 5. Parse subjects
+             const cardSubjects: SubjectResult[] = [
+               { subjectId: "toan", subjectName: "Toán học", isEvaluatedByScore: true },
+               { subjectId: "ly_dia", subjectName: "Lịch sử và Địa lí", isEvaluatedByScore: true },
+               { subjectId: "khtn", subjectName: "Khoa học tự nhiên", isEvaluatedByScore: true },
+               { subjectId: "tin", subjectName: "Tin học", isEvaluatedByScore: true },
+               { subjectId: "van", subjectName: "Ngữ văn", isEvaluatedByScore: true },
+               { subjectId: "anh", subjectName: "Ngoại ngữ", isEvaluatedByScore: true },
+               { subjectId: "gdcd", subjectName: "GDCD", isEvaluatedByScore: true },
+               { subjectId: "cong_nghe", subjectName: "Công nghệ", isEvaluatedByScore: true },
+               { subjectId: "the_duc", subjectName: "Giáo dục thể chất", isEvaluatedByScore: false },
+               { subjectId: "nghe_thuat", subjectName: "Nghệ thuật", isEvaluatedByScore: false },
+               { subjectId: "gd_dia_phuong", subjectName: "Nội dung giáo dục của địa phương", isEvaluatedByScore: false },
+               { subjectId: "trai_nghiem", subjectName: "Hoạt động trải nghiệm, hướng nghiệp", isEvaluatedByScore: false }
+             ].map((def, idx) => {
+               const existingSub = existing ? existing.subjects.find(s => s.subjectId === def.subjectId) : null;
+               const targetSub = { ...def, ...existingSub };
+
+               let rowIdx = headerR + 1 + idx;
+               let excelSubjName = (rows[rowIdx]?.[colSubject] || "").trim();
+               if (!excelSubjName.toLowerCase().includes(def.subjectName.toLowerCase().slice(0, 4))) {
+                 let foundRow = -1;
+                 const keywords = def.subjectId === "toan" ? ["toán"] :
+                                  def.subjectId === "ly_dia" ? ["sử", "lịch sử", "địa"] :
+                                  def.subjectId === "khtn" ? ["khtn", "khoa học"] :
+                                  def.subjectId === "tin" ? ["tin học", "tin"] :
+                                  def.subjectId === "van" ? ["văn", "ngữ văn"] :
+                                  def.subjectId === "anh" ? ["anh", "ngoại ngữ"] :
+                                  def.subjectId === "gdcd" ? ["gdcd", "công dân"] :
+                                  def.subjectId === "cong_nghe" ? ["công nghệ"] :
+                                  def.subjectId === "the_duc" ? ["thể chất"] :
+                                  def.subjectId === "nghe_thuat" ? ["nghệ thuật"] :
+                                  def.subjectId === "gd_dia_phuong" ? ["địa phương"] :
+                                  def.subjectId === "trai_nghiem" ? ["trải nghiệm"] :
+                                  [def.subjectName.toLowerCase().slice(0, 4)];
+                 for (let searchR = headerR + 1; searchR <= Math.min(headerR + 20, rows.length - 1); searchR++) {
+                   const cellName = (rows[searchR]?.[colSubject] || "").trim().toLowerCase();
+                   if (keywords.some(k => cellName.includes(k))) {
+                     foundRow = searchR;
+                     break;
+                   }
+                 }
+                 if (foundRow !== -1) {
+                   rowIdx = foundRow;
+                 }
+               }
+
+               const txVals = [];
+               for(let t = colTxStart; t < colMid; t++) {
+                 const v = (rows[rowIdx]?.[t] || "").trim();
+                 if (v) txVals.push(v);
+               }
+               
+               const txVal = txVals.join(" ");
+               const midVal = (rows[rowIdx]?.[colMid] || "").trim();
+               const endVal = (rows[rowIdx]?.[colEnd] || "").trim();
+               const avgVal = (rows[rowIdx]?.[colAvg] || "").trim();
+
+               const parseScore = (val: string): number | "" => {
+                 if (!val || val === "-" || val === "—" || val === "_" || val === "...") return "";
+                 const cl = val.replace(",", ".");
+                 const parsed = parseFloat(cl);
+                 return isNaN(parsed) ? "" : parsed;
+               };
+
+               const parseComment = (val: string): "Đạt" | "Chưa đạt" | "" => {
+                 if (!val || val === "-" || val === "—" || val === "_" || val === "...") return "";
+                 const cl = val.trim().toLowerCase();
+                 if (cl.includes(" ") || cl.includes(",") || cl.includes(";")) {
+                   const parts = cl.split(/[\s,;]+/).map(p => p.trim()).filter(Boolean);
+                   if (parts.length > 0) {
+                     const hasChuaDat = parts.some(p => p === "cd" || p === "cđ" || p === "chưa đạt" || p.includes("chưa") || p === "kđ" || p === "kd" || p === "không đạt" || p === "chua");
+                     const hasDat = parts.some(p => p === "đ" || p === "d" || p === "đạt" || p === "dat" || p === "k" || p === "t" || p === "tb");
+                     if (hasChuaDat) return "Chưa đạt";
+                     if (hasDat) return "Đạt";
+                   }
+                 }
+                 if (cl === "đ" || cl === "d" || cl === "đạt" || cl === "dat") return "Đạt";
+                 if (cl === "cd" || cl === "cđ" || cl === "chưa đạt" || cl.includes("chưa") || cl === "kđ" || cl === "kd" || cl === "không đạt" || cl === "chua") return "Chưa đạt";
+                 return "";
+               };
+
+               if (importTerm === "hk1") {
+                 if (def.isEvaluatedByScore) {
+                   if (txVal) targetSub.tx1 = cleanSpaceSeparatedScores(txVal);
+                   const mVal = parseScore(midVal);
+                   if (mVal !== "") targetSub.mid1 = mVal;
+                   const eVal = parseScore(endVal);
+                   if (eVal !== "") targetSub.end1 = eVal;
+                   const aVal = parseScore(avgVal);
+                   if (aVal !== "") targetSub.semester1 = aVal;
+                 } else {
+                   if (txVal) targetSub.tx1 = cleanSpaceSeparatedComments(txVal);
+                   const commM = parseComment(midVal);
+                   if (commM) targetSub.mid1 = commM;
+                   const commE = parseComment(endVal);
+                   if (commE) targetSub.end1 = commE;
+                   const comm = parseComment(avgVal) || parseComment(txVal);
+                   if (comm) targetSub.semester1 = comm;
+                 }
+               } else if (importTerm === "hk2") {
+                 if (def.isEvaluatedByScore) {
+                   if (txVal) targetSub.tx2 = cleanSpaceSeparatedScores(txVal);
+                   const mVal = parseScore(midVal);
+                   if (mVal !== "") targetSub.mid2 = mVal;
+                   const eVal = parseScore(endVal);
+                   if (eVal !== "") targetSub.end2 = eVal;
+                   const aVal = parseScore(avgVal);
+                   if (aVal !== "") targetSub.semester2 = aVal;
+                 } else {
+                   if (txVal) targetSub.tx2 = cleanSpaceSeparatedComments(txVal);
+                   const commM = parseComment(midVal);
+                   if (commM) targetSub.mid2 = commM;
+                   const commE = parseComment(endVal);
+                   if (commE) targetSub.end2 = commE;
+                   const comm = parseComment(avgVal) || parseComment(txVal);
+                   if (comm) targetSub.semester2 = comm;
+                 }
+               } else if (importTerm === "canam") {
+                 if (def.isEvaluatedByScore) {
+                   const h1Val = parseScore(txVal);
+                   if (h1Val !== "") targetSub.semester1 = h1Val;
+                   const h2Val = parseScore(midVal);
+                   if (h2Val !== "") targetSub.semester2 = h2Val;
+                   const yVal = parseScore(avgVal);
+                   if (yVal !== "") targetSub.yearAvg = yVal;
+                 } else {
+                   const comm1 = parseComment(txVal) || txVal;
+                   if (comm1) targetSub.semester1 = comm1;
+                   const comm2 = parseComment(midVal) || midVal;
+                   if (comm2) targetSub.semester2 = comm2;
+                   const commY = parseComment(avgVal) || avgVal;
+                   if (commY) targetSub.yearAvg = commY;
+                 }
+               }
+
+               // Year Average formulation
+               if (def.isEvaluatedByScore) {
+                 const s1 = typeof targetSub.semester1 === "number" ? targetSub.semester1 : null;
+                 const s2 = typeof targetSub.semester2 === "number" ? targetSub.semester2 : null;
+                 if (importTerm !== "canam") {
+                   if (s1 !== null && s2 !== null) {
+                     targetSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
+                   }
+                 }
+               } else {
+                 const s1 = targetSub.semester1;
+                 const s2 = targetSub.semester2;
+                 if (importTerm !== "canam") {
+                   if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
+                     targetSub.yearAvg = "Chưa đạt";
+                   } else if (s1 === "Đạt" && s2 === "Đạt") {
+                     targetSub.yearAvg = "Đạt";
+                   }
+                 }
+               }
+
+               return targetSub;
+             });
+
+             // 5. Parse Academic / Behavior ratings & Attendance
+             let academicGrade = existing?.academicGrade || "Tốt";
+             let academicGradeHK1 = existing?.academicGradeHK1 || "";
+             let academicGradeHK2 = existing?.academicGradeHK2 || "";
+             
+             let behaviorGrade = existing?.behaviorGrade || "Tốt";
+             let behaviorGradeHK1 = existing?.behaviorGradeHK1 || "";
+             let behaviorGradeHK2 = existing?.behaviorGradeHK2 || "";
+             
+             let behaviorGradeSummer = existing?.behaviorGradeSummer || "Không";
+             let daysAbsent = existing?.daysAbsent || 0;
+             let daysAbsentUnexcused = existing?.daysAbsentUnexcused || 0;
+             let distinction = existing?.distinction || "Không";
+             let notes = existing?.notes || "Nhập từ học bạ gốc";
+
+             if (parsedAcad) {
+               if (importTerm === "hk1") {
+                 academicGradeHK1 = parsedAcad as any;
+                 academicGrade = parsedAcad as any;
+               } else if (importTerm === "hk2") {
+                 academicGradeHK2 = parsedAcad as any;
+                 academicGrade = parsedAcad as any;
+               } else {
+                 academicGrade = parsedAcad as any;
+               }
+             }
+
+             if (parsedBehav) {
+               if (importTerm === "hk1") {
+                 behaviorGradeHK1 = parsedBehav as any;
+                 behaviorGrade = parsedBehav as any;
+               } else if (importTerm === "hk2") {
+                 behaviorGradeHK2 = parsedBehav as any;
+                 behaviorGrade = parsedBehav as any;
+               } else {
+                 behaviorGrade = parsedBehav as any;
+               }
+             }
+
+             if (parsedAbsent) daysAbsent = parsedAbsent;
+             if (parsedAbsentUnexcused) daysAbsentUnexcused = parsedAbsentUnexcused;
+
+             // Academic Distinction Auto Evaluation
+             const hasAnyScore = cardSubjects.some(s => 
+               (typeof s.semester1 === "number") || (typeof s.semester2 === "number") || (typeof s.yearAvg === "number") ||
+               (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt")
+             );
+
+             if (hasAnyScore) {
+               const validScores = cardSubjects.filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number");
+               if (validScores.length > 0) {
+                 const num9Plus = cardSubjects.filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number" && (s.yearAvg as number) >= 9.0).length;
+                 if (academicGrade === "Tốt" && behaviorGrade === "Tốt") {
+                   distinction = num9Plus >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
+                 } else {
+                   distinction = "Không";
+                 }
+               }
+             }
+
+             parsedResults.push({
+               id: existing?.id || `student_${studentCode}`,
+               studentCode: existing?.studentCode || studentCode,
+               fullName,
+               dob: existing?.dob || "01/01/2011",
+               gender: existing?.gender || "Nam",
+               school: existing?.school || "Trường PTDTBT Tiểu Học và THCS Suối Lư",
+               className: className,
+               gradeLevel: (targetClassObj?.gradeLevel || "9") as any,
+               academicYear: existing?.academicYear || "2025-2026",
+               academicGrade,
+               academicGradeHK1,
+               academicGradeHK2,
+               behaviorGrade,
+               behaviorGradeHK1,
+               behaviorGradeHK2,
+               behaviorGradeSummer,
+               daysAbsent,
+               daysAbsentUnexcused,
+               distinction,
+               notes,
+               verificationToken: existing?.verificationToken || `VERIFY-CCCD-${studentCode}-${className}`,
+               subjects: cardSubjects
+             });
+          });
+
+          if (parsedResults.length > 0) {
+            parsedResults.sort((a, b) => compareVietnameseNames(a.fullName, b.fullName));
+            setImportPreview(parsedResults);
+            setImportStatus(`Phân tích thành công ${parsedResults.length} phiếu học bạ cá nhân của lớp ${importClass} (${importTerm === "hk1" ? "Học kỳ I" : importTerm === "hk2" ? "Học kỳ II" : "Cả năm"}).`);
+            setImportErrors([]);
+            return;
+          }
+        }
+      }
 
       // Default column indexes matching template structure
       let cccdCol = 1;
@@ -1083,18 +1576,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
         // Find subjects
         const subjectsMapping = [
-          { id: "toan", keywords: ["toán", "toán học", "math", "mon toan"] },
-          { id: "ly_dia", keywords: ["lịch sử và địa", "sử địa", "sử & địa", "lịch sử", "địa lý", "địa lí", "ly_dia", "sử và địa", "sử", "địa"] },
-          { id: "khtn", keywords: ["khoa học tự nhiên", "khtn", "tự nhiên", "khoa học"] },
-          { id: "tin", keywords: ["tin học", "tin", "cntt", "tin hoc"] },
-          { id: "van", keywords: ["ngữ văn", "văn", "ngữ văn học", "tiếng việt", "mon van"] },
-          { id: "anh", keywords: ["ngoại ngữ", "tiếng anh", "anh", "english", "anh văn", "n.ngữ"] },
+          { id: "toan", keywords: ["toán", "toán học", "math", "mon toan", "toan"] },
+          { id: "ly_dia", keywords: ["lịch sử và địa", "sử địa", "sử & địa", "lịch sử", "địa lý", "địa lí", "ly_dia", "sử và địa", "sử", "địa", "sửđịa"] },
+          { id: "khtn", keywords: ["khoa học tự nhiên", "khtn", "tự nhiên", "khoa học", "khoahọctựnhiên"] },
+          { id: "tin", keywords: ["tin học", "tin", "cntt", "tin hoc", "tinhọc"] },
+          { id: "van", keywords: ["ngữ văn", "văn", "ngữ văn học", "tiếng việt", "mon van", "ngữvăn"] },
+          { id: "anh", keywords: ["ngoại ngữ", "tiếng anh", "anh", "english", "anh văn", "n.ngữ", "ngoạingữ", "tiếnganh"] },
           { id: "gdcd", keywords: ["gdcd", "giáo dục công dân", "gd công dân"] },
-          { id: "cong_nghe", keywords: ["công nghệ", "kỹ thuật", "c.nghệ"] },
-          { id: "the_duc", keywords: ["thể chất", "thể dục", "giáo dục thể chất", "thể dục thể thao", "gd tc", "gdtc"] },
-          { id: "nghe_thuat", keywords: ["nghệ thuật", "âm nhạc", "mỹ thuật", "am nhac", "my thuat", "n.thuật", "n nghệ thuật"] },
-          { id: "gd_dia_phuong", keywords: ["địa phương", "giáo dục địa phương", "gd địa phương", "nội dung giáo dục của địa phương", "gd đf"] },
-          { id: "trai_nghiem", keywords: ["trải nghiệm", "hoạt động trải nghiệm", "hướng nghiệp", "trai nghiem", "hđtn"] }
+          { id: "cong_nghe", keywords: ["công nghệ", "kỹ thuật", "c.nghệ", "côngnghệ", "congnghe"] },
+          { id: "the_duc", keywords: ["thể chất", "thể dục", "giáo dục thể chất", "thể dục thể thao", "gd tc", "gdtc", "thểchất"] },
+          { id: "nghe_thuat", keywords: ["nghệ thuật", "âm nhạc", "mỹ thuật", "am nhac", "my thuat", "n.thuật", "n nghệ thuật", "nghệthuật"] },
+          { id: "gd_dia_phuong", keywords: ["địa phương", "giáo dục địa phương", "gd địa phương", "nội dung giáo dục của địa phương", "gd đf", "địaphương"] },
+          { id: "trai_nghiem", keywords: ["trải nghiệm", "hoạt động trải nghiệm", "hướng nghiệp", "trai nghiem", "hđtn", "trảinghiệm"] }
         ];
 
         subjectsMapping.forEach(sub => {
@@ -1165,48 +1658,59 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         }
 
         // We process rows with some integrity
-        if (parts.length > Math.max(cccdCol, nameCol, dobCol)) {
-          const rawCode = parts[cccdCol]?.trim() || "";
+        if (parts.length > nameCol && nameCol !== -1) {
+          const rawCode = cccdCol !== -1 && cccdCol < parts.length ? parts[cccdCol]?.trim() || "" : "";
           const fullName = parts[nameCol]?.trim() || "";
-          const dob = parts[dobCol]?.trim() || "";
+          const dob = dobCol !== -1 && dobCol < parts.length ? parts[dobCol]?.trim() || "" : "";
 
           // Clean names checking for safe mapping
           const cleanString = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
           const rowNameClean = cleanString(fullName);
           const rowDobClean = dob.trim();
 
-          // Validation of key attributes
-          if (!rawCode) {
-            collectedErrors.push(`Dòng ${rowNum}: Thiếu Số CCCD (CCCD đóng vai trò là mã định danh quản lý, bắt buộc phải điền).`);
-            return;
-          }
+          const removeDiacritics = (str: string): string => {
+            return str
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/đ/g, "d")
+              .replace(/Đ/g, "D");
+          };
 
-          let studentCode = rawCode.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
-          if (!studentCode) {
-            collectedErrors.push(`Dòng ${rowNum}: Số CCCD "${rawCode}" không chứa ký tự hợp lệ.`);
-            return;
-          }
-
-          // Resilient identity handling: pad leading zeros if Excel stripped them (e.g. 11 digits to 12 digits)
-          if (studentCode.length === 11 && /^[0-9]+$/.test(studentCode)) {
-            studentCode = "0" + studentCode;
-          }
-
-          if (!/^[0-9]{12}$/.test(studentCode)) {
-            collectedErrors.push(`Dòng ${rowNum} (${fullName || "Chưa nhập họ tên"}): Số CCCD "${rawCode}" không chuẩn 12 chữ số theo quy định.`);
-          }
+          const rowClass = importClass;
 
           if (!fullName) {
-            collectedErrors.push(`Dòng ${rowNum}: Chưa nhập họ tên của học sinh.`);
+            collectedErrors.push(`Dòng ${rowNum}: Chưa nhập họ tên của học sinh. Bỏ qua dòng này.`);
+            return;
           }
 
-          if (!dob) {
-            collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Chưa nhập ngày sinh.`);
+          // Find if student already exists in this class by Full Name
+          let existing = students.find(
+            s => cleanString(s.fullName) === rowNameClean && 
+                 s.className.trim().toUpperCase() === rowClass.trim().toUpperCase()
+          );
+
+          let studentCode = "";
+          if (existing) {
+            studentCode = existing.studentCode;
+          } else if (rawCode) {
+            studentCode = rawCode.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
+            if (studentCode.length === 11 && /^[0-9]+$/.test(studentCode)) {
+              studentCode = "0" + studentCode;
+            }
+          } else {
+            // Auto-generate standard deterministic student code based on name and class
+            const cleanNameNoSign = removeDiacritics(fullName).replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+            studentCode = `HS-${rowClass.toUpperCase()}-${cleanNameNoSign}`;
+          }
+
+          let finalDob = dob.trim();
+          if (!finalDob) {
+            finalDob = existing?.dateOfBirth || existing?.dob || "01/01/2011";
           } else {
             const dobRegex = /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/[0-9]{4}$/;
             const alternativeDbRegex = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/; // YYYY-MM-DD
-            if (!dobRegex.test(dob) && !alternativeDbRegex.test(dob)) {
-              collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Ngày sinh "${dob}" không đúng định dạng. Yêu cầu nhập DD/MM/YYYY (ví dụ: 15/05/2011) hoặc YYYY-MM-DD.`);
+            if (!dobRegex.test(finalDob) && !alternativeDbRegex.test(finalDob)) {
+              collectedErrors.push(`Dòng ${rowNum} (${fullName}): Ngày sinh "${dob}" không đúng định dạng. Yêu cầu nhập DD/MM/YYYY (ví dụ: 15/05/2011) hoặc YYYY-MM-DD.`);
             }
           }
 
@@ -1227,26 +1731,42 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             if (subIdx < 8) {
               // Evaluated by float score
               if (rawVal && !isExplicitPlaceholder) {
-                const clean = rawVal.replace(",", ".");
-                const parsed = parseFloat(clean);
-                if (isNaN(parsed) || parsed < 0 || parsed > 10) {
-                  collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Điểm số môn ${sName} "${rawVal}" không hợp lệ (Phải từ 0 đến 10).`);
+                const cleanRaw = rawVal.trim();
+                if (/\s+/.test(cleanRaw)) {
+                  const partsScore = cleanRaw.split(/\s+/).map(p => p.trim());
+                  partsScore.forEach(pScore => {
+                    const clean = pScore.replace(",", ".");
+                    const parsed = parseFloat(clean);
+                    if (isNaN(parsed) || parsed < 0 || parsed > 10) {
+                      collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Điểm số môn ${sName} "${pScore}" trong chuỗi "${rawVal}" không hợp lệ (Phải từ 0 đến 10).`);
+                    }
+                  });
+                } else {
+                  const clean = rawVal.replace(",", ".");
+                  const parsed = parseFloat(clean);
+                  if (isNaN(parsed) || parsed < 0 || parsed > 10) {
+                    collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Điểm số môn ${sName} "${rawVal}" không hợp lệ (Phải từ 0 đến 10).`);
+                  }
                 }
               }
             } else {
               // Evaluated by check comment "Đạt" or "Chưa đạt"
               if (rawVal && !isExplicitPlaceholder) {
-                const cleanLower = rawVal.toLowerCase();
-                // Support shorthands: Đ, CĐ, Đạt, Chưa đạt, D, CD, Dat...
-                const isValidComment = 
-                  cleanLower === "đạt" || cleanLower === "chưa đạt" || 
-                  cleanLower === "đ" || cleanLower === "cd" || 
-                  cleanLower === "cđ" || cleanLower === "d" || 
-                  cleanLower === "dat" || cleanLower.includes("chưa");
-                
-                if (!isValidComment) {
-                  collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Nhận xét môn ${sName} "${rawVal}" không đúng chuẩn quy định (Nhập "Đ", "CĐ", "Đạt" hoặc "Chưa đạt").`);
-                }
+                const cleanRaw = rawVal.trim();
+                const comments = cleanRaw.split(/[\s,;]+/).map(p => p.trim()).filter(Boolean);
+                comments.forEach(comment => {
+                  const cleanLower = comment.toLowerCase();
+                  const isValidComment = 
+                    cleanLower === "đạt" || cleanLower === "chưa đạt" || 
+                    cleanLower === "đ" || cleanLower === "cd" || 
+                    cleanLower === "cđ" || cleanLower === "d" || 
+                    cleanLower === "dat" || cleanLower.includes("chưa") ||
+                    cleanLower === "kđ" || cleanLower === "kd" || cleanLower === "không đạt" || cleanLower === "chua";
+                  
+                  if (!isValidComment) {
+                    collectedErrors.push(`Dòng ${rowNum} (${fullName || "Học sinh"}): Nhận xét môn ${sName} "${comment}" không đúng chuẩn quy định (Nhập "Đ", "CĐ", "Đạt" hoặc "Chưa đạt").`);
+                  }
+                });
               }
             }
           });
@@ -1302,47 +1822,16 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             return "";
           };
 
-          const parseDistinction = (val: string): "Học sinh Xuất sắc" | "Học sinh Giỏi" | "Học sinh Tiêu biểu" | "Không" | "" => {
+          const parseDistinction = (val: string): "Học sinh Xuất sắc" | "Học sinh Giỏi" | "Không" | "" => {
             const clean = val?.trim()?.toLowerCase() || "";
             if (!clean || clean === "-" || clean === "—" || clean === "_") return "";
             if (clean.includes("xuất sắc") || clean.includes("xs")) return "Học sinh Xuất sắc";
             if (clean.includes("giỏi") || clean.includes("g")) return "Học sinh Giỏi";
-            if (clean.includes("tiêu biểu") || clean.includes("tb")) return "Học sinh Tiêu biểu";
             if (clean.includes("không") || clean === "k") return "Không";
             return "";
           };
 
-          // ROBUST ROSTER SHIFT PROTECTION:
-          // Try to look up existing student with premium validation of Identity to prevent shifts
-          const isDummyCode = studentCode === "012345678901" || studentCode === "012345678902";
-          let existing = isDummyCode ? undefined : students.find(s => s.studentCode === studentCode);
-
-          // If CCCD matches but name is totally different, prevent overwriting and look up by Name + DOB within current class instead
-          if (existing && cleanString(existing.fullName) !== rowNameClean) {
-            const matchedByNameDob = students.find(
-              s => s.className === importClass && 
-                   cleanString(s.fullName) === rowNameClean && 
-                   s.dob.trim() === rowDobClean
-            );
-            if (matchedByNameDob) {
-              // Redirect mapping to match the database's existing student
-              existing = matchedByNameDob;
-              collectedErrors.push(`Chú ý dòng ${rowNum}: Học sinh "${fullName}" có CCCD khác biệt trong database (${matchedByNameDob.studentCode}). Hệ thống tự động sửa khớp theo lịch sử Học kỳ I.`);
-            } else {
-              // To avoid hijacking another student, treat as new
-              existing = undefined;
-            }
-          }
-
-          // Fallback search strictly by Name + DOB in the importing class (if CCCD not resolved)
-          if (!existing) {
-            existing = students.find(
-              s => s.className === importClass && 
-                   cleanString(s.fullName) === rowNameClean && 
-                   s.dob.trim() === rowDobClean
-            );
-          }
-
+          // Student matching has already been computed cleanly based on Name and Class above
           // Build/Merge Subjects list with absolute cell alignment
           const mockSubjects: SubjectResult[] = [
             { subjectId: "toan", subjectName: "Toán học", isEvaluatedByScore: true },
@@ -1369,29 +1858,105 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
             if (rawVal !== "" && !isPlaceholder) {
               if (def.isEvaluatedByScore) {
-                const score = parseScore(rawVal);
-                if (score !== "") {
-                  if (importTerm === "hk1") {
-                    targetSub.semester1 = score;
-                    if (targetSub.mid1 === undefined || targetSub.mid1 === "") targetSub.mid1 = score;
-                    if (targetSub.end1 === undefined || targetSub.end1 === "") targetSub.end1 = score;
-                  } else if (importTerm === "hk2") {
-                    targetSub.semester2 = score;
-                    if (targetSub.mid2 === undefined || targetSub.mid2 === "") targetSub.mid2 = score;
-                    if (targetSub.end2 === undefined || targetSub.end2 === "") targetSub.end2 = score;
+                let txVal: string = "";
+                let midVal: number | "" = "";
+                let endVal: number | "" = "";
+                let avgVal: number | "" = "";
+
+                if (rawVal.includes("/") || rawVal.includes(";")) {
+                  const partsScore = rawVal.split(/[\/;]/).map(p => p.trim());
+                  if (partsScore.length >= 1) {
+                    txVal = cleanSpaceSeparatedScores(partsScore[0]);
+                  }
+                  if (partsScore.length >= 2) {
+                    const parsedMid = parseFloat(partsScore[1].replace(",", "."));
+                    midVal = isNaN(parsedMid) ? "" : parsedMid;
+                  }
+                  if (partsScore.length >= 3) {
+                    const parsedEnd = parseFloat(partsScore[2].replace(",", "."));
+                    endVal = isNaN(parsedEnd) ? "" : parsedEnd;
+                  }
+                  if (partsScore.length >= 4) {
+                    const parsedAvg = parseFloat(partsScore[3].replace(",", "."));
+                    avgVal = isNaN(parsedAvg) ? "" : parsedAvg;
                   } else {
-                    targetSub.yearAvg = score;
+                    // Auto calculate average
+                    if (txVal && midVal !== "" && endVal !== "") {
+                      const txParts = txVal.split(/\s+/).map(p => parseFloat(p.replace(",", "."))).filter(num => !isNaN(num));
+                      if (txParts.length > 0) {
+                        const txAvg = txParts.reduce((sum, val) => sum + val, 0) / txParts.length;
+                        avgVal = parseFloat(((txAvg + (midVal as number) * 2 + (endVal as number) * 3) / 6).toFixed(1));
+                      } else {
+                        avgVal = parseFloat((((midVal as number) * 2 + (endVal as number) * 3) / 5).toFixed(1));
+                      }
+                    } else if (midVal !== "") {
+                      avgVal = midVal;
+                    } else if (endVal !== "") {
+                      avgVal = endVal;
+                    }
+                  }
+                } else {
+                  const cleanRaw = rawVal.trim();
+                  const hasSpaces = /\s+/.test(cleanRaw);
+                  if (hasSpaces) {
+                    txVal = cleanSpaceSeparatedScores(cleanRaw);
+                  } else {
+                    const score = parseScore(rawVal);
+                    if (score !== "") {
+                      avgVal = score;
+                      midVal = score;
+                      endVal = score;
+                      txVal = score.toString();
+                    }
+                  }
+                }
+
+                if (avgVal !== "" || txVal !== "") {
+                  if (importTerm === "hk1") {
+                    if (txVal) targetSub.tx1 = txVal;
+                    if (midVal !== "") targetSub.mid1 = midVal;
+                    if (endVal !== "") targetSub.end1 = endVal;
+                    if (avgVal !== "") targetSub.semester1 = avgVal;
+                  } else if (importTerm === "hk2") {
+                    if (txVal) targetSub.tx2 = txVal;
+                    if (midVal !== "") targetSub.mid2 = midVal;
+                    if (endVal !== "") targetSub.end2 = endVal;
+                    if (avgVal !== "") targetSub.semester2 = avgVal;
+                  } else {
+                    if (avgVal !== "") targetSub.yearAvg = avgVal;
                   }
                 }
               } else {
-                const comment = parseComment(rawVal);
-                if (comment !== "") {
+                const cleanRaw = rawVal.trim();
+                const hasSpaces = /\s+/.test(cleanRaw);
+                if (hasSpaces) {
                   if (importTerm === "hk1") {
-                    targetSub.semester1 = comment;
+                    targetSub.tx1 = cleanSpaceSeparatedComments(cleanRaw);
+                    const comm = parseComment(cleanRaw);
+                    if (comm) targetSub.semester1 = comm;
                   } else if (importTerm === "hk2") {
-                    targetSub.semester2 = comment;
+                    targetSub.tx2 = cleanSpaceSeparatedComments(cleanRaw);
+                    const comm = parseComment(cleanRaw);
+                    if (comm) targetSub.semester2 = comm;
+                  }
+                } else {
+                  const comment = parseComment(rawVal);
+                  if (comment !== "") {
+                    if (importTerm === "hk1") {
+                      targetSub.semester1 = comment;
+                      targetSub.tx1 = "Đ";
+                    } else if (importTerm === "hk2") {
+                      targetSub.semester2 = comment;
+                      targetSub.tx2 = "Đ";
+                    } else {
+                      targetSub.yearAvg = comment;
+                    }
                   } else {
-                    targetSub.yearAvg = comment;
+                    if (importTerm === "hk1") {
+                      targetSub.tx1 = cleanSpaceSeparatedComments(cleanRaw);
+                    } else if (importTerm === "hk2") {
+                      targetSub.tx2 = cleanSpaceSeparatedComments(cleanRaw);
+                    }
                   }
                 }
               }
@@ -1406,7 +1971,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                 if (s1 !== null && s2 !== null) {
                   targetSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
                 }
-                // No auto-fill yearAvg with only one semester to prevent "jumping" scores
               }
             } else {
                const s1 = targetSub.semester1;
@@ -1567,14 +2131,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
               if (academicGrade === "Tốt" && behaviorGrade === "Tốt") {
                 distinction = num9Plus >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
-              } else if (academicGrade === "Khá" && behaviorGrade === "Tốt") {
-                distinction = "Học sinh Tiêu biểu";
               } else {
                 distinction = "Không";
               }
             } else if (academicGrade === "Khá" && (distinction === "Học sinh Giỏi" || distinction === "Học sinh Xuất sắc")) {
               // Forced correction for existing inconsistent data during import/update
-              distinction = "Học sinh Tiêu biểu";
+              distinction = "Không";
             } else if ((academicGrade === "Đạt" || academicGrade === "Chưa đạt") && distinction !== "Không") {
               distinction = "Không";
             }
@@ -1637,139 +2199,249 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const termLabel = importTerm === "hk1" ? "HocKy1" : importTerm === "hk2" ? "HocKy2" : "CaNam";
       const enrolled = students.filter(s => s.className === importClass);
       
-      const fileHeaders = importTerm === "canam" ? [
-        "STT", "Số Căn cước công dân (12 chữ số)", "Họ và tên học sinh", "Ngày sinh (YYYY-MM-DD)",
-        "Toán học", "Lịch sử và Địa lí", "Khoa học tự nhiên", "Tin học", "Ngữ văn", "Ngoại ngữ", "GDCD", "Công nghệ",
-        "Giáo dục thể chất", "Nghệ thuật", "Nội dung giáo dục của địa phương", "Hoạt động trải nghiệm, hướng nghiệp",
-        "Kết quả học tập (Tốt/Khá/Đạt/Chưa đạt)", "Kết quả rèn luyện (Tốt/Khá/Đạt/Chưa đạt)", "Kết quả rèn luyện sau hè",
-        "Vắng có phép", "Vắng không phép", "Tổng số vắng (Tự động cộng)", "Danh hiệu cả năm (Học sinh Giỏi / Học sinh Xuất sắc / Không)", "Ghi chú"
-      ] : [
-        "STT", "Số Căn cước công dân (12 chữ số)", "Họ và tên học sinh", "Ngày sinh (YYYY-MM-DD)",
-        "Toán học", "Lịch sử và Địa lí", "Khoa học tự nhiên", "Tin học", "Ngữ văn", "Ngoại ngữ", "GDCD", "Công nghệ",
-        "Giáo dục thể chất", "Nghệ thuật", "Nội dung giáo dục của địa phương", "Hoạt động trải nghiệm, hướng nghiệp",
-        "Kết quả học tập (Tốt/Khá/Đạt/Chưa đạt)", "Kết quả rèn luyện (Tốt/Khá/Đạt/Chưa đạt)",
-        "Vắng có phép", "Vắng không phép", "Tổng số vắng (Tự động cộng)", "Ghi chú"
+      const listToRender = enrolled.length > 0 ? enrolled : [
+        {
+          studentCode: "230793038",
+          fullName: "Nguyễn Bảo An",
+          className: importClass,
+          subjects: [
+            { subjectId: "toan", semester1: 9, semester2: 8, yearAvg: 8.1, tx1: "9 8 7 9", mid1: 8, end1: 8.0 },
+            { subjectId: "ly_dia", semester1: 10, semester2: 9, yearAvg: 8.9, tx1: "10 9 9 8", mid1: 9.5, end1: 8.3 },
+            { subjectId: "khtn", semester1: 9, semester2: 8, yearAvg: 8.1, tx1: "9 8 7 9", mid1: 10, end1: 6.5 },
+            { subjectId: "tin", semester1: 9, semester2: 9, yearAvg: 8.8, tx1: "9 9", mid1: 9, end1: 8.5 },
+            { subjectId: "van", semester1: 8.5, semester2: 7, yearAvg: 8.0, tx1: "8 5 7 9", mid1: 8, end1: 9.0 },
+            { subjectId: "anh", semester1: 9, semester2: 8, yearAvg: 8.0, tx1: "9 8 8 8.5", mid1: 8.8, end1: 7.0 },
+            { subjectId: "gdcd", semester1: 9, semester2: 8, yearAvg: 8.3, tx1: "9 8", mid1: 8, end1: 8.3 },
+            { subjectId: "cong_nghe", semester1: 8, semester2: 9, yearAvg: 7.7, tx1: "8 9", mid1: 8, end1: 7.0 },
+            { subjectId: "the_duc", semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
+            { subjectId: "nghe_thuat", semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
+            { subjectId: "gd_dia_phuong", semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
+            { subjectId: "trai_nghiem", semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" }
+          ],
+          academicGrade: "Tốt",
+          behaviorGrade: "Tốt",
+          daysAbsent: 0,
+          daysAbsentUnexcused: 0
+        },
+        {
+          studentCode: "251486884",
+          fullName: "Lô Thị Kỳ Anh",
+          className: importClass,
+          subjects: [
+            { subjectId: "toan", semester1: 7, semester2: 7, yearAvg: 7.3, tx1: "7 7 6 8", mid1: 6.8, end1: 8.0 },
+            { subjectId: "ly_dia", semester1: 7, semester2: 7, yearAvg: 7.2, tx1: "7 7 8 7", mid1: 7, end1: 7.3 },
+            { subjectId: "khtn", semester1: 8, semester2: 8, yearAvg: 7.5, tx1: "8 8 9 8", mid1: 8.8, end1: 5.5 },
+            { subjectId: "tin", semester1: 8, semester2: 7, yearAvg: 5.7, tx1: "8 7", mid1: 5, end1: 5.0 },
+            { subjectId: "van", semester1: 9, semester2: 8, yearAvg: 7.2, tx1: "9 8 8 7", mid1: 9, end1: 5.0 },
+            { subjectId: "anh", semester1: 9, semester2: 8, yearAvg: 8.0, tx1: "9 8 9 7", mid1: 8.5, end1: 7.3 },
+            { subjectId: "gdcd", semester1: 8, semester2: 8, yearAvg: 7.8, tx1: "8 8", mid1: 8, end1: 7.5 },
+            { subjectId: "cong_nghe", semester1: 6, semester2: 8, yearAvg: 6.8, tx1: "6 8", mid1: 7, end1: 6.5 },
+            { subjectId: "the_duc", semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
+            { subjectId: "nghe_thuat", semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
+            { subjectId: "gd_dia_phuong", semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" },
+            { subjectId: "trai_nghiem", semester1: "Đạt", semester2: "Đạt", yearAvg: "Đạt" }
+          ],
+          academicGrade: "Khá",
+          behaviorGrade: "Tốt",
+          daysAbsent: 0,
+          daysAbsentUnexcused: 0
+        }
       ];
 
-      const rows: any[] = [fileHeaders];
+      const totalBlocks = Math.ceil(listToRender.length / 2);
+      const rows: any[][] = [];
 
-      if (enrolled.length > 0) {
-        enrolled.forEach((s, idx) => {
-          const getSubjectGrade = (stud: Student, subId: string) => {
-            const sSub = stud.subjects.find(sub => sub.subjectId === subId);
-            if (!sSub) return "";
-            if (importTerm === "hk1") return sSub.semester1 !== undefined ? sSub.semester1 : "";
-            if (importTerm === "hk2") return sSub.semester2 !== undefined ? sSub.semester2 : "";
-            return sSub.yearAvg !== undefined ? sSub.yearAvg : "";
-          };
+      // Initialize empty cells
+      for (let r = 0; r < totalBlocks * 36; r++) {
+        rows.push(Array(15).fill(""));
+      }
 
-          const sRow = importTerm === "canam" ? [
-            idx + 1,
-            s.studentCode,
-            s.fullName,
-            s.dob,
-            getSubjectGrade(s, "toan"),
-            getSubjectGrade(s, "ly_dia"),
-            getSubjectGrade(s, "khtn"),
-            getSubjectGrade(s, "tin"),
-            getSubjectGrade(s, "van"),
-            getSubjectGrade(s, "anh"),
-            getSubjectGrade(s, "gdcd"),
-            getSubjectGrade(s, "cong_nghe"),
-            getSubjectGrade(s, "the_duc") || "Đạt",
-            getSubjectGrade(s, "nghe_thuat") || "Đạt",
-            getSubjectGrade(s, "gd_dia_phuong") || "Đạt",
-            getSubjectGrade(s, "trai_nghiem") || "Đạt",
-            s.academicGrade || "Tốt",
-            s.behaviorGrade || "Tốt",
-            s.behaviorGradeSummer || "Không",
-            s.daysAbsent || 0,
-            s.daysAbsentUnexcused || 0,
-            (s.daysAbsent || 0) + (s.daysAbsentUnexcused || 0),
-            s.distinction || "Không",
-            s.notes || ""
-          ] : [
-            idx + 1,
-            s.studentCode,
-            s.fullName,
-            s.dob,
-            getSubjectGrade(s, "toan"),
-            getSubjectGrade(s, "ly_dia"),
-            getSubjectGrade(s, "khtn"),
-            getSubjectGrade(s, "tin"),
-            getSubjectGrade(s, "van"),
-            getSubjectGrade(s, "anh"),
-            getSubjectGrade(s, "gdcd"),
-            getSubjectGrade(s, "cong_nghe"),
-            getSubjectGrade(s, "the_duc") || "Đạt",
-            getSubjectGrade(s, "nghe_thuat") || "Đạt",
-            getSubjectGrade(s, "gd_dia_phuong") || "Đạt",
-            getSubjectGrade(s, "trai_nghiem") || "Đạt",
-            s.academicGrade || "Tốt",
-            s.behaviorGrade || "Tốt",
-            s.daysAbsent || 0,
-            s.daysAbsentUnexcused || 0,
-            (s.daysAbsent || 0) + (s.daysAbsentUnexcused || 0),
-            s.notes || ""
-          ];
-          rows.push(sRow);
-        });
-      } else {
-        // Sample rows to show proper structure to teachers when the database is empty
-        const sampleRows = importTerm === "canam" ? [
-          [
-            1, "012345678901", "Phạm Tuấn Hải", "2011-08-30",
-            9.8, 9.3, 9.6, 9.9, 8.8, 9.8, 9.4, 9.2,
-            "Đạt", "Đạt", "Đạt", "Đạt",
-            "Tốt", "Tốt", "Không",
-            1, 0, 1, "Học sinh Giỏi", "Gương mẫu hoàn thiện học bạ cả năm"
-          ],
-          [
-            2, "012345678902", "Trương Mỹ Linh", "2011-12-11",
-            8.1, 7.9, 8.1, 8.7, 8.4, 8.5, 8.9, 8.1,
-            "Đạt", "Đạt", "Đạt", "Đạt",
-            "Khá", "Tốt", "Không",
-            1, 0, 1, "Không", "Đạt học sinh tiến biểu tốt"
-          ]
-        ] : [
-          [
-            1, "012345678901", "Phạm Tuấn Hải", "2011-08-30",
-            9.5, 9.0, 9.2, 10.0, 8.5, 9.5, 9.0, 9.0,
-            "Đạt", "Đạt", "Đạt", "Đạt",
-            "Tốt", "Tốt",
-            1, 0, 1, "Học tập tiến bộ rõ nét kì này"
-          ],
-          [
-            2, "012345678902", "Trương Mỹ Linh", "2011-12-11",
-            7.5, 8.0, 7.8, 8.0, 8.0, 8.5, 8.5, 8.0,
-            "Đạt", "Đạt", "Đạt", "Đạt",
-            "Khá", "Tốt",
-            0, 0, 0, "Chăm chỉ hoàn thiện tốt"
-          ]
+      const topParts = headerTop.split("•").map(p => p.trim());
+      const headerT1 = topParts[0] || "ỦY BAN NHÂN DÂN";
+      const headerT2 = topParts[1] || "TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
+
+      // Populate cards side-by-side (2 cards per block row)
+      for (let i = 0; i < listToRender.length; i++) {
+        const s = listToRender[i];
+        const isRightCard = i % 2 !== 0;
+        const blockIndex = Math.floor(i / 2);
+        
+        const colOffset = isRightCard ? 7 : 0;
+        const rowOffset = blockIndex * 36;
+
+        rows[rowOffset + 0][colOffset + 0] = headerT1;
+        rows[rowOffset + 1][colOffset + 0] = headerT2;
+        rows[rowOffset + 3][colOffset + 1] = "KẾT QUẢ HỌC TẬP";
+        
+        const termNameStr = importTerm === "hk1" ? "Học kỳ 1" : importTerm === "hk2" ? "Học kỳ 2" : "Cả năm";
+        rows[rowOffset + 4][colOffset + 1] = `${termNameStr}, Năm học 2025 - 2026`;
+
+        rows[rowOffset + 6][colOffset + 0] = "Mã HS :";
+        rows[rowOffset + 6][colOffset + 2] = s.studentCode || "";
+
+        rows[rowOffset + 7][colOffset + 0] = "Họ và tên:";
+        rows[rowOffset + 7][colOffset + 2] = s.fullName || "";
+        rows[rowOffset + 7][colOffset + 4] = "Lớp: " + (s.className || importClass);
+
+        rows[rowOffset + 9][colOffset + 0] = "TT";
+        rows[rowOffset + 9][colOffset + 1] = "Môn học";
+        if (importTerm === "canam") {
+          rows[rowOffset + 9][colOffset + 2] = "ĐTBmhk I";
+          rows[rowOffset + 9][colOffset + 3] = "ĐTBmhk II";
+          rows[rowOffset + 9][colOffset + 4] = "";
+          rows[rowOffset + 9][colOffset + 5] = "ĐTBmcn";
+        } else {
+          rows[rowOffset + 9][colOffset + 2] = "ĐĐGtx";
+          rows[rowOffset + 9][colOffset + 3] = "ĐĐGgk";
+          rows[rowOffset + 9][colOffset + 4] = "ĐĐGck";
+          rows[rowOffset + 9][colOffset + 5] = "TB";
+        }
+
+        const subDefs = [
+          { id: "toan", name: "Toán học", isScore: true },
+          { id: "ly_dia", name: "Lịch sử và Địa lí", isScore: true },
+          { id: "khtn", name: "Khoa học tự nhiên", isScore: true },
+          { id: "tin", name: "Tin học", isScore: true },
+          { id: "van", name: "Ngữ văn", isScore: true },
+          { id: "anh", name: "Ngoại ngữ", isScore: true },
+          { id: "gdcd", name: "GDCD", isScore: true },
+          { id: "cong_nghe", name: "Công nghệ", isScore: true },
+          { id: "the_duc", name: "Giáo dục thể chất", isScore: false },
+          { id: "nghe_thuat", name: "Nghệ thuật", isScore: false },
+          { id: "gd_dia_phuong", name: "Nội dung giáo dục của địa phương", isScore: false },
+          { id: "trai_nghiem", name: "Hoạt động trải nghiệm, hướng nghiệp", isScore: false }
         ];
-        sampleRows.forEach(sr => rows.push(sr));
+
+        subDefs.forEach((def, subIdx) => {
+          const sSub = s.subjects?.find(sub => sub.subjectId === def.id);
+          const rI = rowOffset + 10 + subIdx;
+          
+          rows[rI][colOffset + 0] = subIdx + 1;
+          rows[rI][colOffset + 1] = def.name;
+
+          if (importTerm === "hk1") {
+            if (def.isScore) {
+              rows[rI][colOffset + 2] = sSub?.tx1 !== undefined ? sSub.tx1 : "";
+              rows[rI][colOffset + 3] = sSub?.mid1 !== undefined ? sSub.mid1 : "";
+              rows[rI][colOffset + 4] = sSub?.end1 !== undefined ? sSub.end1 : "";
+              rows[rI][colOffset + 5] = sSub?.semester1 !== undefined ? sSub.semester1 : "";
+            } else {
+              const res = sSub?.semester1 || "Đạt";
+              rows[rI][colOffset + 2] = res === "Đạt" ? "Đ" : "CĐ";
+              rows[rI][colOffset + 3] = res === "Đạt" ? "Đ" : "CĐ";
+              rows[rI][colOffset + 4] = res === "Đạt" ? "Đ" : "CĐ";
+              rows[rI][colOffset + 5] = res === "Đạt" ? "Đ" : "CĐ";
+            }
+          } else if (importTerm === "hk2") {
+            if (def.isScore) {
+              rows[rI][colOffset + 2] = sSub?.tx2 !== undefined ? sSub.tx2 : "";
+              rows[rI][colOffset + 3] = sSub?.mid2 !== undefined ? sSub.mid2 : "";
+              rows[rI][colOffset + 4] = sSub?.end2 !== undefined ? sSub.end2 : "";
+              rows[rI][colOffset + 5] = sSub?.semester2 !== undefined ? sSub.semester2 : "";
+            } else {
+              const res = sSub?.semester2 || "Đạt";
+              rows[rI][colOffset + 2] = res === "Đạt" ? "Đ" : "CĐ";
+              rows[rI][colOffset + 3] = res === "Đạt" ? "Đ" : "CĐ";
+              rows[rI][colOffset + 4] = res === "Đạt" ? "Đ" : "CĐ";
+              rows[rI][colOffset + 5] = res === "Đạt" ? "Đ" : "CĐ";
+            }
+          } else if (importTerm === "canam") {
+            if (def.isScore) {
+              rows[rI][colOffset + 2] = sSub?.semester1 !== undefined ? sSub.semester1 : "";
+              rows[rI][colOffset + 3] = sSub?.semester2 !== undefined ? sSub.semester2 : "";
+              rows[rI][colOffset + 4] = "";
+              rows[rI][colOffset + 5] = sSub?.yearAvg !== undefined ? sSub.yearAvg : "";
+            } else {
+              const res1 = sSub?.semester1 || "Đạt";
+              const res2 = sSub?.semester2 || "Đạt";
+              const resY = sSub?.yearAvg || "Đạt";
+              rows[rI][colOffset + 2] = res1 === "Đạt" ? "Đ" : "CĐ";
+              rows[rI][colOffset + 3] = res2 === "Đạt" ? "Đ" : "CĐ";
+              rows[rI][colOffset + 4] = "";
+              rows[rI][colOffset + 5] = resY === "Đạt" ? "Đ" : "CĐ";
+            }
+          }
+        });
+
+        const currentAcad = s.academicGrade || "Tốt";
+        const currentBehav = s.behaviorGrade || "Tốt";
+        
+        rows[rowOffset + 22][colOffset + 1] = `Đánh giá KQ học tập: ${currentAcad}`;
+        rows[rowOffset + 22][colOffset + 3] = `Đánh giá KQ rèn luyện: ${currentBehav}`;
+        
+        rows[rowOffset + 23][colOffset + 1] = `Số ngày nghỉ học: ${s.daysAbsent || 0}`;
+        rows[rowOffset + 23][colOffset + 3] = `Số ngày nghỉ học k.p: ${s.daysAbsentUnexcused || 0}`;
+
+        rows[rowOffset + 25][colOffset + 1] = "Ý kiến của phụ huynh học sinh";
+        rows[rowOffset + 25][colOffset + 3] = "Nhận xét của GVCN";
+        
+        // Blank spaces for signatures
+        rows[rowOffset + 30][colOffset + 1] = ".......................................................";
+        rows[rowOffset + 30][colOffset + 3] = ".......................................................";
+        rows[rowOffset + 31][colOffset + 1] = ".......................................................";
+        rows[rowOffset + 31][colOffset + 3] = ".......................................................";
+        
+        const teacherName = importTerm === "hk1" ? "Giáo viên chủ nhiệm" : "Giáo viên chủ nhiệm (ký, ghi rõ họ tên)";
+        rows[rowOffset + 34][colOffset + 1] = "(Ký, ghi rõ họ tên)";
+        rows[rowOffset + 34][colOffset + 3] = teacherName;
       }
 
       const ws = XLSX.utils.aoa_to_sheet(rows);
-      // Give some safe default column widths
+
+      // Create cell merges to maintain high-fidelity school card look
+      const merges: XLSX.Range[] = [];
+      for (let b = 0; b < totalBlocks; b++) {
+        const rOff = b * 36;
+        for (const cOff of [0, 7]) {
+          merges.push({ s: { r: rOff + 0, c: cOff }, e: { r: rOff + 0, c: cOff + 5 } });
+          merges.push({ s: { r: rOff + 1, c: cOff }, e: { r: rOff + 1, c: cOff + 5 } });
+          merges.push({ s: { r: rOff + 3, c: cOff + 1 }, e: { r: rOff + 3, c: cOff + 5 } });
+          merges.push({ s: { r: rOff + 4, c: cOff + 1 }, e: { r: rOff + 4, c: cOff + 5 } });
+          merges.push({ s: { r: rOff + 6, c: cOff + 2 }, e: { r: rOff + 6, c: cOff + 5 } });
+          merges.push({ s: { r: rOff + 7, c: cOff + 2 }, e: { r: rOff + 7, c: cOff + 3 } });
+          merges.push({ s: { r: rOff + 7, c: cOff + 4 }, e: { r: rOff + 7, c: cOff + 5 } });
+          
+          merges.push({ s: { r: rOff + 22, c: cOff + 1 }, e: { r: rOff + 22, c: cOff + 2 } });
+          merges.push({ s: { r: rOff + 22, c: cOff + 3 }, e: { r: rOff + 22, c: cOff + 5 } });
+          merges.push({ s: { r: rOff + 23, c: cOff + 1 }, e: { r: rOff + 23, c: cOff + 2 } });
+          merges.push({ s: { r: rOff + 23, c: cOff + 3 }, e: { r: rOff + 23, c: cOff + 5 } });
+          
+          merges.push({ s: { r: rOff + 25, c: cOff + 1 }, e: { r: rOff + 25, c: cOff + 2 } });
+          merges.push({ s: { r: rOff + 25, c: cOff + 3 }, e: { r: rOff + 25, c: cOff + 5 } });
+          
+          merges.push({ s: { r: rOff + 30, c: cOff + 1 }, e: { r: rOff + 30, c: cOff + 2 } });
+          merges.push({ s: { r: rOff + 30, c: cOff + 3 }, e: { r: rOff + 30, c: cOff + 5 } });
+          merges.push({ s: { r: rOff + 31, c: cOff + 1 }, e: { r: rOff + 31, c: cOff + 2 } });
+          merges.push({ s: { r: rOff + 31, c: cOff + 3 }, e: { r: rOff + 31, c: cOff + 5 } });
+          
+          merges.push({ s: { r: rOff + 34, c: cOff + 1 }, e: { r: rOff + 34, c: cOff + 2 } });
+          merges.push({ s: { r: rOff + 34, c: cOff + 3 }, e: { r: rOff + 34, c: cOff + 5 } });
+        }
+      }
+      ws["!merges"] = merges;
+
+      // Adjust column widths beautifully
       ws["!cols"] = [
-        { wch: 6 },  // STT
-        { wch: 18 }, // CCCD 
-        { wch: 22 }, // Name
-        { wch: 14 }, // DOB
-        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, // Scores
-        { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, // Comments
-        { wch: 15 }, { wch: 15 }, // Eval
-        ...(importTerm === "canam" ? [{ wch: 15 }] : []), // Summer behav
-        { wch: 12 }, { wch: 12 }, { wch: 12 }, // Absent
-        ...(importTerm === "canam" ? [{ wch: 20 }] : []), // Distinction
-        { wch: 25 }, // Notes
+        { wch: 6 },  // TT
+        { wch: 20 }, // Môn học
+        { wch: 10 }, // ĐĐGtx / ĐTBmhkI
+        { wch: 10 }, // ĐĐGgk / ĐTBmhkII
+        { wch: 10 }, // ĐĐGck / Empty
+        { wch: 10 }, // TB / ĐTBmcn
+        { wch: 6 },  // separator (G)
+        { wch: 6 },  // TT (H)
+        { wch: 20 }, // Môn học (I)
+        { wch: 10 }, // ĐĐGtx (J)
+        { wch: 10 }, // ĐĐGgk (K)
+        { wch: 10 }, // ĐĐGck (L)
+        { wch: 10 }, // TB (M)
+        { wch: 6 }   // separator (N)
       ];
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, `DS_Lop_${importClass}`);
+      XLSX.utils.book_append_sheet(wb, ws, `HocBa_${importClass}`);
       XLSX.writeFile(wb, `Mau_Hoc_Ba_Lop_${importClass}_${termLabel}.xlsx`);
-      setImportStatus(`Đã kết xuất thành công tệp .xlsx mẫu lớp ${importClass} (${importTerm === "hk1" ? "Học kỳ I" : importTerm === "hk2" ? "Học kỳ II" : "Cả năm"}) chứa ${enrolled.length} hồ sơ mẫu.`);
+      setImportStatus(`Đã kết xuất thành công tệp .xlsx mẫu học bạ song song khớp 100% hình gốc cho lớp ${importClass} (${importTerm === "hk1" ? "Học kỳ I" : importTerm === "hk2" ? "Học kỳ II" : "Cả năm"}).`);
     } catch (err: any) {
       console.error(err);
       setImportStatus("Lỗi xuất excel: " + err.message);
@@ -1921,7 +2593,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       return hasS1 || hasS2 || hasAvg;
     }).length;
     if (scoredCount === 0) return false;
-    return s.distinction === "Học sinh Giỏi" || s.distinction === "Học sinh Tiêu biểu";
+    return s.distinction === "Học sinh Giỏi";
   }).length;
   
   const gotNoneTitle = students.length - gotExcellentTitle - gotGoodTitle;
@@ -2360,20 +3032,20 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                           <th className="px-4 py-3 w-40 sticky left-0 bg-white shadow-md z-10">Mã & Tên Học Sinh</th>
                           
                           {/* Score-based subjects */}
-                          <th className="px-1 py-3 text-center w-16">Toán<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Sử & Địa<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">KHTN<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Tin Học<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Ngữ Văn<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Ngoại Ngữ<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">GDCD<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
-                          <th className="px-1 py-3 text-center w-16">Công Nghệ<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Toán học<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Lịch sử và Địa lí<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Khoa học tự nhiên<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Tin học<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Ngữ văn<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Ngoại ngữ<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-20">GDCD<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Công nghệ<div className="text-[7px] text-slate-400 font-normal method">(HS 1)</div></th>
 
                           {/* Comment-based subjects */}
-                          <th className="px-1 py-3 text-center w-20">Giáo dục TC<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
-                          <th className="px-1 py-3 text-center w-20">Nghệ Thuật<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
-                          <th className="px-1 py-3 text-center w-20">GD Địa Phương<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
-                          <th className="px-1 py-3 text-center w-20">Trải Nghiệm HN<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Giáo dục thể chất<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
+                          <th className="px-1 py-3 text-center w-20">Nghệ thuật<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
+                          <th className="px-1 py-3 text-center w-20">GD địa phương<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
+                          <th className="px-1 py-3 text-center w-20">HĐ trải nghiệm, HN<div className="text-[7px] text-slate-400 font-normal method">(N.xét)</div></th>
 
                           <th className="px-3 py-3 text-center bg-slate-50 w-24">Kết Quả Chung</th>
                         </tr>
@@ -2383,7 +3055,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                           const getSubjectVal = (id: string) => student.subjects.find(s => s.subjectId === id);
                           
                           // Use stored Academic Grade depending on Term
-                          const termAcademicGrade = (gradesTerm === "hk1" ? student.academicGradeHK1 : (gradesTerm === "hk2" ? student.academicGradeHK2 : student.academicGrade)) || student.academicGrade;
+                          const termAcademicGrade = gradesTerm === "hk1" ? student.academicGradeHK1 : gradesTerm === "hk2" ? student.academicGradeHK2 : student.academicGrade;
 
                           // Recalculate GPA for display only
                           const scoreSubjects = student.subjects.filter(s => s.isEvaluatedByScore);
@@ -2410,46 +3082,194 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                               {/* Score based subjects column rendering */}
                               {["toan", "ly_dia", "khtn", "tin", "van", "anh", "gdcd", "cong_nghe"].map(subjId => {
                                 const sub = getSubjectVal(subjId);
-                                let v: string | number = "-";
+                                
+                                let tx: string | undefined = undefined;
+                                let mid: string | number | undefined = undefined;
+                                let end: string | number | undefined = undefined;
+                                let avg: string | number = "-";
+
                                 if (sub) {
-                                  if (gradesTerm === "hk1") v = sub.semester1 ?? "-";
-                                  else if (gradesTerm === "hk2") v = sub.semester2 ?? "-";
-                                  else {
+                                  if (gradesTerm === "hk1") {
+                                    tx = sub.tx1;
+                                    mid = sub.mid1;
+                                    end = sub.end1;
+                                    avg = sub.semester1 ?? "-";
+                                  } else if (gradesTerm === "hk2") {
+                                    tx = sub.tx2;
+                                    mid = sub.mid2;
+                                    end = sub.end2;
+                                    avg = sub.semester2 ?? "-";
+                                  } else {
                                     // canam
+                                    tx = sub.semester1 !== undefined && sub.semester1 !== "" ? `HK1: ${sub.semester1}` : undefined;
+                                    mid = sub.semester2 !== undefined && sub.semester2 !== "" ? `HK2: ${sub.semester2}` : undefined;
                                     if (sub.isEvaluatedByScore && typeof sub.semester1 === "number" && typeof sub.semester2 === "number") {
-                                      v = parseFloat(((sub.semester2 * 2 + sub.semester1) / 3).toFixed(1));
+                                      avg = parseFloat(((sub.semester2 * 2 + sub.semester1) / 3).toFixed(1));
                                     } else {
-                                      v = sub.yearAvg ?? "-";
+                                      avg = sub.yearAvg ?? "-";
                                     }
                                   }
                                 }
-                                const valToDisplay = v !== undefined && v !== null && v !== "" ? v : "-";
+
+                                const hasDetails = !!(tx || (mid !== undefined && mid !== "") || (end !== undefined && end !== ""));
+                                const valToDisplay = avg !== undefined && avg !== null && avg !== "" ? avg : "-";
                                 const isEditing = editingStudentCode === student.studentCode && editingSubjectId === subjId;
-                                
+
                                 return (
-                                  <td key={subjId} className="px-1 py-2.5 text-center font-bold">
+                                  <td key={subjId} className="px-1 py-1.5 text-center font-bold bg-white align-middle relative">
                                     {isEditing ? (
-                                      <div className="flex items-center gap-1 justify-center z-50">
-                                        <input
-                                          type="text"
-                                          value={tempGradeValue}
-                                          onChange={(e) => setTempGradeValue(e.target.value)}
-                                          className="w-10 text-center border-2 border-blue-500 rounded font-bold text-xs"
-                                          autoFocus
-                                        />
-                                        <button
-                                          onClick={() => saveEditedGrade(student)}
-                                          className="p-0.5 bg-emerald-500 text-white rounded cursor-pointer"
-                                        >
-                                          <Check className="w-3 h-3" />
-                                        </button>
+                                      <div className="absolute bg-white border-2 border-[#0055A5] rounded-xl p-3 shadow-2xl z-50 flex flex-col gap-2 text-left min-w-[170px] -translate-x-1/2 left-1/2 top-1.5 animate-scaleUp">
+                                        <div className="text-[10px] font-extrabold text-[#0055A5] uppercase tracking-wider border-b pb-1 flex items-center justify-between">
+                                          <span>Sửa {sub?.subjectName}</span>
+                                          <button 
+                                            type="button" 
+                                            onClick={() => {
+                                              setEditingStudentCode(null);
+                                              setEditingSubjectId(null);
+                                            }}
+                                            className="text-slate-400 hover:text-red-500 font-bold px-1"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                        {gradesTerm !== "canam" ? (
+                                          <>
+                                            <div className="flex flex-col gap-0.5">
+                                              <span className="text-[8px] text-slate-500 font-black uppercase">Thường xuyên (ĐĐGtx)</span>
+                                              <input
+                                                type="text"
+                                                value={tempTx}
+                                                onChange={(e) => setTempTx(e.target.value)}
+                                                className="w-full border rounded px-2 py-1 font-bold text-xs text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none bg-slate-50"
+                                                placeholder="9 8 7 9"
+                                                title="Nhập các điểm cách nhau bởi dấu cách"
+                                              />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-1.5">
+                                              <div className="flex flex-col gap-0.5">
+                                                <span className="text-[8px] text-slate-500 font-black uppercase">Giữa kì (ĐĐGgk)</span>
+                                                <input
+                                                  type="text"
+                                                  value={tempMid}
+                                                  onChange={(e) => setTempMid(e.target.value)}
+                                                  className="w-full border rounded px-1.5 py-1 text-center font-bold text-xs text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                  placeholder="-"
+                                                />
+                                              </div>
+                                              <div className="flex flex-col gap-0.5">
+                                                <span className="text-[8px] text-slate-500 font-black uppercase">Cuối kì (ĐĐGck)</span>
+                                                <input
+                                                  type="text"
+                                                  value={tempEnd}
+                                                  onChange={(e) => setTempEnd(e.target.value)}
+                                                  className="w-full border rounded px-1.5 py-1 text-center font-bold text-xs text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                  placeholder="-"
+                                                />
+                                              </div>
+                                            </div>
+                                            <div className="flex flex-col gap-0.5">
+                                              <span className="text-[8px] text-slate-500 font-black uppercase">Trung bình (TB)</span>
+                                              <input
+                                                type="text"
+                                                value={tempGradeValue}
+                                                onChange={(e) => setTempGradeValue(e.target.value)}
+                                                className="w-full border-2 border-emerald-500 rounded px-2 py-1 font-black text-xs text-emerald-800 bg-emerald-50/50 text-center focus:outline-none"
+                                                placeholder="-"
+                                              />
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <div className="flex flex-col gap-0.5">
+                                              <span className="text-[8px] text-slate-500 font-black uppercase">Học kỳ I</span>
+                                              <input
+                                                type="text"
+                                                value={tempTx}
+                                                onChange={(e) => setTempTx(e.target.value)}
+                                                className="w-full border rounded px-2 py-1 text-center font-bold text-xs text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                placeholder="-"
+                                              />
+                                            </div>
+                                            <div className="flex flex-col gap-0.5">
+                                              <span className="text-[8px] text-slate-500 font-black uppercase">Học kỳ II</span>
+                                              <input
+                                                type="text"
+                                                value={tempMid}
+                                                onChange={(e) => setTempMid(e.target.value)}
+                                                className="w-full border rounded px-2 py-1 text-center font-bold text-xs text-slate-800 focus:ring-1 focus:ring-blue-500 outline-none"
+                                                placeholder="-"
+                                              />
+                                            </div>
+                                            <div className="flex flex-col gap-0.5">
+                                              <span className="text-[8px] text-slate-500 font-black uppercase">Cả năm</span>
+                                              <input
+                                                type="text"
+                                                value={tempGradeValue}
+                                                onChange={(e) => setTempGradeValue(e.target.value)}
+                                                className="w-full border-2 border-emerald-500 rounded px-2 py-1 text-center font-black text-xs text-emerald-800 bg-emerald-50/50 focus:outline-none"
+                                                placeholder="-"
+                                              />
+                                            </div>
+                                          </>
+                                        )}
+                                        <div className="flex gap-1.5 mt-1 justify-end">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingStudentCode(null);
+                                              setEditingSubjectId(null);
+                                            }}
+                                            className="px-2.5 py-1 text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition cursor-pointer"
+                                          >
+                                            Hủy
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => saveEditedGrade(student)}
+                                            className="px-2.5 py-1 text-[9px] bg-[#0055A5] hover:bg-blue-800 text-white rounded-lg font-bold flex items-center gap-0.5 transition cursor-pointer"
+                                          >
+                                            Lưu
+                                          </button>
+                                        </div>
                                       </div>
                                     ) : (
                                       <button
-                                        onClick={() => startEditingGrade(student.studentCode, subjId, valToDisplay)}
-                                        className="w-full text-slate-800 hover:text-blue-700 hover:scale-115 font-extrabold text-[11px] transition"
+                                        onClick={() => startEditingGrade(student, subjId)}
+                                        className="w-full hover:bg-blue-50/40 rounded transition p-1 text-slate-800 flex flex-col items-center justify-center space-y-0.5"
                                       >
-                                        {typeof valToDisplay === "number" ? valToDisplay.toFixed(1) : valToDisplay}
+                                        {gradesTerm !== "canam" ? (
+                                          <div className="flex flex-col items-center justify-center w-full px-0.5">
+                                            {/* TX line */}
+                                            <div className="text-[10px] text-slate-500 font-medium tracking-normal h-4 overflow-hidden text-center truncate max-w-[80px]" title="Điểm kiểm tra thường xuyên">
+                                              {tx || "—"}
+                                            </div>
+                                            {/* GK & CK line */}
+                                            <div className="text-[8px] text-slate-400 font-normal mt-0.5 whitespace-nowrap">
+                                              GK: <span className="text-slate-700 font-bold">{mid !== undefined && mid !== "" ? (typeof mid === "number" ? mid.toFixed(1) : mid) : "—"}</span>
+                                              {" | "}
+                                              CK: <span className="text-slate-700 font-bold">{end !== undefined && end !== "" ? (typeof end === "number" ? end.toFixed(1) : end) : "—"}</span>
+                                            </div>
+                                            {/* Average line */}
+                                            <div className="text-blue-900 font-black text-[11.5px] mt-1 bg-blue-50/50 px-1.5 py-0.5 rounded border border-blue-100/60 min-w-[44px] text-center">
+                                              {typeof valToDisplay === "number" ? valToDisplay.toFixed(1) : valToDisplay}
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="flex flex-col items-center justify-center w-full px-0.5">
+                                            {/* HK1 average */}
+                                            <div className="text-[8.5px] text-slate-400 font-normal">
+                                              HK1: <span className="text-slate-700 font-bold">{sub?.semester1 !== undefined && sub?.semester1 !== "" ? (typeof sub.semester1 === "number" ? sub.semester1.toFixed(1) : sub.semester1) : "—"}</span>
+                                            </div>
+                                            {/* HK2 average */}
+                                            <div className="text-[8.5px] text-slate-400 font-normal mt-0.5">
+                                              HK2: <span className="text-slate-700 font-bold">{sub?.semester2 !== undefined && sub?.semester2 !== "" ? (typeof sub.semester2 === "number" ? sub.semester2.toFixed(1) : sub.semester2) : "—"}</span>
+                                            </div>
+                                            {/* Year Average line */}
+                                            <div className="text-emerald-900 font-black text-[11.5px] mt-1 bg-emerald-50/50 px-1.5 py-0.5 rounded border border-emerald-100/60 min-w-[44px] text-center">
+                                              {typeof valToDisplay === "number" ? valToDisplay.toFixed(1) : valToDisplay}
+                                            </div>
+                                          </div>
+                                        )}
                                       </button>
                                     )}
                                   </td>
@@ -2485,7 +3305,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                       </div>
                                     ) : (
                                       <button
-                                        onClick={() => startEditingGrade(student.studentCode, subjId, valToDisplay.toString())}
+                                        onClick={() => startEditingGrade(student, subjId)}
                                         className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold cursor-pointer transition hover:scale-105 ${
                                           valToDisplay === "Đạt" ? "bg-emerald-50 text-emerald-800" : valToDisplay === "Chưa đạt" ? "bg-rose-50 text-rose-800" : "text-slate-400 font-normal"
                                         }`}
@@ -2891,10 +3711,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                               </div>
                               <div className="text-right space-y-1 shrink-0">
                                 <div className="text-[9px] font-bold uppercase bg-blue-100 text-blue-800 px-2 py-0.5 rounded-lg inline-block">
-                                  Học lực: {stud.academicGrade}
+                                  Học lực: {importTerm === "hk1" ? stud.academicGradeHK1 : importTerm === "hk2" ? stud.academicGradeHK2 : stud.academicGrade}
                                 </div>
                                 <div className="text-[9px] font-bold uppercase block bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-lg">
-                                  Rèn luyện: {stud.behaviorGrade}
+                                  Rèn luyện: {importTerm === "hk1" ? stud.behaviorGradeHK1 : importTerm === "hk2" ? stud.behaviorGradeHK2 : stud.behaviorGrade}
                                 </div>
                               </div>
                             </div>
@@ -4101,7 +4921,6 @@ NOTIFY pgrst, 'reload schema';`}
                       className="w-full border p-2 rounded bg-white"
                     >
                       <option value="Không">Không</option>
-                      <option value="Học sinh Tiêu biểu">Học sinh Tiêu biểu</option>
                       <option value="Học sinh Giỏi">Học sinh Giỏi</option>
                       <option value="Học sinh Xuất sắc">Học sinh Xuất sắc</option>
                     </select>
@@ -4147,19 +4966,23 @@ NOTIFY pgrst, 'reload schema';`}
                   Bảng điểm chi tiết môn học
                 </h3>
                 <div className="overflow-x-auto border rounded-xl">
-                  <table className="w-full text-[11px] border-collapse">
+                  <table className="w-full text-[11px] border-collapse min-w-[650px]">
                     <thead className="bg-slate-50 border-b">
                       <tr className="divide-x border-b">
-                        <th className="p-2 text-left sticky left-0 bg-slate-50 z-10 w-32 border-r">Môn học</th>
-                        <th className="p-2 text-center" colSpan={1}>Học kỳ I</th>
-                        <th className="p-2 text-center" colSpan={1}>Học kỳ II</th>
-                        <th className="p-2 text-center bg-rose-50/50">Cả năm</th>
+                        <th className="p-2 text-left sticky left-0 bg-slate-50 z-10 w-32 border-r" rowSpan={2}>Môn học</th>
+                        <th className="p-2 text-center text-blue-800 font-bold bg-blue-50/30" colSpan={4}>Học kỳ I</th>
+                        <th className="p-2 text-center text-indigo-800 font-bold bg-indigo-50/30" colSpan={4}>Học kỳ II</th>
+                        <th className="p-2 text-center text-rose-800 font-bold bg-rose-50/30 border-l" rowSpan={2}>Cả năm</th>
                       </tr>
-                      <tr className="bg-slate-100/50 text-[10px] uppercase tracking-wider text-slate-500 divide-x">
-                        <th className="p-1 sticky left-0 bg-slate-100/50 z-10 border-r"></th>
-                        <th className="p-1 font-bold text-blue-600 bg-blue-50/50">Tổng kết I</th>
-                        <th className="p-1 font-bold text-blue-600 bg-blue-50/50">Tổng kết II</th>
-                        <th className="p-1 font-bold text-rose-600 bg-rose-100/50">TB Năm</th>
+                      <tr className="bg-slate-100/50 text-[9px] uppercase tracking-wider text-slate-500 divide-x">
+                        <th className="p-1 font-bold text-slate-500">TX (ĐĐGtx)</th>
+                        <th className="p-1 font-bold text-slate-500">GK</th>
+                        <th className="p-1 font-bold text-slate-500">CK</th>
+                        <th className="p-1 font-bold text-blue-700 bg-blue-50/30">TB HK I</th>
+                        <th className="p-1 font-bold text-slate-500">TX (ĐĐGtx)</th>
+                        <th className="p-1 font-bold text-slate-500">GK</th>
+                        <th className="p-1 font-bold text-slate-500">CK</th>
+                        <th className="p-1 font-bold text-indigo-700 bg-indigo-50/30">TB HK II</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -4168,7 +4991,53 @@ NOTIFY pgrst, 'reload schema';`}
                           <td className="p-2 font-semibold sticky left-0 bg-white z-10 border-r text-slate-700">{sub.subjectName}</td>
                           {sub.isEvaluatedByScore ? (
                             <>
-                              <td className="p-1 bg-blue-50/20 font-bold">
+                              {/* HK1 */}
+                              {/* TX1 */}
+                              <td className="p-1 bg-slate-50/40">
+                                <input
+                                  type="text"
+                                  value={sub.tx1 || ""}
+                                  onChange={(e) => {
+                                    const updated = [...(formStudent.subjects || [])];
+                                    updated[sIdx] = { ...sub, tx1: e.target.value };
+                                    setFormStudent({ ...formStudent, subjects: updated });
+                                  }}
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 font-bold"
+                                  placeholder="9 8 7"
+                                />
+                              </td>
+                              {/* GK1 */}
+                              <td className="p-1">
+                                <input
+                                  type="text"
+                                  value={sub.mid1 ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(",", ".");
+                                    const updated = [...(formStudent.subjects || [])];
+                                    updated[sIdx] = { ...sub, mid1: val };
+                                    setFormStudent({ ...formStudent, subjects: updated });
+                                  }}
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 font-bold"
+                                  placeholder="-"
+                                />
+                              </td>
+                              {/* CK1 */}
+                              <td className="p-1">
+                                <input
+                                  type="text"
+                                  value={sub.end1 ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(",", ".");
+                                    const updated = [...(formStudent.subjects || [])];
+                                    updated[sIdx] = { ...sub, end1: val };
+                                    setFormStudent({ ...formStudent, subjects: updated });
+                                  }}
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 font-bold"
+                                  placeholder="-"
+                                />
+                              </td>
+                              {/* TB1 */}
+                              <td className="p-1 bg-blue-50/40 font-bold">
                                 <input
                                   type="text"
                                   value={sub.semester1 ?? ""}
@@ -4178,11 +5047,58 @@ NOTIFY pgrst, 'reload schema';`}
                                     updated[sIdx] = { ...sub, semester1: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-1 text-blue-700"
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 text-blue-700 font-extrabold"
                                   placeholder="-"
                                 />
                               </td>
-                              <td className="p-1 bg-blue-50/20 font-bold">
+
+                              {/* HK2 */}
+                              {/* TX2 */}
+                              <td className="p-1 bg-slate-50/40">
+                                <input
+                                  type="text"
+                                  value={sub.tx2 || ""}
+                                  onChange={(e) => {
+                                    const updated = [...(formStudent.subjects || [])];
+                                    updated[sIdx] = { ...sub, tx2: e.target.value };
+                                    setFormStudent({ ...formStudent, subjects: updated });
+                                  }}
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 font-bold"
+                                  placeholder="9 8 7"
+                                />
+                              </td>
+                              {/* GK2 */}
+                              <td className="p-1">
+                                <input
+                                  type="text"
+                                  value={sub.mid2 ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(",", ".");
+                                    const updated = [...(formStudent.subjects || [])];
+                                    updated[sIdx] = { ...sub, mid2: val };
+                                    setFormStudent({ ...formStudent, subjects: updated });
+                                  }}
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 font-bold"
+                                  placeholder="-"
+                                />
+                              </td>
+                              {/* CK2 */}
+                              <td className="p-1">
+                                <input
+                                  type="text"
+                                  value={sub.end2 ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(",", ".");
+                                    const updated = [...(formStudent.subjects || [])];
+                                    updated[sIdx] = { ...sub, end2: val };
+                                    setFormStudent({ ...formStudent, subjects: updated });
+                                  }}
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 font-bold"
+                                  placeholder="-"
+                                />
+                              </td>
+                              {/* TB2 */}
+                              <td className="p-1 bg-indigo-50/40 font-bold">
                                 <input
                                   type="text"
                                   value={sub.semester2 ?? ""}
@@ -4192,11 +5108,13 @@ NOTIFY pgrst, 'reload schema';`}
                                     updated[sIdx] = { ...sub, semester2: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-1 text-blue-700"
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 text-indigo-700 font-extrabold"
                                   placeholder="-"
                                 />
                               </td>
-                              <td className="p-3 bg-rose-50/20 font-bold border-l-2 border-rose-200">
+
+                              {/* Cả năm average */}
+                              <td className="p-1 bg-rose-50/40 font-bold border-l">
                                 <input
                                   type="text"
                                   value={sub.yearAvg ?? ""}
@@ -4206,14 +5124,28 @@ NOTIFY pgrst, 'reload schema';`}
                                     updated[sIdx] = { ...sub, yearAvg: val };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-rose-400 p-1 text-rose-700 font-black"
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-rose-400 p-0.5 text-rose-700 font-black"
                                   placeholder="-"
                                 />
                               </td>
                             </>
                           ) : (
                             <>
-                              <td className="p-1 bg-blue-50/20">
+                              {/* HKI Comment */}
+                              <td className="p-1 bg-slate-50/40" colSpan={3}>
+                                <input
+                                  type="text"
+                                  value={sub.tx1 || ""}
+                                  onChange={(e) => {
+                                    const updated = [...(formStudent.subjects || [])];
+                                    updated[sIdx] = { ...sub, tx1: e.target.value };
+                                    setFormStudent({ ...formStudent, subjects: updated });
+                                  }}
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 font-bold"
+                                  placeholder="Đ Đ"
+                                />
+                              </td>
+                              <td className="p-1 bg-blue-50/10">
                                 <select
                                   value={sub.semester1 || ""}
                                   onChange={(e) => {
@@ -4221,14 +5153,29 @@ NOTIFY pgrst, 'reload schema';`}
                                     updated[sIdx] = { ...sub, semester1: e.target.value };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 text-blue-800 font-medium"
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 text-blue-700 font-extrabold bg-white"
                                 >
                                   <option value="">-</option>
                                   <option value="Đạt">Đạt</option>
                                   <option value="Chưa đạt">Chưa đạt</option>
                                 </select>
                               </td>
-                              <td className="p-1 bg-blue-50/20">
+
+                              {/* HKII Comment */}
+                              <td className="p-1 bg-slate-50/40" colSpan={3}>
+                                <input
+                                  type="text"
+                                  value={sub.tx2 || ""}
+                                  onChange={(e) => {
+                                    const updated = [...(formStudent.subjects || [])];
+                                    updated[sIdx] = { ...sub, tx2: e.target.value };
+                                    setFormStudent({ ...formStudent, subjects: updated });
+                                  }}
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 font-bold"
+                                  placeholder="Đ Đ"
+                                />
+                              </td>
+                              <td className="p-1 bg-indigo-50/10">
                                 <select
                                   value={sub.semester2 || ""}
                                   onChange={(e) => {
@@ -4236,14 +5183,16 @@ NOTIFY pgrst, 'reload schema';`}
                                     updated[sIdx] = { ...sub, semester2: e.target.value };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 text-blue-800 font-medium"
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-blue-400 p-0.5 text-indigo-700 font-extrabold bg-white"
                                 >
                                   <option value="">-</option>
                                   <option value="Đạt">Đạt</option>
                                   <option value="Chưa đạt">Chưa đạt</option>
                                 </select>
                               </td>
-                              <td className="p-1 bg-rose-50/20">
+
+                              {/* Cả năm comment */}
+                              <td className="p-1 bg-rose-50/20 border-l">
                                 <select
                                   value={sub.yearAvg || ""}
                                   onChange={(e) => {
@@ -4251,7 +5200,7 @@ NOTIFY pgrst, 'reload schema';`}
                                     updated[sIdx] = { ...sub, yearAvg: e.target.value };
                                     setFormStudent({ ...formStudent, subjects: updated });
                                   }}
-                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-rose-400 p-0.5 font-bold text-rose-800"
+                                  className="w-full text-center border-0 bg-transparent focus:ring-1 focus:ring-rose-400 p-0.5 text-rose-700 font-black bg-white"
                                 >
                                   <option value="">-</option>
                                   <option value="Đạt">Đạt</option>

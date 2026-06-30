@@ -7,6 +7,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { Student } from "../types";
 import { ArrowLeft } from "lucide-react";
 import dbService from "../lib/supabase";
+import { evaluateTT22, evaluateDistinctionTT22 } from "../lib/tt22";
 
 interface StudentResultProps {
   student: Student;
@@ -67,22 +68,9 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   const activeGpa = scoreCount > 0 ? (scoreSum / scoreCount) : 0.0;
 
   // Academic Classification
-  let activeAcademicGrade = student.academicGrade;
+  let activeAcademicGrade = term === "hk1" ? student.academicGradeHK1 : term === "hk2" ? student.academicGradeHK2 : student.academicGrade;
   
-  // Prefer stored semester grades if available
-  const storedAcademic = term === "hk1" ? student.academicGradeHK1 : term === "hk2" ? student.academicGradeHK2 : student.academicGrade;
-  
-  if (storedAcademic) {
-    activeAcademicGrade = storedAcademic as any;
-  } else if (scoreCount > 0) {
-    const nonScoreSubjects = (student.subjects || []).filter(s => !s.isEvaluatedByScore);
-    const countNonPassed = nonScoreSubjects.filter(s => {
-        const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
-        return val === "Đạt" || !val;
-    }).length;
-    const allNonPassed = countNonPassed === nonScoreSubjects.length;
-    const mostlyNonPassed = countNonPassed >= nonScoreSubjects.length - 1;
-
+  if (!activeAcademicGrade && scoreCount > 0) {
     const currentScores = scoreSubjects.map(s => {
       if (term === "canam") {
         if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
@@ -94,27 +82,17 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       return typeof val === "number" ? val : null;
     }).filter(v => v !== null) as number[];
 
-    const countScores = currentScores.length;
-    const countAbove9 = currentScores.filter(v => v >= 9.0).length;
-    const countAbove8 = currentScores.filter(v => v >= 8.0).length;
-    const countAbove65 = currentScores.filter(v => v >= 6.5).length;
-    const countAbove50 = currentScores.filter(v => v >= 5.0).length;
-    const allAbove50 = countAbove50 === countScores;
-    const allAbove35 = currentScores.every(v => v >= 3.5);
+    const currentComments = (student.subjects || []).filter(s => !s.isEvaluatedByScore).map(s => {
+        const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
+        return val === "Đạt" || val === "Chưa đạt" ? val : null;
+    }).filter(v => v !== null) as string[];
 
-    if (allNonPassed && allAbove50 && countAbove8 >= 6) {
-      activeAcademicGrade = "Tốt";
-    } else if (allNonPassed && allAbove35 && countAbove65 >= 6) {
-      activeAcademicGrade = "Khá";
-    } else if (mostlyNonPassed && (allAbove50 || (countAbove50 >= 6 && allAbove35))) {
-      activeAcademicGrade = "Đạt";
-    } else {
-      activeAcademicGrade = "Chưa đạt";
-    }
+    const calculatedGrade = evaluateTT22(currentScores, currentComments);
+    if (calculatedGrade) activeAcademicGrade = calculatedGrade as any;
   }
 
   // Behavior Grade
-  const activeBehaviorGrade = (term === "hk1" ? student.behaviorGradeHK1 : term === "hk2" ? student.behaviorGradeHK2 : student.behaviorGrade) || student.behaviorGrade;
+  const activeBehaviorGrade = term === "hk1" ? student.behaviorGradeHK1 : term === "hk2" ? student.behaviorGradeHK2 : student.behaviorGrade;
 
   // Designation Distinction
   const scoredCount = (student.subjects || []).filter(s => {
@@ -133,38 +111,32 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     activeDistinction = "ĐỐI TƯỢNG MIỄN ĐÁNH GIÁ";
   } else if (isExempt) {
     activeDistinction = "KHÔNG";
-  } else if (term === "canam") {
-    let d = student.distinction && student.distinction !== "Không" ? student.distinction : "KHÔNG";
-    
-    // Recalculate dynamic distinction if it's "canam" and we have valid results
-    if (activeAcademicGrade === "Tốt" && activeBehaviorGrade === "Tốt") {
-      const currentScores = scoreSubjects.map(s => {
+  } else {
+    let d = "Không";
+    const currentScores = scoreSubjects.map(s => {
+      if (term === "canam") {
         if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
           return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
         }
         return typeof s.yearAvg === "number" ? s.yearAvg : null;
-      }).filter(v => v !== null) as number[];
-      const countAbove9 = currentScores.filter(v => v >= 9.0).length;
-      d = countAbove9 >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
-    } else if (activeAcademicGrade === "Khá" && activeBehaviorGrade === "Tốt") {
-      d = "Học sinh Tiêu biểu";
+      }
+      const val = term === "hk1" ? s.semester1 : s.semester2;
+      return typeof val === "number" ? val : null;
+    }).filter(v => v !== null) as number[];
+
+    if (term === "canam") {
+      d = student.distinction && student.distinction !== "Không" ? student.distinction : "Không";
+      // Auto recalculate if it's currently marked as something but we have valid data to recalculate
+      if (activeAcademicGrade && activeBehaviorGrade) {
+        d = evaluateDistinctionTT22(activeAcademicGrade as string, activeBehaviorGrade as string, currentScores);
+      }
     } else {
-      d = "KHÔNG";
+      if (activeAcademicGrade && activeBehaviorGrade) {
+        d = evaluateDistinctionTT22(activeAcademicGrade as string, activeBehaviorGrade as string, currentScores);
+      }
     }
     
     activeDistinction = d.toUpperCase();
-  } else {
-    const currentScores = scoreSubjects.map(s => {
-       const val = term === "hk1" ? s.semester1 : s.semester2;
-       return typeof val === "number" ? val : null;
-    }).filter(v => v !== null) as number[];
-    const countAbove9 = currentScores.filter(v => v >= 9.0).length;
-
-    if (activeAcademicGrade === "Tốt" && activeBehaviorGrade === "Tốt") {
-      activeDistinction = countAbove9 >= 6 ? "HỌC SINH XUẤT SẮC" : "HỌC SINH GIỎI";
-    } else if (activeAcademicGrade === "Khá" && activeBehaviorGrade === "Tốt") {
-      activeDistinction = "HỌC SINH TIÊU BIỂU";
-    }
   }
 
   // Days absent
@@ -176,7 +148,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto" id="student-result-container">
+    <div className="w-full max-w-3xl mx-auto" id="student-result-container">
       {/* Main Printable report card container */}
       <div
         ref={printAreaRef}
@@ -242,48 +214,101 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
               {/* Spacer Row if desired, but image does not have one, it goes straight to headers */}
 
-              {/* Table Headers */}
-              <tr className="font-bold text-center bg-[#003366] text-white">
-                <td className="p-1.5 sm:p-2 border border-slate-600">TT</td>
-                <td className="p-1.5 sm:p-2 border border-slate-600">Môn học</td>
-                <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">Kỳ I</td>
-                <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">Kỳ II</td>
-                <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">Cả Năm</td>
-                <td className="p-1.5 sm:p-2 border border-slate-600">Ghi chú</td>
-              </tr>
+              {/* Dynamic Headers based on selected Term */}
+              {term === "canam" ? (
+                <tr className="font-bold text-center bg-[#003366] text-white">
+                  <td className="p-1.5 sm:p-2 border border-slate-600">TT</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600">Môn học</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">Kỳ 1</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">Kỳ 2</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">Thi lại</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">Cả năm</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600">Ghi chú</td>
+                </tr>
+              ) : (
+                <tr className="font-bold text-center bg-[#003366] text-white">
+                  <td className="p-1.5 sm:p-2 border border-slate-600">TT</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600">Môn học</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">ĐĐGtx</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">ĐĐGgk</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">ĐĐGck</td>
+                  <td className="p-1.5 sm:p-2 border border-slate-600 whitespace-nowrap text-[10px] sm:text-[14px]">TB</td>
+                </tr>
+              )}
               
               {/* Subjects */}
               {(student.subjects || []).map((sub, index) => {
-                const valHk1 = sub.isEvaluatedByScore 
-                  ? (typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : (typeof sub.end1 === "number" ? sub.end1.toFixed(1).replace(".", ",") : "")) 
-                  : sub.semester1 || "";
-                const valHk2 = sub.isEvaluatedByScore 
-                  ? (typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : (typeof sub.end2 === "number" ? sub.end2.toFixed(1).replace(".", ",") : "")) 
-                  : sub.semester2 || "";
-                const valCaNam = sub.isEvaluatedByScore
-                  ? (typeof sub.semester1 === "number" && typeof sub.semester2 === "number"
-                    ? ((sub.semester2 * 2 + sub.semester1) / 3).toFixed(1).replace(".", ",")
-                    : (typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : ""))
-                  : sub.yearAvg || "";
+                const mapComment = (v: string | number | undefined) => {
+                  if (v === "Đạt") return "Đ";
+                  if (v === "Chưa đạt") return "CĐ";
+                  return v;
+                };
 
-                return (
-                 <tr key={index} className="text-center even:bg-slate-50 hover:bg-sky-50 transition-colors text-[11px] sm:text-[14px]">
-                     <td className="p-1 sm:p-2 border border-slate-500 font-medium text-slate-600">{index + 1}</td>
-                     <td className="p-1 sm:p-2 border border-slate-500 text-left px-1.5 sm:px-4 font-semibold tracking-tight text-[11px] sm:text-[14px]">{sub.subjectName}</td>
-                     <td className="p-1 sm:p-2 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{valHk1}</td>
-                     <td className="p-1 sm:p-2 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{valHk2}</td>
-                     <td className="p-1 sm:p-2 border border-slate-500 font-black text-[#B71C1C] whitespace-nowrap">{valCaNam}</td>
-                     <td className="p-1 sm:p-2 border border-slate-500"></td>
-                 </tr>
-                );
+                if (term === "canam") {
+                  const valHk1 = sub.isEvaluatedByScore 
+                    ? (typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : "") 
+                    : mapComment(sub.semester1) || "";
+                  const valHk2 = sub.isEvaluatedByScore 
+                    ? (typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : "") 
+                    : mapComment(sub.semester2) || "";
+                  const valCaNam = sub.isEvaluatedByScore
+                    ? (typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "")
+                    : mapComment(sub.yearAvg) || "";
+
+                  return (
+                    <tr key={index} className="text-center even:bg-slate-50 hover:bg-sky-50 transition-colors text-[11px] sm:text-[14px]">
+                      <td className="p-1 sm:p-2 border border-slate-500 font-medium text-slate-600">{index + 1}</td>
+                      <td className="p-1 sm:p-2 border border-slate-500 text-left px-1.5 sm:px-4 font-semibold tracking-tight text-[11px] sm:text-[14px]">{sub.subjectName}</td>
+                      <td className="p-1 sm:p-2 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{valHk1}</td>
+                      <td className="p-1 sm:p-2 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{valHk2}</td>
+                      <td className="p-1 sm:p-2 border border-slate-500"></td>
+                      <td className="p-1 sm:p-2 border border-slate-500 font-black text-[#B71C1C] whitespace-nowrap">{valCaNam}</td>
+                      <td className="p-1 sm:p-2 border border-slate-500"></td>
+                    </tr>
+                  );
+                } else {
+                  // HK I or HK II
+                  const txVal = term === "hk1" ? sub.tx1 : sub.tx2;
+                  const midVal = term === "hk1" ? sub.mid1 : sub.mid2;
+                  const endVal = term === "hk1" ? sub.end1 : sub.end2;
+                  const avgVal = term === "hk1" ? sub.semester1 : sub.semester2;
+
+                  const formattedTx = txVal ? txVal.toString().replace(/\./g, ",") : "";
+                  const mappedTx = !sub.isEvaluatedByScore && formattedTx ? formattedTx.replace(/Đạt/g, "Đ").replace(/Chưa đạt/g, "CĐ") : formattedTx;
+
+                  const formattedMid = sub.isEvaluatedByScore 
+                    ? (typeof midVal === "number" ? midVal.toFixed(1).replace(".", ",") : midVal || "")
+                    : mapComment(midVal) || mapComment(avgVal) || "";
+                  const formattedEnd = sub.isEvaluatedByScore 
+                    ? (typeof endVal === "number" ? endVal.toFixed(1).replace(".", ",") : endVal || "")
+                    : mapComment(endVal) || mapComment(avgVal) || "";
+                  const formattedAvg = sub.isEvaluatedByScore
+                    ? (typeof avgVal === "number" ? avgVal.toFixed(1).replace(".", ",") : avgVal || "")
+                    : mapComment(avgVal) || "";
+
+                  return (
+                    <tr key={index} className="text-center even:bg-slate-50 hover:bg-sky-50 transition-colors text-[11px] sm:text-[14px]">
+                      <td className="p-1 sm:p-2 border border-slate-500 font-medium text-slate-600">{index + 1}</td>
+                      <td className="p-1 sm:p-2 border border-slate-500 text-left px-1.5 sm:px-4 font-semibold tracking-tight text-[11px] sm:text-[14px]">{sub.subjectName}</td>
+                      {/* Regular Assessment (space separated scores) */}
+                      <td className="p-1 sm:p-2 border border-slate-500 font-medium text-slate-700 tracking-wider text-xs whitespace-nowrap">{mappedTx || (sub.isEvaluatedByScore ? "" : mapComment(avgVal) || "")}</td>
+                      {/* Midterm */}
+                      <td className="p-1 sm:p-2 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{formattedMid}</td>
+                      {/* Endterm */}
+                      <td className="p-1 sm:p-2 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{formattedEnd}</td>
+                      {/* Semester Average */}
+                      <td className="p-1 sm:p-2 border border-slate-500 font-black text-[#B71C1C] whitespace-nowrap">{formattedAvg}</td>
+                    </tr>
+                  );
+                }
               })}
 
               {/* Summary Rows */}
-              <tr className="bg-white text-[11px] sm:text-[13px]">
-                <td className="py-2.5 px-1 border-2 border-slate-700 font-black text-[#003366] whitespace-nowrap text-center text-[12px] sm:text-[16px] uppercase italic" colSpan={2} rowSpan={2}>
+              <tr className="bg-white text-[11px] sm:text-[14px]">
+                <td className="py-2.5 px-1 border border-slate-700 font-bold text-slate-900 whitespace-nowrap text-center text-[12px] sm:text-[15px]" colSpan={2} rowSpan={2}>
                   <div className="flex flex-col items-center gap-1">
                     <span>
-                      {term === "canam" ? "TỔNG KẾT CẢ NĂM:" : term === "hk1" ? "TỔNG KẾT HK I:" : "TỔNG KẾT HK II:"}
+                      {term === "canam" ? "Kết quả CN:" : term === "hk1" ? "Kết quả HK 1:" : "Kết quả HK 2:"}
                     </span>
                     <div className="no-print flex flex-col gap-1 w-full px-1 mt-1">
                       {(["hk1", "hk2", "canam"] as const).map((t) => (
@@ -302,23 +327,27 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                     </div>
                   </div>
                 </td>
-                <td className="p-2 sm:p-3 border-2 border-slate-700 text-center whitespace-normal font-bold text-xs sm:text-base" colSpan={4}>
-                  Vắng: <span className="text-[#B71C1C]">{activeDaysAbsent}</span> (p), <span className="text-[#B71C1C]">0</span> (k), <span className="text-[#B71C1C]">0</span>(bt)
+                <td className="p-1 sm:p-2 border border-slate-700 text-center whitespace-normal text-[12px] sm:text-[15px]" colSpan={term === "canam" ? 5 : 4}>
+                  Vắng: {activeDaysAbsent} (phép), 0 (không), 0 (bỏ tiết)
                 </td>
               </tr>
-              <tr className="bg-white text-[11px] sm:text-[13px]">
-                <td className="p-2 sm:p-3 border-2 border-slate-700 text-center whitespace-normal font-black text-[14px] sm:text-[18px]" colSpan={4}>
+              <tr className="bg-white text-[11px] sm:text-[14px]">
+                <td className="p-1 sm:p-2 border border-slate-700 text-center whitespace-normal text-[13px] sm:text-[16px]" colSpan={term === "canam" ? 5 : 4}>
                   {isExempt ? (
                     <span className="text-[#B71C1C] uppercase">
                       Học sinh Khuyết tật không đánh giá thuộc đối tượng miễn
                     </span>
                   ) : (
-                    <div className="flex flex-wrap justify-center items-center gap-x-3 sm:gap-x-6">
-                      <span>KQHT: <span className="text-[#B71C1C]">{activeAcademicGrade?.toUpperCase() || "KHÁ"}</span></span>
-                      <span className="text-slate-300">|</span>
-                      <span>KQRL: <span className="text-[#003366]">{activeBehaviorGrade?.toUpperCase() || "TỐT"}</span></span>
-                      <span className="text-slate-300">|</span>
-                      <span className="whitespace-nowrap">Danh hiệu: <span className="text-[#B71C1C] underline decoration-double decoration-2 underline-offset-4 tracking-tighter italic">({activeDistinction})</span></span>
+                    <div className="flex flex-wrap justify-center items-center gap-x-2 sm:gap-x-4">
+                      <span>KQHT: {activeAcademicGrade?.toUpperCase() || "KHÁ"}</span>
+                      <span className="text-slate-500">|</span>
+                      <span>KQRL: {activeBehaviorGrade?.toUpperCase() || "TỐT"}</span>
+                      {term === "canam" && activeDistinction !== "KHÔNG" && (
+                        <>
+                          <span className="text-slate-500">|</span>
+                          <span className="whitespace-nowrap">Danh hiệu: {activeDistinction.replace("HỌC SINH", "HS")}</span>
+                        </>
+                      )}
                     </div>
                   )}
                 </td>

@@ -7,14 +7,17 @@ export interface SubjectResult {
   subjectId: string;
   subjectName: string;
   isEvaluatedByScore: boolean; // True for Math, Lit, etc. False for Physical Ed, Art, etc.
+  // Regular assessment (spaced numbers e.g. "9 8 7 9")
+  tx1?: string; // ĐĐGtx kì 1
+  tx2?: string; // ĐĐGtx kì 2
   // Semester 1
-  mid1?: number | string; // Giữa kì 1
-  end1?: number | string; // Cuối kì 1
-  semester1?: number | string; // ĐTBmhk1 hoặc "Đạt"/"Chưa đạt"
+  mid1?: number | string; // Giữa kì 1 (ĐĐGgk)
+  end1?: number | string; // Cuối kì 1 (ĐĐGck)
+  semester1?: number | string; // ĐTBmhk1 hoặc "Đạt"/"Chưa đạt" (TB)
   // Semester 2
-  mid2?: number | string; // Giữa kì 2
-  end2?: number | string; // Cuối kì 2
-  semester2?: number | string; // ĐTBmhk2 hoặc "Đạt"/"Chưa đạt"
+  mid2?: number | string; // Giữa kì 2 (ĐĐGgk)
+  end2?: number | string; // Cuối kì 2 (ĐĐGck)
+  semester2?: number | string; // ĐTBmhk2 hoặc "Đạt"/"Chưa đạt" (TB)
   // Year
   yearAvg?: number | string; // ĐTBmcn hoặc "Đạt"/"Chưa đạt"
 }
@@ -41,7 +44,7 @@ export interface Student {
   behaviorGradeSummer?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "Không"; // KQRL sau hè
   daysAbsent: number; // Buổi nghỉ
   daysAbsentUnexcused: number; // Trong đó không phép
-  distinction: "Học sinh Xuất sắc" | "Học sinh Giỏi" | "Học sinh Tiêu biểu" | "Không"; // Danh hiệu
+  distinction: "Học sinh Xuất sắc" | "Học sinh Giỏi" | "Không"; // Danh hiệu
   notes: string; // Ghi chú
   
   // Verification details

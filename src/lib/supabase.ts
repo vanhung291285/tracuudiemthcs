@@ -337,6 +337,73 @@ class DatabaseService {
     return normalized;
   }
 
+  public async queryStudentByNameAndClass(fullName: string, className: string): Promise<Student[]> {
+    const cleanName = this.normalizeName(fullName);
+    const noDiacriticInput = this.removeDiacritics(fullName);
+    const cleanClass = className.trim().toUpperCase();
+
+    if (!cleanName && !noDiacriticInput) return [];
+
+    if (this.supabase) {
+      try {
+        await this.checkSchemaCase();
+        const nameField = this.isSnakeCaseSchema ? "full_name" : "fullName";
+        const classField = this.isSnakeCaseSchema ? "class_name" : "className";
+        
+        const { data, error } = await this.supabase
+          .from("students")
+          .select("*")
+          .eq(classField, cleanClass);
+
+        if (!error && data && data.length > 0) {
+          const mappedList = data.map((d: any) => this.mapDbToStudent(d));
+          
+          // 1. Try strict match with normalization
+          let found = mappedList.filter((m: Student) => 
+            this.normalizeName(m.fullName) === cleanName
+          );
+          if (found.length > 0) return found;
+
+          // 2. Try match without diacritics
+          found = mappedList.filter((m: Student) => 
+            this.removeDiacritics(m.fullName) === noDiacriticInput
+          );
+          if (found.length > 0) return found;
+
+          // 3. Fuzzy match: Ensure parts of the input are present in the name
+          const inputParts = cleanName.split(" ").filter(p => p.length > 1);
+          found = mappedList.filter((m: Student) => {
+            const dbName = this.normalizeName(m.fullName);
+            const dbNoAccents = this.removeDiacritics(m.fullName);
+            return inputParts.every(part => dbName.includes(part) || dbNoAccents.includes(this.removeDiacritics(part)));
+          });
+          if (found.length > 0) return found;
+        }
+      } catch (err) {
+        console.warn("Supabase query by name/class error:", err);
+      }
+    }
+
+    // Fallback: search local database
+    const localFound = this.localStudentsList.filter(s => {
+      const isClassMatch = (s.className || "").trim().toUpperCase() === cleanClass;
+      if (!isClassMatch) return false;
+
+      const dbNameNormalized = this.normalizeName(s.fullName);
+      const dbNoAccents = this.removeDiacritics(s.fullName);
+      
+      if (dbNameNormalized === cleanName) return true;
+      if (dbNoAccents === noDiacriticInput) return true;
+      
+      const inputParts = cleanName.split(" ").filter(p => p.length > 1);
+      return inputParts.length > 0 && inputParts.every(part => 
+        dbNameNormalized.includes(part) || dbNoAccents.includes(this.removeDiacritics(part))
+      );
+    });
+    
+    return localFound;
+  }
+
   public async queryStudentsByName(fullName: string, dob: string): Promise<Student[]> {
     const cleanName = this.normalizeName(fullName);
     const noDiacriticInput = this.removeDiacritics(fullName);

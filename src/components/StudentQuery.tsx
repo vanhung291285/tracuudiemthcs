@@ -31,7 +31,8 @@ import {
   Lightbulb,
   MessageCircle,
   Facebook,
-  Globe
+  Globe,
+  School
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import dbService from "../lib/supabase";
@@ -53,6 +54,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [studentCode, setStudentCode] = useState("");
   const [fullName, setFullName] = useState("");
   const [dob, setDob] = useState("");
+  const [availableClasses, setAvailableClasses] = useState<string[]>([]);
+  const [searchClass, setSearchClass] = useState("");
   const [selectedTerm, setSelectedTerm] = useState<"hk1" | "hk2" | "canam">("canam");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -194,21 +197,39 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     }
   };
 
+  const fetchClassesList = async () => {
+    try {
+      const clsList = await dbService.getClasses();
+      const names = clsList.map(c => c.className).filter(Boolean);
+      const uniqueNames = Array.from(new Set(names)).sort((a, b) => a.localeCompare(b, "vi"));
+      setAvailableClasses(uniqueNames);
+      if (uniqueNames.length > 0) {
+        setSearchClass(uniqueNames[0]);
+      }
+    } catch (err) {
+      console.warn("Could not load classes:", err);
+    }
+  };
+
   useEffect(() => {
     fetchNews();
     fetchTopStudents();
     fetchRecentActivities();
+    fetchClassesList();
   }, []);
 
-  const [headerTop, setHeaderTop] = useState(() => 
-    localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ"
-  );
-  const [headerMain, setHeaderMain] = useState(() => 
-    localStorage.getItem("portal_header_main") || "TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS"
-  );
-  const [schoolYear, setSchoolYear] = useState(() => 
-    localStorage.getItem("portal_school_year") || "NĂM HỌC 2025 - 2026"
-  );
+  const [headerTop, setHeaderTop] = useState(() => {
+    const val = localStorage.getItem("portal_header_top");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
+  });
+  const [headerMain, setHeaderMain] = useState(() => {
+    const val = localStorage.getItem("portal_header_main");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS";
+  });
+  const [schoolYear, setSchoolYear] = useState(() => {
+    const val = localStorage.getItem("portal_school_year");
+    return (val !== null && val !== "null" && val !== "undefined") ? val : "NĂM HỌC 2025 - 2026";
+  });
   const [footerTitle, setFooterTitle] = useState("HỆ THỐNG SUỐI LƯ");
   const [footerDesc, setFooterDesc] = useState("Cổng tra cứu kết quả học tập và học bạ điện tử chính thức của **Trường PTDTBT TH & THCS Suối Lư**. Hệ thống cung cấp dữ liệu số hóa chính xác từ sổ bộ gốc của nhà trường, phục vụ học sinh và phụ huynh.");
   const [footerKeywords, setFooterKeywords] = useState("Suối Lư, THCS Suối Lư, Tiểu học Suối Lư, Học bạ điện tử, Tra cứu điểm, Điện Biên");
@@ -284,50 +305,16 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     e.preventDefault();
     setError("");
 
-    const cleanCode = studentCode.trim().replace(/\s/g, "");
     const cleanName = fullName.trim().normalize("NFC");
-    const cleanDob = dob.trim();
+    const cleanClass = searchClass.trim().toUpperCase();
 
-    if (searchMode === "cccd") {
-      if (!cleanCode) {
-        setError("Vui lòng nhập Số Căn cước công dân (CCCD).");
-        return;
-      }
-      const cccdRegex = /^[0-9]{12}$/;
-      if (!cccdRegex.test(cleanCode)) {
-        setError("Số Căn cước công dân (CCCD) phải đủ 12 chữ số (chỉ bao gồm các số từ 0-9).");
-        return;
-      }
-    } else {
-      if (!cleanName) {
-        setError("Vui lòng nhập Họ và tên đầy đủ của học sinh.");
-        return;
-      }
-    }
-
-    if (!cleanDob) {
-      setError("Vui lòng nhập Ngày sinh.");
+    if (!cleanName) {
+      setError("Vui lòng nhập Họ và tên đầy đủ của học sinh.");
       return;
     }
 
-    // Format D/M/YYYY or DD/M/YYYY or D/MM/YYYY into DD/MM/YYYY, allowing spaces around slashes
-    let queryDob = cleanDob.replace(/\s/g, "");
-    if (queryDob.includes("/")) {
-      const parts = queryDob.split("/");
-      if (parts.length === 3) {
-        queryDob = `${parts[0].trim().padStart(2, "0")}/${parts[1].trim().padStart(2, "0")}/${parts[2].trim()}`;
-      }
-    } else if (queryDob.includes("-")) {
-      const parts = queryDob.split("-");
-      if (parts.length === 3) {
-        queryDob = `${parts[0].trim().padStart(2, "0")}/${parts[1].trim().padStart(2, "0")}/${parts[2].trim()}`;
-      }
-    }
-
-    // Strict RegEx checking DD/MM/YYYY
-    const dobRegex = /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/[0-9]{4}$/;
-    if (!dobRegex.test(queryDob)) {
-      setError("Ngày sinh học sinh không hợp lệ. Vui lòng nhập đúng (Ví dụ: 15/05/2011 hoặc 1/5/2011).");
+    if (!cleanClass) {
+      setError("Vui lòng chọn hoặc nhập Lớp học.");
       return;
     }
 
@@ -335,13 +322,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     setMultipleMatches([]);
     
     try {
-      let results: Student[] = [];
-      if (searchMode === "cccd") {
-        const student = await dbService.queryStudent(cleanCode, queryDob);
-        if (student) results = [student];
-      } else {
-        results = await dbService.queryStudentsByName(cleanName, queryDob);
-      }
+      const results = await dbService.queryStudentByNameAndClass(cleanName, cleanClass);
 
       if (results && results.length > 0) {
         if (results.length === 1) {
@@ -355,15 +336,9 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           setMultipleMatches(results);
         }
       } else {
-        if (searchMode === "cccd") {
-          setError(
-            `Không tìm thấy học sinh phù hợp. Hãy kiểm tra lại chính xác Số CCCD và Ngày sinh (Gợi ý kiểm thử: ${cleanCode} sinh ngày ${cleanDob}).`
-          );
-        } else {
-          setError(
-            `Không tìm thấy học sinh phù hợp. Hãy kiểm tra lại chính xác Họ tên và Ngày sinh.`
-          );
-        }
+        setError(
+          `Không tìm thấy học sinh "${fullName}" thuộc lớp "${searchClass}". Vui lòng kiểm tra lại chính xác Họ tên và Lớp học.`
+        );
       }
     } catch (err) {
       setError("Đã xảy ra lỗi hệ thống khi kết nối cơ sở dữ liệu học tập.");
@@ -418,6 +393,20 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       
       {/* Top Banner Navigation Header */}
       <header className="w-full bg-[#0055A5] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
+        {/* Admin Navigation Button */}
+        <div className="absolute top-3 right-4 md:top-4 md:right-6 lg:right-10 flex items-center gap-2">
+          <button
+            onClick={onNavigateToAdmin}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 text-xs font-bold text-white transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+            title="Đăng nhập trang quản trị"
+            id="btn-nav-to-admin"
+          >
+            <LayoutDashboard className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Quản trị viên</span>
+            <span className="sm:hidden">Quản trị</span>
+          </button>
+        </div>
+
         <div className="max-w-6xl mx-auto space-y-1.5">
           <div className="flex flex-col items-center">
             <span className="text-[10px] md:text-xs uppercase tracking-[0.15em] font-bold text-slate-100/90 leading-none">
@@ -456,83 +445,55 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   
-                  {/* Search Mode Toggles (only show if both are enabled) */}
-                  {searchByCccd && searchByName && (
-                    <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 mb-5 relative">
-                      <button
-                        type="button"
-                        onClick={() => setSearchMode("name")}
-                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-bold tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
-                          searchMode === "name"
-                            ? "bg-[#0055A5] text-white shadow-md text-shadow-sm font-semibold"
-                            : "text-slate-800 hover:text-slate-900"
-                        }`}
-                      >
-                        TRA CỨU HỌ VÀ TÊN
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSearchMode("cccd")}
-                        className={`flex-1 py-2.5 text-[10px] md:text-[11px] uppercase font-bold tracking-wider rounded-md transition-all duration-200 cursor-pointer text-center z-10 ${
-                          searchMode === "cccd"
-                            ? "bg-[#0055A5] text-white shadow-md text-shadow-sm font-semibold"
-                            : "text-slate-800 hover:text-slate-900"
-                        }`}
-                      >
-                        TRA CỨU QUA CCCD
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Student Identity Input */}
-                  {searchMode === "cccd" && searchByCccd ? (
-                    <div>
-                      <label htmlFor="student-code" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-[#0055A5]" /> Số Căn cước công dân (12 số) <span className="text-[#E53935]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="student-code"
-                        value={studentCode}
-                        onChange={(e) => setStudentCode(e.target.value)}
-                        placeholder="Nhập đủ 12 số CCCD học sinh (Ví dụ: 037206123456)"
-                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-[13px] placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
-                        autoComplete="off"
-                      />
-                    </div>
-                  ) : searchByName ? (
-                    <div>
-                      <label htmlFor="student-name" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-[#0055A5]" /> Họ và Tên học sinh <span className="text-[#E53935]">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="student-name"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Nhập tên học sinh (Ví dụ: Vũ Văn Hùng)"
-                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-[13px] placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
-                        autoComplete="off"
-                      />
-                    </div>
-                  ) : null}
-
-                  {/* Date of Birth Input */}
+                  {/* Student Name Input */}
                   <div>
-                    <label htmlFor="date-of-birth" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-[#0055A5]" /> Ngày sinh học sinh <span className="text-[#E53935]">*</span>
+                    <label htmlFor="student-name" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-[#0055A5]" /> Họ và Tên học sinh <span className="text-[#E53935]">*</span>
                     </label>
                     <input
                       type="text"
-                      id="date-of-birth"
-                      value={dob}
-                      onChange={(e) => setDob(e.target.value)}
-                      placeholder="Nhập định dạng: DD/MM/YYYY (Ví dụ: 15/05/2011)"
+                      id="student-name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Nhập tên học sinh (Ví dụ: Vũ Văn Hùng)"
                       className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-[13px] placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
                       autoComplete="off"
+                      required
                     />
+                  </div>
+
+                  {/* Student Class Input */}
+                  <div>
+                    <label htmlFor="student-class" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                      <School className="w-3.5 h-3.5 text-[#0055A5]" /> Lớp học <span className="text-[#E53935]">*</span>
+                    </label>
+                    {availableClasses.length > 0 ? (
+                      <select
+                        id="student-class"
+                        value={searchClass}
+                        onChange={(e) => setSearchClass(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition cursor-pointer"
+                      >
+                        {availableClasses.map((cls) => (
+                          <option key={cls} value={cls}>
+                            Lớp {cls}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        id="student-class"
+                        value={searchClass}
+                        onChange={(e) => setSearchClass(e.target.value)}
+                        placeholder="Nhập tên lớp (Ví dụ: 9A1)"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] focus:bg-white transition"
+                        autoComplete="off"
+                        required
+                      />
+                    )}
                     <p className="text-[11px] text-slate-500 mt-1.5 pl-1 font-medium italic">
-                      Thông tin phải trùng khớp tuyệt đối với sổ bộ bản sao gốc.
+                      Vui lòng nhập hoặc chọn đúng lớp của học sinh để tra cứu điểm.
                     </p>
                   </div>
 
@@ -657,8 +618,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 <div className="flex items-start gap-4 p-1">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">1</div>
                   <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP THÔNG TIN</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ tên học sinh hoặc nhập số căn cước công dân (CCCD).</p>
+                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP HỌ TÊN</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ và tên đầy đủ, chính xác của học sinh cần tra cứu.</p>
                   </div>
                 </div>
 
@@ -666,8 +627,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 <div className="flex items-start gap-4 p-1">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0055A5] flex items-center justify-center text-white font-black text-base shadow-sm">2</div>
                   <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">NHẬP NGÀY SINH</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Điền chính xác ngày sinh (Ví dụ: 15/05/2011) như trong khai sinh.</p>
+                    <h4 className="text-[13px] font-black uppercase text-[#0055A5] tracking-tight">CHỌN LỚP HỌC</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Chọn hoặc nhập đúng lớp của học sinh (Ví dụ: Lớp 9A1).</p>
                   </div>
                 </div>
 
@@ -676,7 +637,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E53935] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
                   <div className="space-y-1">
                     <h4 className="text-[13px] font-black uppercase text-[#E53935] tracking-tight">TRA CỨU KẾT QUẢ</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để xem chi tiết kết quả học tập và kết quả rèn luyện của các em</p>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để xem chi tiết bảng điểm thành phần môn học và kết quả rèn luyện.</p>
                   </div>
                 </div>
               </div>

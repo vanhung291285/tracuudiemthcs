@@ -7,7 +7,6 @@ import React, { useState, useEffect } from "react";
 import StudentQuery from "./components/StudentQuery";
 import StudentResult from "./components/StudentResult";
 import AdminDashboard from "./components/AdminDashboard";
-import Footer from "./components/Footer";
 import { Student } from "./types";
 import { dbService } from "./lib/supabase";
 
@@ -133,8 +132,6 @@ export default function App() {
           </div>
         )}
       </div>
-
-      {view !== "admin" && <Footer />}
     </div>
   );
 }
