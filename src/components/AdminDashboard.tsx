@@ -1208,10 +1208,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                  .replace(/Đ/g, "D");
              };
 
+             // Priority 1: Match by Student Code (CCCD) if we parsed it from this card
              let existing = students.find(
-               s => cleanString(s.fullName) === rowNameClean && 
-                    s.className.trim().toUpperCase() === className.trim().toUpperCase()
+               s => studentCode && s.studentCode === studentCode
              );
+
+             // Priority 2: Fallback to Name + Class matching
+             if (!existing) {
+               existing = students.find(
+                 s => cleanString(s.fullName) === rowNameClean && 
+                      s.className.trim().toUpperCase() === className.trim().toUpperCase()
+               );
+             }
 
              if (existing) {
                studentCode = existing.studentCode;
@@ -1500,6 +1508,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
              }
 
              parsedResults.push({
+               ...existing, // Preserve all existing fields (id, teacher, school, etc.)
                id: existing?.id || `student_${studentCode}`,
                studentCode: existing?.studentCode || studentCode,
                fullName,
@@ -1688,17 +1697,25 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             return;
           }
 
-          // Find if student already exists in this class by Full Name
+          // Priority 1: Match by Student Code (CCCD) if provided in Excel
+          const cleanedInputCode = rawCode.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
           let existing = students.find(
-            s => cleanString(s.fullName) === rowNameClean && 
-                 s.className.trim().toUpperCase() === rowClass.trim().toUpperCase()
+            s => cleanedInputCode && s.studentCode === cleanedInputCode
           );
+
+          // Priority 2: Fallback to Name + Class matching
+          if (!existing) {
+            existing = students.find(
+              s => cleanString(s.fullName) === rowNameClean && 
+                   s.className.trim().toUpperCase() === rowClass.trim().toUpperCase()
+            );
+          }
 
           let studentCode = "";
           if (existing) {
             studentCode = existing.studentCode;
-          } else if (rawCode) {
-            studentCode = rawCode.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
+          } else if (cleanedInputCode) {
+            studentCode = cleanedInputCode;
             if (studentCode.length === 11 && /^[0-9]+$/.test(studentCode)) {
               studentCode = "0" + studentCode;
             }
@@ -2148,10 +2165,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           }
 
           parsedResults.push({
+            ...existing, // Preserve all existing fields
             id: existing?.id || `student_${studentCode}`,
             studentCode: existing?.studentCode || studentCode,
             fullName,
-            dob,
+            dob: finalDob,
             gender: existing?.gender || "Nam",
             school: existing?.school || "Trường PTDTBT Tiểu Học và THCS Suối Lư",
             className: importClass,
