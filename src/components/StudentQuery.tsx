@@ -997,7 +997,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                           {icon}
                         </div>
                         <div className="space-y-0.5 min-w-0">
-                          <div className={`font-black ${nameStyles} text-[12px] md:text-[13px] uppercase leading-tight tracking-tighter truncate whitespace-nowrap`}>{student.fullName}</div>
+                          <div className={`font-black ${nameStyles} text-[11px] md:text-[13px] uppercase leading-tight tracking-tighter truncate whitespace-nowrap`}>{student.fullName}</div>
                           <div className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 bg-slate-50/50 px-2 py-0.5 rounded-lg border border-slate-100/50 w-fit">
                             <Users className="w-3 h-3 opacity-50" />
                             {student.className}
@@ -1005,7 +1005,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         </div>
                       </div>
                       <div className="flex flex-col items-end shrink-0 relative z-10 ml-2">
-                        <span className={`${badgeStyles} border px-2 py-0.5 rounded-lg font-black text-[8px] uppercase tracking-wider shadow-sm`}>
+                        <span className={`${badgeStyles} border px-2 py-0.5 rounded-lg font-black text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm`}>
                           {label}
                         </span>
                       </div>
@@ -1069,7 +1069,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                               <User className="w-5 h-5 text-emerald-600" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-[13px] font-black text-slate-800 truncate leading-none mb-1.5 group-hover:text-emerald-700 transition-colors tracking-tight">
+                              <div className="text-[13px] font-black text-slate-800 leading-none mb-1.5 group-hover:text-emerald-700 transition-colors tracking-tight truncate whitespace-nowrap">
                                 {toDisplayCase(activity.studentName)}
                               </div>
                               <div className="flex items-center gap-2.5">
