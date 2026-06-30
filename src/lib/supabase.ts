@@ -20,6 +20,7 @@ class DatabaseService {
   private mapFormatChecked = false;
   private isSnakeCaseSchema = false;
   private isModernSchema = false;
+  private hasIdColumn = false;
   private classesFormatChecked = false;
   private isSnakeCaseClasses = false;
 
@@ -202,8 +203,15 @@ class DatabaseService {
   private async checkSchemaCase() {
     if (this.mapFormatChecked || !this.supabase) return;
     try {
+      // Check for 'id' column specifically
+      const { error: idError } = await this.supabase
+        .from("students")
+        .select("id")
+        .limit(1);
+      this.hasIdColumn = !idError;
+
       // 1. Check for modern snake_case schema (all columns present)
-      const { data, error } = await this.supabase
+      const { error } = await this.supabase
         .from("students")
         .select("student_code, academic_grade")
         .limit(1);
@@ -225,6 +233,7 @@ class DatabaseService {
     } catch {
       this.isSnakeCaseSchema = false;
       this.isModernSchema = false;
+      this.hasIdColumn = false;
     }
   }
 
@@ -290,10 +299,11 @@ class DatabaseService {
 
   // Bidirectional mapping from React Student to target DB columns
   private mapStudentToDb(student: Student): any {
+    let result: any = {};
+
     // 1. Modern Schema: Top-level columns
     if (this.isSnakeCaseSchema && this.isModernSchema) {
-      return {
-        id: student.id,
+      result = {
         student_code: student.studentCode,
         full_name: student.fullName,
         date_of_birth: student.dob,
@@ -318,11 +328,9 @@ class DatabaseService {
         subjects: student.subjects
       };
     } 
-    
     // 2. Legacy Schema (Fallback): Pack extra fields into JSONB column 'subjects'
-    if (this.isSnakeCaseSchema) {
-      return {
-        id: student.id,
+    else if (this.isSnakeCaseSchema) {
+      result = {
         student_code: student.studentCode,
         full_name: student.fullName,
         date_of_birth: student.dob,
@@ -349,9 +357,20 @@ class DatabaseService {
         }
       };
     }
-    
-    // 3. Default (CamelCase or others)
-    return student;
+    // 3. Default (CamelCase)
+    else {
+      result = { ...student };
+    }
+
+    // Only include ID if column exists in database
+    if (this.hasIdColumn) {
+      result.id = student.id;
+    } else {
+      // If no ID column, remove it from payload to avoid Supabase error
+      delete result.id;
+    }
+
+    return result;
   }
 
   private removeDiacritics(str: string): string {

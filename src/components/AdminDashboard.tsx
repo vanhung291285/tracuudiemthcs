@@ -2549,7 +2549,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       
       const errorMsgText = uniqueErrors.join(", ");
       if (errorMsgText.includes("column") || errorMsgText.includes("schema cache")) {
-        specificTip = "Hệ thống phát hiện Cấu trúc bảng Students của bạn đã CŨ hoặc lỗi Cache. \n\n👉 CÁCH SỬA: Bạn hãy vào tab 'Supabase & Database' trong Cài đặt, COPY toàn bộ Mã SQL và CHẠY LẠI trên SQL Editor của Supabase để cập nhật các cột mới (như academic_grade), sau đó thử nhập lại.";
+        let missingCol = "";
+        if (errorMsgText.includes("'id'")) missingCol = "(cột 'id')";
+        else if (errorMsgText.includes("'academic_grade'")) missingCol = "(cột 'academic_grade')";
+        
+        specificTip = `Hệ thống phát hiện Cấu trúc bảng Students của bạn đã CŨ hoặc thiếu cột ${missingCol}. \n\n👉 CÁCH SỬA: Bạn hãy vào tab 'Supabase & Database' trong Cài đặt, COPY đoạn mã ở phần "0. NÂNG CẤP BẢNG CŨ" và CHẠY trên SQL Editor của Supabase để cập nhật các cột còn thiếu, sau đó thử nhập lại.`;
       }
 
       const errorMsg = uniqueErrors.length > 0 ? `\nChi tiết lỗi từ Supabase: ${errorMsgText}` : "";
@@ -4066,6 +4070,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 {`-- [MẪU 1] TẠO 6 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
 
 -- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng students nhưng thiếu cột, hãy chạy đoạn này trước)
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade TEXT DEFAULT 'Tốt';
@@ -4081,6 +4086,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS verification_token TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
+-- NOTIFY pgrst, 'reload schema';
 
 -- 1. Tạo bảng học sinh (students)
 CREATE TABLE IF NOT EXISTS students (
@@ -4203,6 +4209,7 @@ NOTIFY pgrst, 'reload schema';`}
 {`-- [MẪU 2] TẠO 6 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
 
 -- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng students nhưng thiếu cột, hãy chạy đoạn này trước)
+-- ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGrade" TEXT DEFAULT 'Tốt';
@@ -4218,6 +4225,7 @@ NOTIFY pgrst, 'reload schema';`}
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS "verificationToken" TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
+-- NOTIFY pgrst, 'reload schema';
 
 -- 1. Tạo bảng học sinh (students)
 CREATE TABLE IF NOT EXISTS students (
