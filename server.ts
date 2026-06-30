@@ -346,7 +346,7 @@ async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
       });
     }
   } catch (err) {
-    console.warn("Failed to dynamically auto-discover RSS feeds:", err);
+    console.log("Failed to dynamically auto-discover RSS feeds:", err.message || err);
   }
 
   // Always append standard Nukeviet and WordPress fallback patterns for high availability
@@ -565,7 +565,7 @@ async function fetchSuoiluRSS(): Promise<any[]> {
       return parseRSSXml(xmlText);
     }
   } catch (err) {
-    console.warn("Direct RSS fetch failed:", err);
+    console.log("Direct RSS fetch failed:", err.message || err);
   }
   return [];
 }
@@ -576,7 +576,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
   // Wrap the entire fetching process in a global timeout to avoid Vercel 504 Gateway Timeout
   const timeoutPromise = new Promise<any[]>((resolve) => {
     setTimeout(() => {
-      console.warn("Global timeout of 12s reached in fetchSuoiluNews. Resolving with empty list to fallback to static news.");
+      console.log("Global timeout of 12s reached in fetchSuoiluNews. Resolving with empty list to fallback to static news.");
       resolve([]);
     }, 12000);
   });

@@ -1440,7 +1440,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
              });
 
              // 5. Parse Academic / Behavior ratings & Attendance
-             let academicGrade = existing?.academicGrade || "Tốt";
+             let academicGrade = existing?.academicGrade || "";
              let academicGradeHK1 = existing?.academicGradeHK1 || "";
              let academicGradeHK2 = existing?.academicGradeHK2 || "";
              
@@ -1480,6 +1480,31 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
              if (parsedAbsent) daysAbsent = parsedAbsent;
              if (parsedAbsentUnexcused) daysAbsentUnexcused = parsedAbsentUnexcused;
+             
+             // Force recalculate academic grade if scores are present
+             if (!parsedAcad && cardSubjects.length > 0) {
+               const isHK1 = importTerm === "hk1";
+               const termScores = cardSubjects
+                 .filter(s => s.isEvaluatedByScore)
+                 .map(s => {
+                   const val = isHK1 ? s.semester1 : s.yearAvg;
+                   return typeof val === "number" ? val : null;
+                 })
+                 .filter(v => v !== null) as number[];
+               const termComments = cardSubjects
+                 .filter(s => !s.isEvaluatedByScore)
+                 .map(s => {
+                   const val = isHK1 ? s.semester1 : s.yearAvg;
+                   return (val === "Đạt" || val === "Chưa đạt") ? val : null;
+                 })
+                 .filter(v => v !== null) as string[];
+               
+               const calculatedAcad = evaluateTT22(termScores, termComments);
+               if (calculatedAcad) {
+                 academicGrade = calculatedAcad;
+                 if (isHK1) academicGradeHK1 = calculatedAcad;
+               }
+             }
 
              // Academic Distinction Auto Evaluation
              const hasAnyScore = cardSubjects.some(s => 
@@ -2002,7 +2027,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           });
 
           // Overall attributes depending on selected Term
-          let academicGrade: any = existing?.academicGrade || "Tốt";
+          let academicGrade: any = existing?.academicGrade || "";
           let academicGradeHK1: any = existing?.academicGradeHK1 || "";
           let academicGradeHK2: any = existing?.academicGradeHK2 || "";
           
@@ -2108,19 +2133,28 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                // Stay as "Không"
             }
           } else {
-            // Only auto-recalculate if the file didn't provide an explicit grade
-            if (!academicVal.trim() && validScoreSubjects.length > 0 && importTerm !== "hk1") {
-               const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
-               if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
-                  const currentScores = mockSubjects
-                    .filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number")
-                    .map(s => s.yearAvg as number);
-                  const currentComments = mockSubjects
-                    .filter(s => !s.isEvaluatedByScore && (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt"))
-                    .map(s => s.yearAvg as string);
-                  
-                  const calculatedAcad = evaluateTT22(currentScores, currentComments);
-                  if (calculatedAcad) academicGrade = calculatedAcad;
+            // Recalculate academic grade if scores are present
+            if (!academicVal.trim() && validScoreSubjects.length > 0) {
+               const isHK1 = importTerm === "hk1";
+               const currentScores = mockSubjects
+                 .filter(s => s.isEvaluatedByScore)
+                 .map(s => {
+                   const val = isHK1 ? s.semester1 : s.yearAvg;
+                   return typeof val === "number" ? val : null;
+                 })
+                 .filter(v => v !== null) as number[];
+               const currentComments = mockSubjects
+                 .filter(s => !s.isEvaluatedByScore)
+                 .map(s => {
+                   const val = isHK1 ? s.semester1 : s.yearAvg;
+                   return (val === "Đạt" || val === "Chưa đạt") ? val : null;
+                 })
+                 .filter(v => v !== null) as string[];
+               
+               const calculatedAcad = evaluateTT22(currentScores, currentComments);
+               if (calculatedAcad) {
+                 academicGrade = calculatedAcad;
+                 if (isHK1) academicGradeHK1 = calculatedAcad;
                }
             }
 
@@ -2360,7 +2394,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           }
         });
 
-        const currentAcad = s.academicGrade || "Tốt";
+        const currentAcad = s.academicGrade || "";
         const currentBehav = s.behaviorGrade || "Tốt";
         
         rows[rowOffset + 22][colOffset + 1] = `Đánh giá KQ học tập: ${currentAcad}`;
@@ -2513,6 +2547,43 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     };
 
     reader.readAsArrayBuffer(file);
+  };
+
+  const handleRecalculateAll = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn TỰ ĐỘNG TÍNH LẠI kết quả học tập cho TẤT CẢ học sinh dựa trên điểm số hiện có? Thao tác này sẽ cập nhật lại Xếp loại và Danh hiệu theo đúng Thông tư 22.")) return;
+    
+    setAuthIsLoading(true);
+    let updatedCount = 0;
+    
+    for (const student of students) {
+      const scoreSubjects = (student.subjects || []).filter(s => s.isEvaluatedByScore);
+      const commentSubjects = (student.subjects || []).filter(s => !s.isEvaluatedByScore);
+      
+      const currentScores = scoreSubjects
+        .map(s => typeof s.yearAvg === "number" ? s.yearAvg : null)
+        .filter(v => v !== null) as number[];
+      const currentComments = commentSubjects
+        .map(s => (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt") ? s.yearAvg : "Đạt") as string[];
+
+      if (currentScores.length > 0 || currentComments.length > 0) {
+        const calculatedAcad = evaluateTT22(currentScores, currentComments);
+        const calculatedDistinction = evaluateDistinctionTT22(calculatedAcad, student.behaviorGrade, currentScores);
+        
+        if (calculatedAcad !== student.academicGrade || calculatedDistinction !== student.distinction) {
+          const updated = {
+            ...student,
+            academicGrade: calculatedAcad,
+            distinction: calculatedDistinction as any
+          };
+          await dbService.upsertStudent(updated);
+          updatedCount++;
+        }
+      }
+    }
+    
+    setAuthIsLoading(false);
+    alert(`Hoàn thành! Đã cập nhật lại kết quả cho ${updatedCount} học sinh có sai lệch.`);
+    loadStudents();
   };
 
   const handleApplyImport = async () => {
@@ -2836,6 +2907,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     className="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm hover:shadow-md"
                   >
                     <SortAsc className="w-4 h-4" /> Sắp xếp ABC
+                  </button>
+
+                  <button
+                    onClick={handleRecalculateAll}
+                    disabled={authIsLoading || students.length === 0}
+                    className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${authIsLoading ? "animate-spin" : ""}`} /> Tính lại KQHT (TT22)
                   </button>
                 </div>
 

@@ -328,9 +328,9 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                     </span>
                   ) : (
                     <div className="flex flex-wrap justify-center items-center gap-x-2 sm:gap-x-4">
-                      <span>KQHT: {activeAcademicGrade?.toUpperCase() || "KHÁ"}</span>
+                      <span>KQHT: {activeAcademicGrade?.toUpperCase() || "CHƯA CÓ"}</span>
                       <span className="text-slate-500">|</span>
-                      <span>KQRL: {activeBehaviorGrade?.toUpperCase() || "TỐT"}</span>
+                      <span>KQRL: {activeBehaviorGrade?.toUpperCase() || "CHƯA CÓ"}</span>
                       {term === "canam" && activeDistinction !== "KHÔNG" && (
                         <>
                           <span className="text-slate-500">|</span>
