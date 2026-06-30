@@ -2123,6 +2123,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             behaviorGradeSummer = (behaviorSummerCol !== -1 && behaviorSummerCol < parts.length) ? (parseBehavior(parts[behaviorSummerCol]) as any || behaviorGradeSummer) : behaviorGradeSummer;
             daysAbsent = (absentPCol !== -1 && absentPCol < parts.length) ? (parseInt(parts[absentPCol]) || 0) : daysAbsent;
             daysAbsentUnexcused = (absentKCol !== -1 && absentKCol < parts.length) ? (parseInt(parts[absentKCol]) || 0) : daysAbsentUnexcused;
+            skippedPeriods = (skippedPeriodsCol !== -1 && skippedPeriodsCol < parts.length) ? (parseInt(parts[skippedPeriodsCol]) || 0) : skippedPeriods;
             
             const di = (distinctionCol !== -1 && distinctionCol < parts.length) ? parseDistinction(parts[distinctionCol]) : "";
             if (di) distinction = di;
@@ -3587,7 +3588,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                             {/* Absences heading details */}
                             <th className="px-1.5 py-1 w-10 font-bold text-slate-600">P</th>
                             <th className="px-1.5 py-1 w-10 font-bold text-slate-600">K</th>
-                            <th className="px-1.5 py-1 w-10 font-bold text-slate-800 bg-slate-200/50">Tổng</th>
+                            <th className="px-1.5 py-1 w-10 font-bold text-red-600 bg-red-50/50">BT</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -3675,8 +3676,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                             onChange={(e) => setImportText(e.target.value)}
                             placeholder={
                               importTerm === "canam"
-                                ? "STT\tCCCD\tHọ tên\tNgày sinh\tToán\tSửĐịa\tKHTN\tTin\tVăn\tAnh\tGDCD\tCôngNghệ\tThểChất\tNghệThuật\tĐịaPhương\tTrảiNghiệm\tKQ H.tập\tKQ R.luyện\tKQRL Sau Hè\tVắng P\tVắng K\tTổng vắng\tDanh hiệu\tGhi chú\n1\t012345678901\tPhạm Tuấn Hải\t2011-08-30\t9.8\t9.3\t9.6\t9.9\t8.8\t9.8\t9.4\t9.2\tĐạt\tĐạt\tĐạt\tĐạt\tTốt\tTốt\tKhông\t1\t0\t1\tHọc sinh Giỏi\tHọc sinh Xuất sắc cả năm"
-                                : "STT\tCCCD\tHọ tên\tNgày sinh\tToán\tSửĐịa\tKHTN\tTin\tVăn\tAnh\tGDCD\tCôngNghệ\tThểChất\tNghệThuật\tĐịaPhương\tTrảiNghiệm\tKQ H.tập\tKQ R.luyện\tVắng P\tVắng K\tTổng vắng\tGhi chú\n1\t012345678901\tPhạm Tuấn Hải\t2011-08-30\t9.5\t9.0\t9.2\t10.0\t8.5\t9.5\t9.0\t9.0\tĐạt\tĐạt\tĐạt\tĐạt\tTốt\tTốt\t1\t0\t1\tHoàn thành tốt nhất"
+                                ? "STT\tCCCD\tHọ tên\tNgày sinh\tToán\tSửĐịa\tKHTN\tTin\tVăn\tAnh\tGDCD\tCôngNghệ\tThểChất\tNghệThuật\tĐịaPhương\tTrảiNghiệm\tKQ H.tập\tKQ R.luyện\tKQRL Sau Hè\tVắng P\tVắng K\tBỏ tiết\tDanh hiệu\tGhi chú\n1\t012345678901\tPhạm Tuấn Hải\t2011-08-30\t9.8\t9.3\t9.6\t9.9\t8.8\t9.8\t9.4\t9.2\tĐạt\tĐạt\tĐạt\tĐạt\tTốt\tTốt\tKhông\t1\t0\t2\tHọc sinh Giỏi\tHọc sinh Xuất sắc cả năm"
+                                : "STT\tCCCD\tHọ tên\tNgày sinh\tToán\tSửĐịa\tKHTN\tTin\tVăn\tAnh\tGDCD\tCôngNghệ\tThểChất\tNghệThuật\tĐịaPhương\tTrảiNghiệm\tKQ H.tập\tKQ R.luyện\tVắng P\tVắng K\tBỏ tiết\tGhi chú\n1\t012345678901\tPhạm Tuấn Hải\t2011-08-30\t9.5\t9.0\t9.2\t10.0\t8.5\t9.5\t9.0\t9.0\tĐạt\tĐạt\tĐạt\tĐạt\tTốt\tTốt\t1\t0\t2\tHoàn thành tốt nhất"
                             }
                             className="w-full text-xs font-mono p-4 border rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-600 outline-none transition"
                           />
@@ -5103,7 +5104,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={formStudent.daysAbsent || 0}
                         onChange={(e) => setFormStudent({ ...formStudent, daysAbsent: parseInt(e.target.value) || 0 })}
                         className="w-full border p-2 rounded"
-                        placeholder="Tổng phép"
+                        placeholder="Có phép"
                       />
                       <input
                         type="number"
