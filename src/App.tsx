@@ -115,7 +115,7 @@ export default function App() {
         )}
 
         {view === "result" && selectedStudent && (
-          <div className="flex-1 w-full flex flex-col pt-2 pb-6">
+          <div className="flex-1 w-full flex flex-col pt-1 pb-2">
             <StudentResult
               student={selectedStudent}
               initialTerm={selectedTerm}
