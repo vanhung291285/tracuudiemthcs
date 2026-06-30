@@ -562,7 +562,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                           >
                             <div>
                               <div className="font-black text-slate-800 uppercase text-sm">{student.fullName}</div>
-                              <div className="text-xs text-slate-500 font-medium mt-0.5">Sinh ngày: <span className="text-slate-800 font-bold">{student.dob}</span> | Số CCCD: <span className="font-mono text-slate-600">{student.studentCode}</span></div>
+                              <div className="text-xs text-slate-500 font-medium mt-0.5">Mã học sinh: <span className="font-mono text-slate-800 font-bold">{student.studentCode}</span></div>
                             </div>
                             <div className="bg-[#0055A5] text-white px-3 py-1 rounded font-bold text-xs uppercase shadow-sm">
                               Lớp {student.className}

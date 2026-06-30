@@ -34,7 +34,7 @@ export interface Student {
   academicYear: string; // e.g. "2025-2026"
   
   // Overall results
-  academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt"; // Kết quả học tập (Final/Year)
+  academicGrade: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | ""; // Kết quả học tập (Final/Year)
   academicGradeHK1?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | ""; 
   academicGradeHK2?: "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "";
   

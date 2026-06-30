@@ -4,13 +4,13 @@ export const evaluateTT22 = (scores: number[], comments: string[]): "Tốt" | "K
   const countAbove = (arr: number[], val: number) => arr.filter(x => x >= val).length;
   
   const isTot = (s: number[], c: string[]) => 
-    c.every(x => x === "Đạt") && s.every(x => x >= 6.5) && countAbove(s, 8.0) >= 6;
+    c.every(x => x === "Đạt") && s.every(x => x >= 5.0) && countAbove(s, 8.0) >= 6;
     
   const isKha = (s: number[], c: string[]) => 
-    c.every(x => x === "Đạt") && s.every(x => x >= 5.0) && countAbove(s, 6.5) >= 6;
+    c.every(x => x === "Đạt") && s.every(x => x >= 3.5) && countAbove(s, 6.5) >= 6;
     
   const isDat = (s: number[], c: string[]) => 
-    c.filter(x => x === "Chưa đạt").length <= 1 && s.every(x => x >= 3.5) && countAbove(s, 5.0) >= 6;
+    c.filter(x => x === "Chưa đạt").length <= 1 && s.every(x => x >= 2.0) && countAbove(s, 5.0) >= 6;
 
   const getRawGrade = (s: number[], c: string[]) => {
     if (isTot(s, c)) return "Tốt";

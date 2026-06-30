@@ -709,7 +709,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         id: crypto.randomUUID ? crypto.randomUUID() : `local-${Date.now()}`,
         studentCode: "037206" + Math.floor(100000 + Math.random() * 900000).toString(),
         fullName: "",
-        dob: "2012-01-01",
+        dob: "",
         gender: "Nam",
         school: "Trường PTDTBT Tiểu Học và THCS Suối Lư",
         className: "9A1",
@@ -749,7 +749,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const handleSaveStudent = async (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     if (!formStudent.studentCode || !formStudent.fullName) {
-      setFormError("Vui lòng điền đầy đủ Mã học sinh (Số CCCD) và Họ và tên.");
+      setFormError("Vui lòng điền đầy đủ Mã học sinh và Họ và tên.");
       return;
     }
 
@@ -760,10 +760,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
     const cleanCode = formStudent.studentCode.trim().replace(/\s/g, "");
     if (!/^[0-9]{12}$/.test(cleanCode)) {
-      setFormError("Mã quản lý học tịch / Số CCCD phải nhập chính xác đúng 12 chữ số.");
+      setFormError("Mã học sinh phải nhập chính xác đúng 12 chữ số.");
       return;
     }
 
+    /* 
     if (!formStudent.dob) {
       setFormError("Vui lòng điền Ngày sinh học sinh.");
       return;
@@ -776,6 +777,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setFormError("Ngày sinh phải đúng định dạng ngày/tháng/năm: DD/MM/YYYY (Ví dụ: 15/05/2011) hoặc YYYY-MM-DD.");
       return;
     }
+    */
+    const cleanDob = formStudent.dob ? formStudent.dob.trim() : "";
 
     const preparedSubjects = (formStudent.subjects || []).map(sub => {
       if (sub.isEvaluatedByScore) {
@@ -797,37 +800,26 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       return sub;
     });
 
-    // Auto-calculate summary fields based on prepared subjects if not manually locked
+    // Auto-calculate summary fields based on prepared subjects using centralized TT22 logic
     let academicGrade = formStudent.academicGrade || "Chưa đạt";
     let distinction = formStudent.distinction || "Không";
     const behaviorGrade = formStudent.behaviorGrade || "Tốt";
 
-    const scoreSubjects = preparedSubjects.filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number");
-    if (scoreSubjects.length > 0) {
-        const nonScoreSubjects = preparedSubjects.filter(s => !s.isEvaluatedByScore);
-        const countNonPassed = nonScoreSubjects.filter(s => s.yearAvg === "Đạt" || !s.yearAvg).length;
-        const allNonPassed = countNonPassed === nonScoreSubjects.length;
-        const mostlyNonPassed = countNonPassed >= nonScoreSubjects.length - 1;
+    const scoreSubjectsList = preparedSubjects.filter(s => s.isEvaluatedByScore);
+    const commentSubjectsList = preparedSubjects.filter(s => !s.isEvaluatedByScore);
 
-        const countScores = scoreSubjects.length;
-        const yearScores = scoreSubjects.map(s => s.yearAvg as number);
-        const countAbove8 = yearScores.filter(v => v >= 8.0).length;
-        const countAbove65 = yearScores.filter(v => v >= 6.5).length;
-        const countAbove50 = yearScores.filter(v => v >= 5.0).length;
-        const allAbove50 = countAbove50 === countScores;
-        const allAbove35 = yearScores.every(v => v >= 3.5);
+    const currentScores = scoreSubjectsList
+      .map(s => typeof s.yearAvg === "number" ? s.yearAvg : null)
+      .filter(v => v !== null) as number[];
+    
+    const currentComments = commentSubjectsList
+      .map(s => (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt") ? s.yearAvg : "Đạt") as string[];
 
-        if (allNonPassed && allAbove50 && countAbove8 >= 6) academicGrade = "Tốt";
-        else if (allNonPassed && allAbove35 && countAbove65 >= 6) academicGrade = "Khá";
-        else if (mostlyNonPassed && (allAbove50 || (countAbove50 >= 6 && allAbove35))) academicGrade = "Đạt";
-        else academicGrade = "Chưa đạt";
+    if (currentScores.length > 0 || currentComments.length > 0) {
+        const calculatedGrade = evaluateTT22(currentScores, currentComments);
+        if (calculatedGrade) academicGrade = calculatedGrade;
 
-        if (academicGrade === "Tốt" && behaviorGrade === "Tốt") {
-          const num9Plus = scoreSubjects.filter(s => (s.yearAvg as number) >= 9.0).length;
-          distinction = num9Plus >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
-        } else {
-          distinction = "Không";
-        }
+        distinction = evaluateDistinctionTT22(academicGrade, behaviorGrade, currentScores);
     }
 
     const preparedStudent = {
@@ -1512,7 +1504,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                id: existing?.id || `student_${studentCode}`,
                studentCode: existing?.studentCode || studentCode,
                fullName,
-               dob: existing?.dob || "01/01/2011",
+               dob: existing?.dob || "",
                gender: existing?.gender || "Nam",
                school: existing?.school || "Trường PTDTBT Tiểu Học và THCS Suối Lư",
                className: className,
@@ -1727,11 +1719,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
           let finalDob = dob.trim();
           if (!finalDob) {
-            finalDob = existing?.dateOfBirth || existing?.dob || "01/01/2011";
+            finalDob = existing?.dateOfBirth || existing?.dob || "";
           } else {
             const dobRegex = /^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])\/[0-9]{4}$/;
             const alternativeDbRegex = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/; // YYYY-MM-DD
-            if (!dobRegex.test(finalDob) && !alternativeDbRegex.test(finalDob)) {
+            if (finalDob !== "" && !dobRegex.test(finalDob) && !alternativeDbRegex.test(finalDob)) {
               collectedErrors.push(`Dòng ${rowNum} (${fullName}): Ngày sinh "${dob}" không đúng định dạng. Yêu cầu nhập DD/MM/YYYY (ví dụ: 15/05/2011) hoặc YYYY-MM-DD.`);
             }
           }
@@ -2117,45 +2109,27 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             }
           } else {
             // Only auto-recalculate if the file didn't provide an explicit grade
-            // Trust the Excel file if academicVal is present
             if (!academicVal.trim() && validScoreSubjects.length > 0 && importTerm !== "hk1") {
                const mockScoreSubjects = mockSubjects.filter(s => s.isEvaluatedByScore);
-               // We only proceed if most subjects are filled to avoid premature grading
                if (validScoreSubjects.length >= (mockScoreSubjects.length * 0.7)) {
-                  const nonScoreSubjects = mockSubjects.filter(s => !s.isEvaluatedByScore);
-                  const countNonPassed = nonScoreSubjects.filter(sub => sub.yearAvg === "Đạt" || !sub.yearAvg).length;
-                  const allNonPassed = countNonPassed === nonScoreSubjects.length;
-                  const mostlyNonPassed = countNonPassed >= nonScoreSubjects.length - 1;
-
-                  const countScores = validScoreSubjects.length;
-                  const yearScores = validScoreSubjects.map(s => s.yearAvg as number);
-                  const countAbove8 = yearScores.filter(v => v >= 8.0).length;
-                  const countAbove65 = yearScores.filter(v => v >= 6.5).length;
-                  const countAbove50 = yearScores.filter(v => v >= 5.0).length;
-                  const allAbove50 = countAbove50 === countScores;
-                  const allAbove35 = yearScores.every(v => v >= 3.5);
-
-                  if (allNonPassed && allAbove50 && countAbove8 >= 6) {
-                    academicGrade = "Tốt";
-                  } else if (allNonPassed && allAbove35 && countAbove65 >= 6) {
-                    academicGrade = "Khá";
-                  } else if (mostlyNonPassed && (allAbove50 || (countAbove50 >= 6 && allAbove35))) {
-                    academicGrade = "Đạt";
-                  } else {
-                    academicGrade = "Chưa đạt";
-                  }
+                  const currentScores = mockSubjects
+                    .filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number")
+                    .map(s => s.yearAvg as number);
+                  const currentComments = mockSubjects
+                    .filter(s => !s.isEvaluatedByScore && (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt"))
+                    .map(s => s.yearAvg as string);
+                  
+                  const calculatedAcad = evaluateTT22(currentScores, currentComments);
+                  if (calculatedAcad) academicGrade = calculatedAcad;
                }
             }
 
             const rawDistinctionVal = (distinctionCol !== -1 && distinctionCol < parts.length) ? (parts[distinctionCol] || "") : "";
             if (!rawDistinctionVal.trim() && (!distinction || distinction === "Không")) {
-              const num9Plus = mockSubjects.filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number" && (s.yearAvg as number) >= 9.0).length;
-
-              if (academicGrade === "Tốt" && behaviorGrade === "Tốt") {
-                distinction = num9Plus >= 6 ? "Học sinh Xuất sắc" : "Học sinh Giỏi";
-              } else {
-                distinction = "Không";
-              }
+              const currentScores = mockSubjects
+                .filter(s => s.isEvaluatedByScore && typeof s.yearAvg === "number")
+                .map(s => s.yearAvg as number);
+              distinction = evaluateDistinctionTT22(academicGrade, behaviorGrade, currentScores);
             } else if (academicGrade === "Khá" && (distinction === "Học sinh Giỏi" || distinction === "Học sinh Xuất sắc")) {
               // Forced correction for existing inconsistent data during import/update
               distinction = "Không";
@@ -2905,9 +2879,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     <table className="w-full text-left text-xs text-slate-700 border-collapse">
                       <thead>
                         <tr className="bg-slate-100 text-slate-600 uppercase border-b text-[10px] tracking-wider">
-                          <th className="px-4 py-3 font-bold w-36">Số CCCD (12 số)</th>
+                          <th className="px-4 py-3 font-bold w-36">Mã học sinh</th>
                           <th className="px-4 py-3 font-bold">Họ tên học sinh</th>
-                          <th className="px-4 py-3 font-bold">Ngày sinh</th>
                           <th className="px-4 py-3 font-bold w-16">Lớp</th>
                           <th className="px-4 py-3 font-bold w-20">Học lực</th>
                           <th className="px-4 py-3 font-bold w-20">Hạnh kiểm</th>
@@ -2921,7 +2894,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                             <tr key={student.studentCode} className="hover:bg-slate-50 transition">
                               <td className="px-4 py-3.5 font-mono font-bold text-blue-800">{student.studentCode}</td>
                               <td className="px-4 py-3.5 font-bold text-slate-900">{student.fullName}</td>
-                              <td className="px-4 py-3.5 italic text-slate-500">{student.dob}</td>
                               <td className="px-4 py-3.5 font-bold text-blue-900">{student.className}</td>
                               <td className="px-4 py-3.5">
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -3742,7 +3714,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                 <span className="font-mono font-bold text-blue-850 text-blue-800">{stud.studentCode}</span> - <span className="font-bold text-slate-900">{stud.fullName}</span>
                                 <div className="text-[10px] text-slate-500 mt-1 flex flex-wrap gap-x-3 gap-y-1">
                                   <span>Lớp: <strong className="text-slate-700">{stud.className}</strong></span>
-                                  <span>Ngày sinh: <strong className="text-slate-700">{stud.dob}</strong></span>
                                   <span>Buổi nghỉ: <strong className="text-slate-700">{stud.daysAbsent} buổi</strong></span>
                                 </div>
                               </div>
@@ -4573,7 +4544,7 @@ NOTIFY pgrst, 'reload schema';`}
 
                     <div className="flex items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-lg">
                       <div>
-                        <h5 className="text-[11px] font-black text-slate-700 uppercase">1. Tra Cứu Bằng Số CCCD</h5>
+                        <h5 className="text-[11px] font-black text-slate-700 uppercase">1. Tra Cứu Bằng Mã học sinh</h5>
                         <p className="text-[9px] text-slate-500 font-semibold mt-0.5">Cho phép học sinh sử dụng Số Căn Cước Công Dân.</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -4871,7 +4842,7 @@ NOTIFY pgrst, 'reload schema';`}
                 <h3 className="uppercase font-bold text-slate-400 mb-3 border-b pb-1">Thông tin cá nhân</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-bold text-slate-700 uppercase mb-1">Số Căn cước công dân (12 số) (*)</label>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Mã học sinh (*)</label>
                     <input
                       type="text"
                       value={formStudent.studentCode || ""}
@@ -4892,6 +4863,7 @@ NOTIFY pgrst, 'reload schema';`}
                     />
                   </div>
 
+                  {/* 
                   <div>
                     <label className="block font-bold text-slate-700 uppercase mb-1">Ngày sinh (*)</label>
                     <input
@@ -4902,6 +4874,7 @@ NOTIFY pgrst, 'reload schema';`}
                       placeholder="Ví dụ: 15/05/2011"
                     />
                   </div>
+                  */}
 
                   <div>
                     <label className="block font-bold text-slate-700 uppercase mb-1">Giới tính</label>

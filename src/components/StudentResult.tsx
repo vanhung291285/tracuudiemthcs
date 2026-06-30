@@ -43,17 +43,6 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   const schoolYearRaw = localStorage.getItem("portal_school_year") || student.academicYear || "Năm học 2025-2026";
   const schoolYear = schoolYearRaw.replace(/năm học/i, "").trim();
 
-  const formatDob = (dob: string) => {
-    if (!dob) return "";
-    if (dob.includes("-")) {
-      const parts = dob.split("-");
-      if (parts.length === 3 && parts[0].length === 4) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
-    }
-    return dob;
-  };
-
   // Compute live term summary as required under Circular 22 rules
   const scoreSubjects = (student.subjects || []).filter(s => s.isEvaluatedByScore);
   let scoreCount = 0;

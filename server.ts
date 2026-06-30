@@ -318,7 +318,7 @@ async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
   const urls: string[] = [];
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 1500); // Tighter timeout of 1.5 seconds to avoid Vercel 504 on blocked connections
+    const id = setTimeout(() => controller.abort(), 5000); // Increased timeout to 5s for better reliability on slow servers
     const response = await fetch(targetUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
@@ -576,9 +576,9 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
   // Wrap the entire fetching process in a global timeout to avoid Vercel 504 Gateway Timeout
   const timeoutPromise = new Promise<any[]>((resolve) => {
     setTimeout(() => {
-      console.warn("Global timeout of 3.5s reached in fetchSuoiluNews. Resolving with empty list to fallback to static news.");
+      console.warn("Global timeout of 12s reached in fetchSuoiluNews. Resolving with empty list to fallback to static news.");
       resolve([]);
-    }, 3500);
+    }, 12000);
   });
 
   const fetchPromise = async (): Promise<any[]> => {
@@ -600,7 +600,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       try {
         const wpApiUrl = "https://suoilu.db.edu.vn/wp-json/wp/v2/posts?_embed&per_page=12";
         const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), 1500);
+        const id = setTimeout(() => controller.abort(), 4000);
         const res = await fetch(wpApiUrl, {
           headers: { "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; vi-VN) AppleWebKit/534.31" },
           signal: controller.signal
@@ -626,7 +626,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
         try {
           const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
           const controller = new AbortController();
-          const id = setTimeout(() => controller.abort(), 1500);
+          const id = setTimeout(() => controller.abort(), 4000);
           const res = await fetch(rss2JsonUrl, { signal: controller.signal });
           clearTimeout(id);
           if (res.ok) {
@@ -651,7 +651,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
         try {
           const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`;
           const controller = new AbortController();
-          const id = setTimeout(() => controller.abort(), 1500);
+          const id = setTimeout(() => controller.abort(), 4000);
           const res = await fetch(proxyUrl, { signal: controller.signal });
           clearTimeout(id);
           if (res.ok) {
@@ -676,7 +676,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
         try {
           const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(rssUrl);
           const controller = new AbortController();
-          const id = setTimeout(() => controller.abort(), 1500);
+          const id = setTimeout(() => controller.abort(), 4000);
           const res = await fetch(proxyUrl, { signal: controller.signal });
           clearTimeout(id);
           if (res.ok) {
@@ -701,7 +701,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       try {
         const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://suoilu.db.edu.vn/wp-json/wp/v2/posts?_embed&per_page=12");
         const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), 1500);
+        const id = setTimeout(() => controller.abort(), 4000);
         const res = await fetch(proxyUrl, { signal: controller.signal });
         clearTimeout(id);
         if (res.ok) {
@@ -726,7 +726,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       for (const rssUrl of discoveredRssUrls.slice(0, 2)) {
         try {
           const controller = new AbortController();
-          const id = setTimeout(() => controller.abort(), 1500);
+          const id = setTimeout(() => controller.abort(), 4000);
           const res = await fetch(rssUrl, {
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
