@@ -434,12 +434,6 @@ class DatabaseService {
             this.normalizeName(m.fullName) === cleanName
           );
           if (found.length > 0) return found;
-
-          // 2. Try match without diacritics
-          found = mappedList.filter((m: Student) => 
-            this.removeDiacritics(m.fullName) === noDiacriticInput
-          );
-          if (found.length > 0) return found;
         }
       } catch (err) {
         console.warn("Supabase query by name/class error:", err);
@@ -452,10 +446,8 @@ class DatabaseService {
       if (!isClassMatch) return false;
 
       const dbNameNormalized = this.normalizeName(s.fullName);
-      const dbNoAccents = this.removeDiacritics(s.fullName);
       
       if (dbNameNormalized === cleanName) return true;
-      if (dbNoAccents === noDiacriticInput) return true;
       
       return false;
     });
@@ -494,14 +486,6 @@ class DatabaseService {
           );
           
           if (found.length > 0) return found;
-
-          // 2. Try match without diacritics (extremely robust for manual typing)
-          found = mappedList.filter((m: Student) => 
-            this.compareDates(m.dob, cleanDob) && 
-            this.removeDiacritics(m.fullName) === noDiacriticInput
-          );
-
-          if (found.length > 0) return found;
         }
       } catch (err) {
         console.warn("Supabase query error:", err);
@@ -514,10 +498,8 @@ class DatabaseService {
       if (!isDateMatch) return false;
 
       const dbNameNormalized = this.normalizeName(s.fullName);
-      const dbNoAccents = this.removeDiacritics(s.fullName);
       
       if (dbNameNormalized === cleanName) return true;
-      if (dbNoAccents === noDiacriticInput) return true;
       
       return false;
     });

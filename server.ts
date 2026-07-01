@@ -355,9 +355,12 @@ async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
     }
   } catch (err) {
     if (err.name === "AbortError") {
-      console.log("RSS discovery timed out (expected for slow target servers)");
+      // console.log("RSS discovery timed out (expected for slow target servers)");
     } else {
-      console.log("Failed to dynamically auto-discover RSS feeds:", getSafeErrorMessage(err));
+      const msg = getSafeErrorMessage(err);
+      if (msg !== "destination offline") {
+        console.log("RSS discovery deferred:", msg);
+      }
     }
   }
 
@@ -577,7 +580,10 @@ async function fetchSuoiluRSS(): Promise<any[]> {
       return parseRSSXml(xmlText);
     }
   } catch (err) {
-    console.log("Direct RSS fetch failed:", getSafeErrorMessage(err));
+    const msg = getSafeErrorMessage(err);
+    if (msg !== "destination offline") {
+      console.log("Direct RSS fetch deferred:", msg);
+    }
   }
   return [];
 }
@@ -757,7 +763,10 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
             }
           }
         } catch (err: any) {
-          console.log(`Channel 5 Direct RSS Parser failed for ${rssUrl}:`, getSafeErrorMessage(err));
+          const msg = getSafeErrorMessage(err);
+          if (msg !== "destination offline") {
+            console.log(`Channel 5 Direct RSS Parser deferred for ${rssUrl}:`, msg);
+          }
         }
       }
     }
