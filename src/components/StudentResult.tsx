@@ -134,16 +134,6 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   let activeDaysAbsent = student.daysAbsent || 0;
   let activeDaysAbsentUnexcused = student.daysAbsentUnexcused || 0;
   let activeSkippedPeriods = student.skippedPeriods || 0;
-  
-  if (term === "hk1") {
-    activeDaysAbsent = Math.ceil(activeDaysAbsent * 0.4);
-    activeDaysAbsentUnexcused = Math.ceil(activeDaysAbsentUnexcused * 0.4);
-    activeSkippedPeriods = Math.ceil(activeSkippedPeriods * 0.4);
-  } else if (term === "hk2") {
-    activeDaysAbsent = Math.floor(activeDaysAbsent * 0.6);
-    activeDaysAbsentUnexcused = Math.floor(activeDaysAbsentUnexcused * 0.6);
-    activeSkippedPeriods = Math.floor(activeSkippedPeriods * 0.6);
-  }
 
   const excusedDays = activeDaysAbsent;
 
