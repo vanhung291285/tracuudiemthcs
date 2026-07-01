@@ -71,6 +71,14 @@ function isValidImage(src: string): boolean {
   return true;
 }
 
+function getSafeErrorMessage(err: any): string {
+  const msg = (err?.message || String(err || "")).trim();
+  if (msg.toLowerCase().includes("fetch failed") || msg.toLowerCase().includes("failed to fetch")) {
+    return "destination offline";
+  }
+  return msg;
+}
+
 // Fallback thematic image resolution helper based on article keywords
 function getThematicImage(title: string, index: number): string {
   const t = title.toLowerCase();
@@ -349,7 +357,7 @@ async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
     if (err.name === "AbortError") {
       console.log("RSS discovery timed out (expected for slow target servers)");
     } else {
-      console.log("Failed to dynamically auto-discover RSS feeds:", err.message || err);
+      console.log("Failed to dynamically auto-discover RSS feeds:", getSafeErrorMessage(err));
     }
   }
 
@@ -569,7 +577,7 @@ async function fetchSuoiluRSS(): Promise<any[]> {
       return parseRSSXml(xmlText);
     }
   } catch (err) {
-    console.log("Direct RSS fetch failed:", err.message || err);
+    console.log("Direct RSS fetch failed:", getSafeErrorMessage(err));
   }
   return [];
 }
@@ -619,7 +627,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
           }
         }
       } catch (err: any) {
-        console.log("Channel 1 WP REST API direct deferred:", err.message);
+        console.log("Channel 1 WP REST API direct deferred:", getSafeErrorMessage(err));
       }
     }
 
@@ -643,7 +651,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
             }
           }
         } catch (err: any) {
-          console.log(`Channel 2 RSS-to-JSON Proxy deferred for ${rssUrl}:`, err.message);
+          console.log(`Channel 2 RSS-to-JSON Proxy deferred for ${rssUrl}:`, getSafeErrorMessage(err));
         }
       }
     }
@@ -668,7 +676,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
             }
           }
         } catch (err: any) {
-          console.log(`Channel 2.5 corsproxy.io RSS Proxy deferred for ${rssUrl}:`, err.message);
+          console.log(`Channel 2.5 corsproxy.io RSS Proxy deferred for ${rssUrl}:`, getSafeErrorMessage(err));
         }
       }
     }
@@ -695,7 +703,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
             }
           }
         } catch (err: any) {
-          console.log(`Channel 3 AllOrigins RSS Proxy deferred for ${rssUrl}:`, err.message);
+          console.log(`Channel 3 AllOrigins RSS Proxy deferred for ${rssUrl}:`, getSafeErrorMessage(err));
         }
       }
     }
@@ -720,7 +728,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
           }
         }
       } catch (err: any) {
-        console.log("Channel 4 AllOrigins WP-JSON Proxy deferred:", err.message);
+        console.log("Channel 4 AllOrigins WP-JSON Proxy deferred:", getSafeErrorMessage(err));
       }
     }
 
@@ -749,7 +757,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
             }
           }
         } catch (err: any) {
-          console.log(`Channel 5 Direct RSS Parser failed for ${rssUrl}:`, err.message);
+          console.log(`Channel 5 Direct RSS Parser failed for ${rssUrl}:`, getSafeErrorMessage(err));
         }
       }
     }

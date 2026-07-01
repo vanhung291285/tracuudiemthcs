@@ -1496,18 +1496,17 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
              
              // Force recalculate academic grade if scores are present
              if (!parsedAcad && cardSubjects.length > 0) {
-               const isHK1 = importTerm === "hk1";
                const termScores = cardSubjects
                  .filter(s => s.isEvaluatedByScore)
                  .map(s => {
-                   const val = isHK1 ? s.semester1 : s.yearAvg;
+                   const val = importTerm === "hk1" ? s.semester1 : importTerm === "hk2" ? s.semester2 : s.yearAvg;
                    return typeof val === "number" ? val : null;
                  })
                  .filter(v => v !== null) as number[];
                const termComments = cardSubjects
                  .filter(s => !s.isEvaluatedByScore)
                  .map(s => {
-                   const val = isHK1 ? s.semester1 : s.yearAvg;
+                   const val = importTerm === "hk1" ? s.semester1 : importTerm === "hk2" ? s.semester2 : s.yearAvg;
                    return (val === "Đạt" || val === "Chưa đạt") ? val : null;
                  })
                  .filter(v => v !== null) as string[];
@@ -1515,7 +1514,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                const calculatedAcad = evaluateTT22(termScores, termComments);
                if (calculatedAcad) {
                  academicGrade = calculatedAcad;
-                 if (isHK1) academicGradeHK1 = calculatedAcad;
+                 if (importTerm === "hk1") {
+                   academicGradeHK1 = calculatedAcad;
+                 } else if (importTerm === "hk2") {
+                   academicGradeHK2 = calculatedAcad;
+                 }
                }
              }
 
@@ -2157,18 +2160,17 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           } else {
             // Recalculate academic grade if scores are present
             if (!academicVal.trim() && validScoreSubjects.length > 0) {
-               const isHK1 = importTerm === "hk1";
                const currentScores = mockSubjects
                  .filter(s => s.isEvaluatedByScore)
                  .map(s => {
-                   const val = isHK1 ? s.semester1 : s.yearAvg;
+                   const val = importTerm === "hk1" ? s.semester1 : importTerm === "hk2" ? s.semester2 : s.yearAvg;
                    return typeof val === "number" ? val : null;
                  })
                  .filter(v => v !== null) as number[];
                const currentComments = mockSubjects
                  .filter(s => !s.isEvaluatedByScore)
                  .map(s => {
-                   const val = isHK1 ? s.semester1 : s.yearAvg;
+                   const val = importTerm === "hk1" ? s.semester1 : importTerm === "hk2" ? s.semester2 : s.yearAvg;
                    return (val === "Đạt" || val === "Chưa đạt") ? val : null;
                  })
                  .filter(v => v !== null) as string[];
@@ -2176,7 +2178,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                const calculatedAcad = evaluateTT22(currentScores, currentComments);
                if (calculatedAcad) {
                  academicGrade = calculatedAcad;
-                 if (isHK1) academicGradeHK1 = calculatedAcad;
+                 if (importTerm === "hk1") {
+                   academicGradeHK1 = calculatedAcad;
+                 } else if (importTerm === "hk2") {
+                   academicGradeHK2 = calculatedAcad;
+                 }
                }
             }
 
@@ -2576,37 +2582,78 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     if (!window.confirm("Bạn có chắc chắn muốn TỰ ĐỘNG TÍNH LẠI kết quả học tập cho TẤT CẢ học sinh dựa trên điểm số hiện có? Thao tác này sẽ cập nhật lại Xếp loại và Danh hiệu theo đúng Thông tư 22.")) return;
     
     setAuthIsLoading(true);
-    let updatedCount = 0;
-    
-    for (const student of students) {
-      const scoreSubjects = (student.subjects || []).filter(s => s.isEvaluatedByScore);
-      const commentSubjects = (student.subjects || []).filter(s => !s.isEvaluatedByScore);
+    try {
+      let updatedCount = 0;
       
-      const currentScores = scoreSubjects
-        .map(s => typeof s.yearAvg === "number" ? s.yearAvg : null)
-        .filter(v => v !== null) as number[];
-      const currentComments = commentSubjects
-        .map(s => (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt") ? s.yearAvg : "Đạt") as string[];
-
-      if (currentScores.length > 0 || currentComments.length > 0) {
-        const calculatedAcad = evaluateTT22(currentScores, currentComments);
-        const calculatedDistinction = evaluateDistinctionTT22(calculatedAcad, student.behaviorGrade, currentScores);
+      for (const student of students) {
+        const scoreSubjects = (student.subjects || []).filter(s => s.isEvaluatedByScore);
+        const commentSubjects = (student.subjects || []).filter(s => !s.isEvaluatedByScore);
         
-        if (calculatedAcad !== student.academicGrade || calculatedDistinction !== student.distinction) {
-          const updated = {
-            ...student,
-            academicGrade: calculatedAcad,
-            distinction: calculatedDistinction as any
-          };
-          await dbService.upsertStudent(updated);
+        // Year Calculation
+        const currentScores = scoreSubjects
+          .map(s => typeof s.yearAvg === "number" ? s.yearAvg : null)
+          .filter(v => v !== null) as number[];
+        const currentComments = commentSubjects
+          .map(s => (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt") ? s.yearAvg : "Đạt") as string[];
+
+        // Semester 1 Calculation
+        const s1Scores = scoreSubjects
+          .map(s => typeof s.semester1 === "number" ? s.semester1 : null)
+          .filter(v => v !== null) as number[];
+        const s1Comments = commentSubjects
+          .map(s => (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ? s.semester1 : "Đạt") as string[];
+
+        // Semester 2 Calculation
+        const s2Scores = scoreSubjects
+          .map(s => typeof s.semester2 === "number" ? s.semester2 : null)
+          .filter(v => v !== null) as number[];
+        const s2Comments = commentSubjects
+          .map(s => (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ? s.semester2 : "Đạt") as string[];
+
+        let hasChange = false;
+        let updatedStudent = { ...student };
+
+        if (currentScores.length > 0 || currentComments.length > 0) {
+          const calculatedAcad = evaluateTT22(currentScores, currentComments);
+          const calculatedDistinction = evaluateDistinctionTT22(calculatedAcad, student.behaviorGrade, currentScores);
+          
+          if (calculatedAcad !== student.academicGrade || calculatedDistinction !== student.distinction) {
+            updatedStudent.academicGrade = calculatedAcad;
+            updatedStudent.distinction = calculatedDistinction as any;
+            hasChange = true;
+          }
+        }
+
+        if (s1Scores.length > 0 || s1Comments.length > 0) {
+          const calculatedHK1 = evaluateTT22(s1Scores, s1Comments);
+          if (calculatedHK1 && calculatedHK1 !== student.academicGradeHK1) {
+            updatedStudent.academicGradeHK1 = calculatedHK1;
+            hasChange = true;
+          }
+        }
+
+        if (s2Scores.length > 0 || s2Comments.length > 0) {
+          const calculatedHK2 = evaluateTT22(s2Scores, s2Comments);
+          if (calculatedHK2 && calculatedHK2 !== student.academicGradeHK2) {
+            updatedStudent.academicGradeHK2 = calculatedHK2;
+            hasChange = true;
+          }
+        }
+
+        if (hasChange) {
+          await dbService.upsertStudent(updatedStudent);
           updatedCount++;
         }
       }
+      
+      alert(`Hoàn thành! Đã cập nhật lại kết quả cho ${updatedCount} học sinh có sai lệch.`);
+      loadStudents();
+    } catch (err: any) {
+      console.error("Recalculate error:", err);
+      alert("Có lỗi xảy ra trong quá trình tính toán lại: " + (err.message || err));
+    } finally {
+      setAuthIsLoading(false);
     }
-    
-    setAuthIsLoading(false);
-    alert(`Hoàn thành! Đã cập nhật lại kết quả cho ${updatedCount} học sinh có sai lệch.`);
-    loadStudents();
   };
 
   const handleApplyImport = async () => {
