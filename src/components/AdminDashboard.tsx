@@ -4694,6 +4694,22 @@ NOTIFY pgrst, 'reload schema';`}
                       </p>
                     </div>
 
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 tracking-wide">
+                        8. Dòng bản quyền (Copyright) <span className="text-[#E53935]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={footerCopy}
+                        onChange={(e) => setFooterCopy(e.target.value)}
+                        placeholder="Ví dụ: © 2026 PTDTBT TH & THCS Suối Lư"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
+                        Gợi ý: Dòng chữ bản quyền ở dưới cùng của chân trang.
+                      </p>
+                    </div>
+
                     <div className="pt-4 border-t border-slate-100">
                       <h4 className="font-extrabold text-[#0055A5] text-[11px] uppercase tracking-wider mb-3">Cấu hình Liên kết Mạng xã hội</h4>
                     </div>
