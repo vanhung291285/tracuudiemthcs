@@ -2589,31 +2589,69 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         let hasChange = false;
         let updatedStudent = { ...student };
         
-        // 1. First, recalculate yearAvg for all subjects if semester1 and semester2 exist
+        // 1. First, recalculate semester1, semester2 and yearAvg for all subjects
         const updatedSubjects = (student.subjects || []).map(subj => {
+          let sSub = { ...subj };
+          let subjChanged = false;
+
           if (subj.isEvaluatedByScore) {
-            const s1 = typeof subj.semester1 === "number" ? subj.semester1 : null;
-            const s2 = typeof subj.semester2 === "number" ? subj.semester2 : null;
-            if (s1 !== null && s2 !== null) {
-              const newYearAvg = parseFloat(((s1 + 2 * s2) / 3).toFixed(1));
+            // Recalculate Semester 1 Average
+            const tx1Val = subj.tx1;
+            const mid1Val = subj.mid1;
+            const end1Val = subj.end1;
+            if (tx1Val && mid1Val !== undefined && mid1Val !== "" && end1Val !== undefined && end1Val !== "") {
+              const txParts = tx1Val.split(/\s+/).map(p => parseFloat(p.replace(",", "."))).filter(num => !isNaN(num));
+              if (txParts.length > 0) {
+                const sumTx = txParts.reduce((sum, val) => sum + val, 0);
+                const newS1 = parseFloat(((sumTx + (mid1Val as number) * 2 + (end1Val as number) * 3) / (txParts.length + 5)).toFixed(1));
+                if (newS1 !== subj.semester1) {
+                  sSub.semester1 = newS1;
+                  subjChanged = true;
+                }
+              }
+            }
+
+            // Recalculate Semester 2 Average
+            const tx2Val = subj.tx2;
+            const mid2Val = subj.mid2;
+            const end2Val = subj.end2;
+            if (tx2Val && mid2Val !== undefined && mid2Val !== "" && end2Val !== undefined && end2Val !== "") {
+              const txParts = tx2Val.split(/\s+/).map(p => parseFloat(p.replace(",", "."))).filter(num => !isNaN(num));
+              if (txParts.length > 0) {
+                const sumTx = txParts.reduce((sum, val) => sum + val, 0);
+                const newS2 = parseFloat(((sumTx + (mid2Val as number) * 2 + (end2Val as number) * 3) / (txParts.length + 5)).toFixed(1));
+                if (newS2 !== subj.semester2) {
+                  sSub.semester2 = newS2;
+                  subjChanged = true;
+                }
+              }
+            }
+
+            // Recalculate Year Average
+            const curS1 = typeof sSub.semester1 === "number" ? sSub.semester1 : null;
+            const curS2 = typeof sSub.semester2 === "number" ? sSub.semester2 : null;
+            if (curS1 !== null && curS2 !== null) {
+              const newYearAvg = parseFloat(((curS1 + 2 * curS2) / 3).toFixed(1));
               if (newYearAvg !== subj.yearAvg) {
-                hasChange = true;
-                return { ...subj, yearAvg: newYearAvg };
+                sSub.yearAvg = newYearAvg;
+                subjChanged = true;
               }
             }
           } else {
-            const s1 = subj.semester1;
-            const s2 = subj.semester2;
+            // Comments logic
+            const s1 = sSub.semester1;
+            const s2 = sSub.semester2;
             if (s1 && s2) {
-              // For comments, usually Year = S2 if S2 is achieved
               const newYearAvg = s2 === "Đạt" ? "Đạt" : s2;
               if (newYearAvg !== subj.yearAvg) {
-                hasChange = true;
-                return { ...subj, yearAvg: newYearAvg };
+                sSub.yearAvg = newYearAvg;
+                subjChanged = true;
               }
             }
           }
-          return subj;
+
+          if (subjChanged) hasChange = true;
+          return sSub;
         });
         
         if (hasChange) updatedStudent.subjects = updatedSubjects;
