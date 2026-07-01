@@ -440,15 +440,6 @@ class DatabaseService {
             this.removeDiacritics(m.fullName) === noDiacriticInput
           );
           if (found.length > 0) return found;
-
-          // 3. Fuzzy match: Ensure parts of the input are present in the name
-          const inputParts = cleanName.split(" ").filter(p => p.length > 1);
-          found = mappedList.filter((m: Student) => {
-            const dbName = this.normalizeName(m.fullName);
-            const dbNoAccents = this.removeDiacritics(m.fullName);
-            return inputParts.every(part => dbName.includes(part) || dbNoAccents.includes(this.removeDiacritics(part)));
-          });
-          if (found.length > 0) return found;
         }
       } catch (err) {
         console.warn("Supabase query by name/class error:", err);
@@ -466,10 +457,7 @@ class DatabaseService {
       if (dbNameNormalized === cleanName) return true;
       if (dbNoAccents === noDiacriticInput) return true;
       
-      const inputParts = cleanName.split(" ").filter(p => p.length > 1);
-      return inputParts.length > 0 && inputParts.every(part => 
-        dbNameNormalized.includes(part) || dbNoAccents.includes(this.removeDiacritics(part))
-      );
+      return false;
     });
     
     return localFound;
@@ -514,17 +502,6 @@ class DatabaseService {
           );
 
           if (found.length > 0) return found;
-
-          // 3. Fuzzy match for long names: Ensure all words in the input are present in the database name
-          const inputParts = cleanName.split(" ").filter(p => p.length > 1);
-          found = mappedList.filter((m: Student) => {
-            if (!this.compareDates(m.dob, cleanDob)) return false;
-            const dbName = this.normalizeName(m.fullName);
-            const dbNoAccents = this.removeDiacritics(m.fullName);
-            return inputParts.every(part => dbName.includes(part) || dbNoAccents.includes(this.removeDiacritics(part)));
-          });
-
-          if (found.length > 0) return found;
         }
       } catch (err) {
         console.warn("Supabase query error:", err);
@@ -542,10 +519,7 @@ class DatabaseService {
       if (dbNameNormalized === cleanName) return true;
       if (dbNoAccents === noDiacriticInput) return true;
       
-      const inputParts = cleanName.split(" ").filter(p => p.length > 1);
-      return inputParts.length > 0 && inputParts.every(part => 
-        dbNameNormalized.includes(part) || dbNoAccents.includes(this.removeDiacritics(part))
-      );
+      return false;
     });
     
     return localFound;
