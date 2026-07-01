@@ -824,12 +824,44 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         distinction = evaluateDistinctionTT22(academicGrade, behaviorGrade, currentScores);
     }
 
+    // Recalculate HK1 Academic Grade if there are scores
+    const s1Scores = scoreSubjectsList
+      .map(s => typeof s.semester1 === "number" ? s.semester1 : null)
+      .filter(v => v !== null) as number[];
+    const s1Comments = commentSubjectsList
+      .map(s => (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ? s.semester1 : "Đạt") as string[];
+    let academicGradeHK1 = formStudent.academicGradeHK1 || "";
+    if (s1Scores.length > 0 || s1Comments.length > 0) {
+      const calculatedHK1 = evaluateTT22(s1Scores, s1Comments);
+      if (calculatedHK1) academicGradeHK1 = calculatedHK1;
+    }
+
+    // Recalculate HK2 Academic Grade if there are scores
+    const s2Scores = scoreSubjectsList
+      .map(s => typeof s.semester2 === "number" ? s.semester2 : null)
+      .filter(v => v !== null) as number[];
+    const s2Comments = commentSubjectsList
+      .map(s => (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ? s.semester2 : "Đạt") as string[];
+    let academicGradeHK2 = formStudent.academicGradeHK2 || "";
+    if (s2Scores.length > 0 || s2Comments.length > 0) {
+      const calculatedHK2 = evaluateTT22(s2Scores, s2Comments);
+      if (calculatedHK2) academicGradeHK2 = calculatedHK2;
+    }
+
+    const behaviorGradeHK1 = formStudent.behaviorGradeHK1 || formStudent.behaviorGrade || "Tốt";
+    const behaviorGradeHK2 = formStudent.behaviorGradeHK2 || formStudent.behaviorGrade || "Tốt";
+
     const preparedStudent = {
       ...formStudent,
       studentCode: cleanCode,
       dob: cleanDob,
       subjects: preparedSubjects,
       academicGrade,
+      academicGradeHK1,
+      academicGradeHK2,
+      behaviorGrade,
+      behaviorGradeHK1,
+      behaviorGradeHK2,
       distinction
     };
 
@@ -5179,12 +5211,42 @@ NOTIFY pgrst, 'reload schema';`}
                   </div>
 
                   <div>
-                    <label className="block font-bold text-slate-700 uppercase mb-1">Xếp loại rèn luyện</label>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Xếp loại rèn luyện Cả Năm</label>
                     <select
                       value={formStudent.behaviorGrade || "Tốt"}
                       onChange={(e) => setFormStudent({ ...formStudent, behaviorGrade: e.target.value as any })}
                       className="w-full border p-2 rounded bg-white"
                     >
+                      <option value="Tốt">Tốt</option>
+                      <option value="Khá">Khá</option>
+                      <option value="Đạt">Đạt</option>
+                      <option value="Chưa đạt">Chưa đạt</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Rèn luyện Học kỳ I</label>
+                    <select
+                      value={formStudent.behaviorGradeHK1 || ""}
+                      onChange={(e) => setFormStudent({ ...formStudent, behaviorGradeHK1: e.target.value as any })}
+                      className="w-full border p-2 rounded bg-white"
+                    >
+                      <option value="">-- Mặc định như Cả Năm --</option>
+                      <option value="Tốt">Tốt</option>
+                      <option value="Khá">Khá</option>
+                      <option value="Đạt">Đạt</option>
+                      <option value="Chưa đạt">Chưa đạt</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 uppercase mb-1">Rèn luyện Học kỳ II</label>
+                    <select
+                      value={formStudent.behaviorGradeHK2 || ""}
+                      onChange={(e) => setFormStudent({ ...formStudent, behaviorGradeHK2: e.target.value as any })}
+                      className="w-full border p-2 rounded bg-white"
+                    >
+                      <option value="">-- Mặc định như Cả Năm --</option>
                       <option value="Tốt">Tốt</option>
                       <option value="Khá">Khá</option>
                       <option value="Đạt">Đạt</option>
