@@ -1944,8 +1944,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     if (txVal && midVal !== "" && endVal !== "") {
                       const txParts = txVal.split(/\s+/).map(p => parseFloat(p.replace(",", "."))).filter(num => !isNaN(num));
                       if (txParts.length > 0) {
-                        const txAvg = txParts.reduce((sum, val) => sum + val, 0) / txParts.length;
-                        avgVal = parseFloat(((txAvg + (midVal as number) * 2 + (endVal as number) * 3) / 6).toFixed(1));
+                        const sumTx = txParts.reduce((sum, val) => sum + val, 0);
+                        avgVal = parseFloat(((sumTx + (midVal as number) * 2 + (endVal as number) * 3) / (txParts.length + 5)).toFixed(1));
                       } else {
                         avgVal = parseFloat((((midVal as number) * 2 + (endVal as number) * 3) / 5).toFixed(1));
                       }
@@ -2586,56 +2586,84 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       let updatedCount = 0;
       
       for (const student of students) {
-        const scoreSubjects = (student.subjects || []).filter(s => s.isEvaluatedByScore);
-        const commentSubjects = (student.subjects || []).filter(s => !s.isEvaluatedByScore);
-        
-        // Year Calculation
-        const currentScores = scoreSubjects
-          .map(s => typeof s.yearAvg === "number" ? s.yearAvg : null)
-          .filter(v => v !== null) as number[];
-        const currentComments = commentSubjects
-          .map(s => (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt") ? s.yearAvg : "Đạt") as string[];
-
-        // Semester 1 Calculation
-        const s1Scores = scoreSubjects
-          .map(s => typeof s.semester1 === "number" ? s.semester1 : null)
-          .filter(v => v !== null) as number[];
-        const s1Comments = commentSubjects
-          .map(s => (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ? s.semester1 : "Đạt") as string[];
-
-        // Semester 2 Calculation
-        const s2Scores = scoreSubjects
-          .map(s => typeof s.semester2 === "number" ? s.semester2 : null)
-          .filter(v => v !== null) as number[];
-        const s2Comments = commentSubjects
-          .map(s => (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ? s.semester2 : "Đạt") as string[];
-
         let hasChange = false;
         let updatedStudent = { ...student };
-
-        if (currentScores.length > 0 || currentComments.length > 0) {
-          const calculatedAcad = evaluateTT22(currentScores, currentComments);
-          const calculatedDistinction = evaluateDistinctionTT22(calculatedAcad, student.behaviorGrade, currentScores);
-          
-          if (calculatedAcad !== student.academicGrade || calculatedDistinction !== student.distinction) {
-            updatedStudent.academicGrade = calculatedAcad;
-            updatedStudent.distinction = calculatedDistinction as any;
-            hasChange = true;
+        
+        // 1. First, recalculate yearAvg for all subjects if semester1 and semester2 exist
+        const updatedSubjects = (student.subjects || []).map(subj => {
+          if (subj.isEvaluatedByScore) {
+            const s1 = typeof subj.semester1 === "number" ? subj.semester1 : null;
+            const s2 = typeof subj.semester2 === "number" ? subj.semester2 : null;
+            if (s1 !== null && s2 !== null) {
+              const newYearAvg = parseFloat(((s1 + 2 * s2) / 3).toFixed(1));
+              if (newYearAvg !== subj.yearAvg) {
+                hasChange = true;
+                return { ...subj, yearAvg: newYearAvg };
+              }
+            }
+          } else {
+            const s1 = subj.semester1;
+            const s2 = subj.semester2;
+            if (s1 && s2) {
+              // For comments, usually Year = S2 if S2 is achieved
+              const newYearAvg = s2 === "Đạt" ? "Đạt" : s2;
+              if (newYearAvg !== subj.yearAvg) {
+                hasChange = true;
+                return { ...subj, yearAvg: newYearAvg };
+              }
+            }
           }
+          return subj;
+        });
+        
+        if (hasChange) updatedStudent.subjects = updatedSubjects;
+
+        const scoreSubjects = updatedStudent.subjects.filter(s => s.isEvaluatedByScore);
+        const commentSubjects = updatedStudent.subjects.filter(s => !s.isEvaluatedByScore);
+        
+        // Semester 1 Calculation
+        const s1Scores = scoreSubjects.map(s => typeof s.semester1 === "number" ? s.semester1 : null).filter(v => v !== null) as number[];
+        const s1Comments = commentSubjects.map(s => (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt") ? s.semester1 : "Đạt") as string[];
+        const calculatedHK1 = s1Scores.length > 0 ? evaluateTT22(s1Scores, s1Comments) : "";
+
+        // Semester 2 Calculation
+        const s2Scores = scoreSubjects.map(s => typeof s.semester2 === "number" ? s.semester2 : null).filter(v => v !== null) as number[];
+        const s2Comments = commentSubjects.map(s => (s.semester2 === "Đạt" || s.semester2 === "Chưa đạt") ? s.semester2 : "Đạt") as string[];
+        const calculatedHK2 = s2Scores.length > 0 ? evaluateTT22(s2Scores, s2Comments) : "";
+
+        // Year Calculation
+        const yearScores = scoreSubjects.map(s => typeof s.yearAvg === "number" ? s.yearAvg : null).filter(v => v !== null) as number[];
+        const yearComments = commentSubjects.map(s => (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt") ? s.yearAvg : "Đạt") as string[];
+        let calculatedYearAcad = yearScores.length > 0 ? evaluateTT22(yearScores, yearComments) : "";
+
+        // Applying the "S2 overrides Year if better" rule (Khoản 4 Điều 9 TT22)
+        const levels: Record<string, number> = { "Tốt": 4, "Khá": 3, "Đạt": 2, "Chưa đạt": 1, "": 0 };
+        if (levels[calculatedHK2] > levels[calculatedYearAcad]) {
+          calculatedYearAcad = calculatedHK2;
         }
 
-        if (s1Scores.length > 0 || s1Comments.length > 0) {
-          const calculatedHK1 = evaluateTT22(s1Scores, s1Comments);
-          if (calculatedHK1 && calculatedHK1 !== student.academicGradeHK1) {
-            updatedStudent.academicGradeHK1 = calculatedHK1;
-            hasChange = true;
-          }
+        if (calculatedHK1 !== student.academicGradeHK1) {
+          updatedStudent.academicGradeHK1 = calculatedHK1;
+          hasChange = true;
+        }
+        if (calculatedHK2 !== student.academicGradeHK2) {
+          updatedStudent.academicGradeHK2 = calculatedHK2;
+          hasChange = true;
         }
 
-        if (s2Scores.length > 0 || s2Comments.length > 0) {
-          const calculatedHK2 = evaluateTT22(s2Scores, s2Comments);
-          if (calculatedHK2 && calculatedHK2 !== student.academicGradeHK2) {
-            updatedStudent.academicGradeHK2 = calculatedHK2;
+        const finalDistinction = evaluateDistinctionTT22(calculatedYearAcad, student.behaviorGrade, yearScores);
+
+        if (calculatedYearAcad !== student.academicGrade || finalDistinction !== student.distinction) {
+          updatedStudent.academicGrade = calculatedYearAcad;
+          updatedStudent.distinction = finalDistinction as any;
+          hasChange = true;
+        }
+
+        // Fix Behavior Grade if missing HK1
+        if (!student.behaviorGradeHK1 && student.behaviorGradeHK2) {
+          updatedStudent.behaviorGradeHK1 = ""; // Explicitly empty
+          if (!student.behaviorGrade || student.behaviorGrade === "Chưa có") {
+            updatedStudent.behaviorGrade = student.behaviorGradeHK2;
             hasChange = true;
           }
         }
