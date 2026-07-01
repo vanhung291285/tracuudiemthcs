@@ -42,6 +42,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authIsLoading, setAuthIsLoading] = useState(false);
+  const [isRecalculatingAll, setIsRecalculatingAll] = useState(false);
 
   // States
   const [students, setStudents] = useState<Student[]>([]);
@@ -2581,7 +2582,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const handleRecalculateAll = async () => {
     if (!window.confirm("Bạn có chắc chắn muốn TỰ ĐỘNG TÍNH LẠI kết quả học tập cho TẤT CẢ học sinh dựa trên điểm số hiện có? Thao tác này sẽ cập nhật lại Xếp loại và Danh hiệu theo đúng Thông tư 22.")) return;
     
-    setAuthIsLoading(true);
+    setIsRecalculatingAll(true);
     try {
       let updatedCount = 0;
       
@@ -2712,7 +2713,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       console.error("Recalculate error:", err);
       alert("Có lỗi xảy ra trong quá trình tính toán lại: " + (err.message || err));
     } finally {
-      setAuthIsLoading(false);
+      setIsRecalculatingAll(false);
     }
   };
 
@@ -3041,10 +3042,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
                   <button
                     onClick={handleRecalculateAll}
-                    disabled={authIsLoading || students.length === 0}
+                    disabled={isRecalculatingAll || students.length === 0}
                     className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm hover:shadow-md"
                   >
-                    <RefreshCw className={`w-4 h-4 ${authIsLoading ? "animate-spin" : ""}`} /> Tính lại KQHT (TT22)
+                    <RefreshCw className={`w-4 h-4 ${isRecalculatingAll ? "animate-spin" : ""}`} /> Tính lại KQHT (TT22)
                   </button>
                 </div>
 
