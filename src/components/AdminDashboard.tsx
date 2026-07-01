@@ -12,7 +12,7 @@ import {
   RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet, UserX, SortAsc
 } from "lucide-react";
 
-import { evaluateTT22, evaluateDistinctionTT22 } from "../lib/tt22";
+import { evaluateTT22, evaluateDistinctionTT22, roundScore } from "../lib/tt22";
 
 interface AdminDashboardProps {
   onBackToPortal: () => void;
@@ -788,7 +788,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         let yAvg = (sub.yearAvg !== "" && sub.yearAvg !== undefined) ? parseFloat(String(sub.yearAvg)) : "";
         
         if (s1 !== null && s2 !== null && !isNaN(s1) && !isNaN(s2)) {
-          yAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
+          yAvg = roundScore((s2 * 2 + s1) / 3);
         }
 
         return {
@@ -976,7 +976,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           const s1 = typeof updatedSub.semester1 === "number" ? updatedSub.semester1 : null;
           const s2 = typeof updatedSub.semester2 === "number" ? updatedSub.semester2 : null;
           if (s1 !== null && s2 !== null) {
-            updatedSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
+            updatedSub.yearAvg = roundScore((s2 * 2 + s1) / 3);
           }
         } else {
           const s1 = updatedSub.semester1;
@@ -1005,7 +1005,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         const termScores = termSubjects.map(s => {
           if (term === "canam") {
              if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
-                return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
+                return roundScore((s.semester2 * 2 + s.semester1) / 3);
              }
              return typeof s.yearAvg === "number" ? s.yearAvg : null;
           }
@@ -1048,7 +1048,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       if (academicGrade && behaviorGrade) {
         const yearScores = scoreSubjects.map(s => {
              if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
-                return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
+                return roundScore((s.semester2 * 2 + s.semester1) / 3);
              }
              return typeof s.yearAvg === "number" ? s.yearAvg : 0;
         });
@@ -1432,7 +1432,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                  const s2 = typeof targetSub.semester2 === "number" ? targetSub.semester2 : null;
                  if (importTerm !== "canam") {
                    if (s1 !== null && s2 !== null) {
-                     targetSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
+                     targetSub.yearAvg = roundScore((s2 * 2 + s1) / 3);
                    }
                  }
                } else {
@@ -1945,9 +1945,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       const txParts = txVal.split(/\s+/).map(p => parseFloat(p.replace(",", "."))).filter(num => !isNaN(num));
                       if (txParts.length > 0) {
                         const sumTx = txParts.reduce((sum, val) => sum + val, 0);
-                        avgVal = parseFloat(((sumTx + (midVal as number) * 2 + (endVal as number) * 3) / (txParts.length + 5)).toFixed(1));
+                        avgVal = roundScore((sumTx + (midVal as number) * 2 + (endVal as number) * 3) / (txParts.length + 5));
                       } else {
-                        avgVal = parseFloat((((midVal as number) * 2 + (endVal as number) * 3) / 5).toFixed(1));
+                        avgVal = roundScore(((midVal as number) * 2 + (endVal as number) * 3) / 5);
                       }
                     } else if (midVal !== "") {
                       avgVal = midVal;
@@ -2029,7 +2029,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               
               if (importTerm !== "canam") {
                 if (s1 !== null && s2 !== null) {
-                  targetSub.yearAvg = parseFloat(((s2 * 2 + s1) / 3).toFixed(1));
+                  targetSub.yearAvg = roundScore((s2 * 2 + s1) / 3);
                 }
               }
             } else {
@@ -2603,7 +2603,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               const txParts = tx1Val.split(/\s+/).map(p => parseFloat(p.replace(",", "."))).filter(num => !isNaN(num));
               if (txParts.length > 0) {
                 const sumTx = txParts.reduce((sum, val) => sum + val, 0);
-                const newS1 = parseFloat(((sumTx + (mid1Val as number) * 2 + (end1Val as number) * 3) / (txParts.length + 5)).toFixed(1));
+                const newS1 = roundScore((sumTx + (mid1Val as number) * 2 + (end1Val as number) * 3) / (txParts.length + 5));
                 if (newS1 !== subj.semester1) {
                   sSub.semester1 = newS1;
                   subjChanged = true;
@@ -2619,7 +2619,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               const txParts = tx2Val.split(/\s+/).map(p => parseFloat(p.replace(",", "."))).filter(num => !isNaN(num));
               if (txParts.length > 0) {
                 const sumTx = txParts.reduce((sum, val) => sum + val, 0);
-                const newS2 = parseFloat(((sumTx + (mid2Val as number) * 2 + (end2Val as number) * 3) / (txParts.length + 5)).toFixed(1));
+                const newS2 = roundScore((sumTx + (mid2Val as number) * 2 + (end2Val as number) * 3) / (txParts.length + 5));
                 if (newS2 !== subj.semester2) {
                   sSub.semester2 = newS2;
                   subjChanged = true;
@@ -2631,7 +2631,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             const curS1 = typeof sSub.semester1 === "number" ? sSub.semester1 : null;
             const curS2 = typeof sSub.semester2 === "number" ? sSub.semester2 : null;
             if (curS1 !== null && curS2 !== null) {
-              const newYearAvg = parseFloat(((curS1 + 2 * curS2) / 3).toFixed(1));
+              const newYearAvg = roundScore((curS1 + 2 * curS2) / 3);
               if (newYearAvg !== subj.yearAvg) {
                 sSub.yearAvg = newYearAvg;
                 subjChanged = true;
@@ -2673,12 +2673,6 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         const yearScores = scoreSubjects.map(s => typeof s.yearAvg === "number" ? s.yearAvg : null).filter(v => v !== null) as number[];
         const yearComments = commentSubjects.map(s => (s.yearAvg === "Đạt" || s.yearAvg === "Chưa đạt") ? s.yearAvg : "Đạt") as string[];
         let calculatedYearAcad = yearScores.length > 0 ? evaluateTT22(yearScores, yearComments) : "";
-
-        // Applying the "S2 overrides Year if better" rule (Khoản 4 Điều 9 TT22)
-        const levels: Record<string, number> = { "Tốt": 4, "Khá": 3, "Đạt": 2, "Chưa đạt": 1, "": 0 };
-        if (levels[calculatedHK2] > levels[calculatedYearAcad]) {
-          calculatedYearAcad = calculatedHK2;
-        }
 
         if (calculatedHK1 !== student.academicGradeHK1) {
           updatedStudent.academicGradeHK1 = calculatedHK1;
@@ -3328,7 +3322,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                     tx = sub.semester1 !== undefined && sub.semester1 !== "" ? `HK1: ${sub.semester1}` : undefined;
                                     mid = sub.semester2 !== undefined && sub.semester2 !== "" ? `HK2: ${sub.semester2}` : undefined;
                                     if (sub.isEvaluatedByScore && typeof sub.semester1 === "number" && typeof sub.semester2 === "number") {
-                                      avg = parseFloat(((sub.semester2 * 2 + sub.semester1) / 3).toFixed(1));
+                                      avg = roundScore((sub.semester2 * 2 + sub.semester1) / 3);
                                     } else {
                                       avg = sub.yearAvg ?? "-";
                                     }

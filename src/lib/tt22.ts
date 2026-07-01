@@ -1,3 +1,7 @@
+export const roundScore = (num: number): number => {
+  return Math.round((num + Number.EPSILON) * 10) / 10;
+};
+
 export const evaluateTT22 = (scores: number[], comments: string[]): "Tốt" | "Khá" | "Đạt" | "Chưa đạt" | "" => {
   if (scores.length === 0 && comments.length === 0) return "";
   

@@ -7,7 +7,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { Student } from "../types";
 import { ArrowLeft } from "lucide-react";
 import dbService from "../lib/supabase";
-import { evaluateTT22, evaluateDistinctionTT22 } from "../lib/tt22";
+import { evaluateTT22, evaluateDistinctionTT22, roundScore } from "../lib/tt22";
 
 interface StudentResultProps {
   student: Student;
@@ -63,7 +63,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     const currentScores = scoreSubjects.map(s => {
       if (term === "canam") {
         if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
-          return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
+          return roundScore((s.semester2 * 2 + s.semester1) / 3);
         }
         return typeof s.yearAvg === "number" ? s.yearAvg : null;
       }
@@ -79,20 +79,6 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     const calculatedGrade = evaluateTT22(currentScores, currentComments);
     if (calculatedGrade) {
       activeAcademicGrade = calculatedGrade as any;
-      
-      // If viewing the full year, check if Semester 2 is better and override
-      if (term === "canam") {
-        const s2Scores = scoreSubjects.map(s => typeof s.semester2 === "number" ? s.semester2 : null).filter(v => v !== null) as number[];
-        const s2Comments = (student.subjects || []).filter(s => !s.isEvaluatedByScore).map(s => {
-            return s.semester2 === "Đạt" || s.semester2 === "Chưa đạt" ? s.semester2 : null;
-        }).filter(v => v !== null) as string[];
-        
-        const hk2Grade = evaluateTT22(s2Scores, s2Comments);
-        const levels: Record<string, number> = { "Tốt": 4, "Khá": 3, "Đạt": 2, "Chưa đạt": 1, "": 0 };
-        if (levels[hk2Grade] > levels[calculatedGrade]) {
-          activeAcademicGrade = hk2Grade as any;
-        }
-      }
     }
   }
 
@@ -121,7 +107,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     const currentScores = scoreSubjects.map(s => {
       if (term === "canam") {
         if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
-          return parseFloat(((s.semester2 * 2 + s.semester1) / 3).toFixed(1));
+          return roundScore((s.semester2 * 2 + s.semester1) / 3);
         }
         return typeof s.yearAvg === "number" ? s.yearAvg : null;
       }
