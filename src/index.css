@@ -96,6 +96,21 @@ html, body, .decorative-page-bg, #app-root {
   50% { transform: translateY(-20px) rotate(5deg); }
 }
 
+@keyframes marquee-horizontal {
+  from { transform: translateX(100vw); }
+  to { transform: translateX(-100%); }
+}
+
+.animate-marquee-horizontal {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee-horizontal 60s linear infinite;
+  will-change: transform;
+}
+.animate-marquee-horizontal:hover {
+  animation-play-state: paused;
+}
+
 .animate-vertical-floating {
   animation: vertical-floating 6s ease-in-out infinite;
 }
@@ -165,7 +180,7 @@ html, body, .decorative-page-bg, #app-root {
   }
 
   th {
-    background-color: #0055A5 !important;
+    background-color: #337819 !important;
     color: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

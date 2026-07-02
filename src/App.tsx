@@ -100,7 +100,7 @@ export default function App() {
 
   // Switch dynamically between pages
   return (
-    <div className="min-h-full flex flex-col decorative-page-bg text-slate-800 font-sans select-none relative selection:bg-[#0055A5]/20 selection:text-[#0055A5]" id="app-root">
+    <div className="min-h-full flex flex-col decorative-page-bg text-slate-800 font-sans select-none relative selection:bg-[#337819]/20 selection:text-[#337819]" id="app-root">
       
       {/* View Container that grows to fill space */}
       <div className="flex-1 flex flex-col w-full relative">

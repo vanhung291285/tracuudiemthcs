@@ -2852,7 +2852,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     <div className="w-full min-h-screen bg-sky-50 flex flex-col" id="admin-dashboard-container">
       
       {/* Admin Logged-In Top Navigation Bar */}
-      <nav className="bg-[#0055A5] text-white px-6 py-4 flex items-center justify-between border-b-2 border-amber-500 shadow-md">
+      <nav className="bg-[#337819] text-white px-6 py-4 flex items-center justify-between border-b-2 border-amber-500 shadow-md">
         <div className="flex items-center gap-3">
           <School className="w-6 h-6 text-amber-400" />
           <div>
@@ -2898,7 +2898,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                 </div>
               </div>
 
-              <h2 className="text-lg font-black text-[#0055A5] uppercase text-center mb-1">
+              <h2 className="text-lg font-black text-[#337819] uppercase text-center mb-1">
                 Xét duyệt cán bộ học tịch
               </h2>
               <p className="text-xs text-slate-500 text-center mb-6">
@@ -2916,7 +2916,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
                     placeholder="Ví dụ: admin@edu.vn"
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-2 focus:ring-[#0055A5] bg-slate-50 focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-2 focus:ring-[#337819] bg-slate-50 focus:bg-white"
                   />
                 </div>
 
@@ -2930,7 +2930,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
                     placeholder="Nhập mật khẩu tác vụ"
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-2 focus:ring-[#0055A5] bg-slate-50 focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-800 text-sm focus:ring-2 focus:ring-[#337819] bg-slate-50 focus:bg-white"
                   />
                 </div>
 
@@ -2962,7 +2962,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             <button
               onClick={() => setActiveTab("students")}
               className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
-                activeTab === "students" ? "bg-[#0055A5]/10 text-[#0055A5]" : "text-slate-600 hover:bg-slate-50"
+                activeTab === "students" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <Users className="w-4 h-4" /> Danh Sách Học Sinh
@@ -2970,7 +2970,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             <button
               onClick={() => setActiveTab("grades")}
               className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
-                activeTab === "grades" ? "bg-[#0055A5]/10 text-[#0055A5]" : "text-slate-600 hover:bg-slate-50"
+                activeTab === "grades" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <Keyboard className="w-4 h-4" /> Bảng Sổ Điểm Nhanh
@@ -2978,7 +2978,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             <button
               onClick={() => setActiveTab("import")}
               className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
-                activeTab === "import" ? "bg-[#0055A5]/10 text-[#0055A5]" : "text-slate-600 hover:bg-slate-50"
+                activeTab === "import" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <Upload className="w-4 h-4" /> Nhập Excel / CSV
@@ -2986,7 +2986,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             <button
               onClick={() => setActiveTab("stats")}
               className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
-                activeTab === "stats" ? "bg-[#0055A5]/10 text-[#0055A5]" : "text-slate-600 hover:bg-slate-50"
+                activeTab === "stats" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <BarChart3 className="w-4 h-4" /> Thống Kê Học Vụ
@@ -2994,7 +2994,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             <button
               onClick={() => setActiveTab("classes")}
               className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
-                activeTab === "classes" ? "bg-[#0055A5]/10 text-[#0055A5]" : "text-slate-600 hover:bg-slate-50"
+                activeTab === "classes" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <Layers className="w-4 h-4" /> Cấu hình lớp học
@@ -3002,7 +3002,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             <button
               onClick={() => setActiveTab("supabase")}
               className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
-                activeTab === "supabase" ? "bg-[#0055A5]/10 text-[#0055A5]" : "text-slate-600 hover:bg-slate-50"
+                activeTab === "supabase" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <Database className="w-4 h-4" /> Thiết lập Supabase
@@ -3010,7 +3010,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             <button
               onClick={() => setActiveTab("settings")}
               className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
-                activeTab === "settings" ? "bg-[#0055A5]/10 text-[#0055A5]" : "text-slate-600 hover:bg-slate-50"
+                activeTab === "settings" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               <School className="w-4 h-4" /> Cấu hình cổng tra cứu
@@ -3088,7 +3088,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Tìm kiếm theo mã học sinh, họ tên, lớp..."
-                    className="w-full sm:flex-1 px-4 py-2 border rounded-lg text-xs text-slate-700 bg-slate-50 focus:ring-2 focus:ring-[#0055A5] outline-none"
+                    className="w-full sm:flex-1 px-4 py-2 border rounded-lg text-xs text-slate-700 bg-slate-50 focus:ring-2 focus:ring-[#337819] outline-none"
                   />
 
                   <div className="flex gap-2 w-full sm:w-auto">
@@ -3236,7 +3236,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         }}
                         className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
                           gradesTerm === "hk1"
-                            ? "bg-[#0055A5] text-white shadow-sm"
+                            ? "bg-[#337819] text-white shadow-sm"
                             : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                         }`}
                       >
@@ -3250,7 +3250,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         }}
                         className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
                           gradesTerm === "hk2"
-                            ? "bg-[#0055A5] text-white shadow-sm"
+                            ? "bg-[#337819] text-white shadow-sm"
                             : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                         }`}
                       >
@@ -3264,7 +3264,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         }}
                         className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
                           gradesTerm === "canam"
-                            ? "bg-[#0055A5] text-white shadow-sm"
+                            ? "bg-[#337819] text-white shadow-sm"
                             : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                         }`}
                       >
@@ -3369,8 +3369,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                 return (
                                   <td key={subjId} className="px-1 py-1.5 text-center font-bold bg-white align-middle relative">
                                     {isEditing ? (
-                                      <div className="absolute bg-white border-2 border-[#0055A5] rounded-xl p-3 shadow-2xl z-50 flex flex-col gap-2 text-left min-w-[170px] -translate-x-1/2 left-1/2 top-1.5 animate-scaleUp">
-                                        <div className="text-[10px] font-extrabold text-[#0055A5] uppercase tracking-wider border-b pb-1 flex items-center justify-between">
+                                      <div className="absolute bg-white border-2 border-[#337819] rounded-xl p-3 shadow-2xl z-50 flex flex-col gap-2 text-left min-w-[170px] -translate-x-1/2 left-1/2 top-1.5 animate-scaleUp">
+                                        <div className="text-[10px] font-extrabold text-[#337819] uppercase tracking-wider border-b pb-1 flex items-center justify-between">
                                           <span>Sửa {sub?.subjectName}</span>
                                           <button 
                                             type="button" 
@@ -3477,7 +3477,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                           <button
                                             type="button"
                                             onClick={() => saveEditedGrade(student)}
-                                            className="px-2.5 py-1 text-[9px] bg-[#0055A5] hover:bg-blue-800 text-white rounded-lg font-bold flex items-center gap-0.5 transition cursor-pointer"
+                                            className="px-2.5 py-1 text-[9px] bg-[#337819] hover:bg-blue-800 text-white rounded-lg font-bold flex items-center gap-0.5 transition cursor-pointer"
                                           >
                                             Lưu
                                           </button>
@@ -4162,7 +4162,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                   
                   {/* Left Form: Edit Connection details */}
                   <div className="bg-white border rounded-xl p-5 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2 border-b pb-2 text-sm font-bold text-[#0055A5]">
+                    <div className="flex items-center gap-2 border-b pb-2 text-sm font-bold text-[#337819]">
                       <Database className="w-5 h-5" />
                       <span>Thông tin đăng kiểm quyền lực đám mây</span>
                     </div>
@@ -4197,7 +4197,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       <div className="flex gap-2">
                         <button
                           onClick={handleSaveSupabaseConfig}
-                          className="bg-[#0055A5] hover:bg-blue-800 text-white font-bold px-4 py-2 text-xs rounded-lg transition cursor-pointer"
+                          className="bg-[#337819] hover:bg-blue-800 text-white font-bold px-4 py-2 text-xs rounded-lg transition cursor-pointer"
                         >
                           KẾT NỐI & KIỂM TRA
                         </button>
@@ -4599,8 +4599,8 @@ NOTIFY pgrst, 'reload schema';`}
                 </div>
 
                 <div className="max-w-xl bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
-                  <div className="flex items-center gap-2 border-b pb-2 text-sm font-bold text-[#0055A5] uppercase tracking-wider">
-                    <School className="w-5 h-5 text-[#0055A5]" />
+                  <div className="flex items-center gap-2 border-b pb-2 text-sm font-bold text-[#337819] uppercase tracking-wider">
+                    <School className="w-5 h-5 text-[#337819]" />
                     <span>Nội dung Tiêu đề Cổng Tra Cứu</span>
                   </div>
 
@@ -4614,7 +4614,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={headerTop}
                         onChange={(e) => setHeaderTop(e.target.value)}
                         placeholder="Ví dụ: ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Dòng chữ nhỏ trên cùng hiển thị cơ quan trực thuộc và tên trường học.
@@ -4630,7 +4630,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={headerMain}
                         onChange={(e) => setHeaderMain(e.target.value)}
                         placeholder="Ví dụ: TRA CỨU KẾT QUẢ HỌC TẬP HỌC SINH THCS"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Tên hệ thống hoặc kỳ thi tra cứu (In hoa lớn ở trung tâm).
@@ -4646,7 +4646,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={schoolYear}
                         onChange={(e) => setSchoolYear(e.target.value)}
                         placeholder="Ví dụ: NĂM HỌC 2025 - 2026"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Ghi nhận năm xét duyệt học bạ điện tử hoặc năm học hiện hành.
@@ -4654,7 +4654,7 @@ NOTIFY pgrst, 'reload schema';`}
                     </div>
 
                     <div className="pt-4 border-t border-slate-100">
-                      <h4 className="font-extrabold text-[#0055A5] text-[11px] uppercase tracking-wider mb-3">Cấu hình Phần Chân Trang (Footer Settings)</h4>
+                      <h4 className="font-extrabold text-[#337819] text-[11px] uppercase tracking-wider mb-3">Cấu hình Phần Chân Trang (Footer Settings)</h4>
                     </div>
 
                     <div>
@@ -4666,7 +4666,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={footerTitle}
                         onChange={(e) => setFooterTitle(e.target.value)}
                         placeholder="Ví dụ: HỆ THỐNG SUỐI LƯ"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Tên hệ thống hiển thị dưới chân trang (In hoa).
@@ -4682,7 +4682,7 @@ NOTIFY pgrst, 'reload schema';`}
                         onChange={(e) => setFooterDesc(e.target.value)}
                         placeholder="Nhập giới thiệu ngắn..."
                         rows={3}
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Dùng **text** để in đậm tên trường.
@@ -4698,7 +4698,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={footerKeywords}
                         onChange={(e) => setFooterKeywords(e.target.value)}
                         placeholder="Suối Lư, THCS Suối Lư, ..."
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Ngăn cách bởi dấu phẩy.
@@ -4714,7 +4714,7 @@ NOTIFY pgrst, 'reload schema';`}
                         onChange={(e) => setFooterContact(e.target.value)}
                         placeholder="Nhập địa chỉ, website, bản quyền..."
                         rows={4}
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Ngăn cách các dòng bằng dấu xuống dòng.
@@ -4730,7 +4730,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={footerCopy}
                         onChange={(e) => setFooterCopy(e.target.value)}
                         placeholder="Ví dụ: © 2026 PTDTBT TH & THCS Suối Lư"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Dòng chữ bản quyền ở dưới cùng của chân trang.
@@ -4738,7 +4738,7 @@ NOTIFY pgrst, 'reload schema';`}
                     </div>
 
                     <div className="pt-4 border-t border-slate-100">
-                      <h4 className="font-extrabold text-[#0055A5] text-[11px] uppercase tracking-wider mb-3">Cấu hình Liên kết Mạng xã hội</h4>
+                      <h4 className="font-extrabold text-[#337819] text-[11px] uppercase tracking-wider mb-3">Cấu hình Liên kết Mạng xã hội</h4>
                     </div>
 
                     <div>
@@ -4750,7 +4750,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={zaloUrl}
                         onChange={(e) => setZaloUrl(e.target.value)}
                         placeholder="Ví dụ: https://zalo.me/0333333333"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                     </div>
 
@@ -4763,7 +4763,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={facebookUrl}
                         onChange={(e) => setFacebookUrl(e.target.value)}
                         placeholder="Ví dụ: https://facebook.com/suoilu"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                     </div>
 
@@ -4776,7 +4776,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={websiteUrl}
                         onChange={(e) => setWebsiteUrl(e.target.value)}
                         placeholder="Ví dụ: https://suoilu.db.edu.vn"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                     </div>
 
@@ -4789,7 +4789,7 @@ NOTIFY pgrst, 'reload schema';`}
                         value={newsSourceUrl}
                         onChange={(e) => setNewsSourceUrl(e.target.value)}
                         placeholder="Ví dụ: https://suoilu.db.edu.vn"
-                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                        className="w-full text-xs font-bold px-4 py-2.5 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                       />
                       <p className="text-[10px] text-slate-400 mt-1 italic pl-1 font-semibold">
                         Gợi ý: Địa chỉ Website để hệ thống tự động lấy tin bài mới nhất.
@@ -4797,7 +4797,7 @@ NOTIFY pgrst, 'reload schema';`}
                     </div>
 
                     <div className="pt-4 border-t border-slate-100">
-                      <h4 className="font-extrabold text-[#0055A5] text-[11px] uppercase tracking-wider mb-3">Cấu hình Bật/Tắt Trường Tra Cứu</h4>
+                      <h4 className="font-extrabold text-[#337819] text-[11px] uppercase tracking-wider mb-3">Cấu hình Bật/Tắt Trường Tra Cứu</h4>
                     </div>
 
                     <div className="flex items-center justify-between bg-slate-50 border border-slate-200 p-3 rounded-lg">
@@ -4825,7 +4825,7 @@ NOTIFY pgrst, 'reload schema';`}
                     <div className="pt-4 flex flex-wrap gap-3 border-t border-slate-100">
                       <button
                         onClick={handleSavePortalSettings}
-                        className="bg-[#0055A5] hover:bg-blue-800 text-white font-black px-5 py-2.5 text-xs rounded uppercase transition cursor-pointer flex items-center gap-1.5"
+                        className="bg-[#337819] hover:bg-blue-800 text-white font-black px-5 py-2.5 text-xs rounded uppercase transition cursor-pointer flex items-center gap-1.5"
                       >
                         <Check className="w-4 h-4 stroke-[3]" />
                         LƯU CẤU HÌNH CỔNG
@@ -4844,7 +4844,7 @@ NOTIFY pgrst, 'reload schema';`}
 
                 {/* Live Preview Container of the Custom Header & Footer in Admin view */}
                 <div className="max-w-xl space-y-4 animate-fadeIn">
-                  <div className="bg-[#0055A5] text-white p-5 rounded-t-xl shadow-md space-y-1.5 text-center">
+                  <div className="bg-[#337819] text-white p-5 rounded-t-xl shadow-md space-y-1.5 text-center">
                     <span className="text-[10px] uppercase font-bold text-amber-300 tracking-wider block mb-1">
                       [ XEM TRƯỚC TIÊU ĐỀ (HEADER) ]
                     </span>
@@ -4862,7 +4862,7 @@ NOTIFY pgrst, 'reload schema';`}
                   </div>
 
                   <div className="bg-slate-100 border border-slate-200 p-5 rounded-b-xl shadow-sm text-center text-[11px] text-slate-600 font-medium space-y-2">
-                    <span className="text-[10px] uppercase font-bold text-[#0055A5] tracking-wider block mb-1">
+                    <span className="text-[10px] uppercase font-bold text-[#337819] tracking-wider block mb-1">
                       [ XEM TRƯỚC CHÂN TRANG (FOOTER) ]
                     </span>
                     <p className="font-bold text-slate-700 uppercase">
@@ -4890,8 +4890,8 @@ NOTIFY pgrst, 'reload schema';`}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* LEFT COLUMN: ADD / EDIT FORM */}
                   <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4 animate-slideIn">
-                    <div className="flex items-center gap-2 border-b pb-2 text-sm font-bold text-[#0055A5] uppercase tracking-wider">
-                      <Layers className="w-5 h-5 text-[#0055A5]" />
+                    <div className="flex items-center gap-2 border-b pb-2 text-sm font-bold text-[#337819] uppercase tracking-wider">
+                      <Layers className="w-5 h-5 text-[#337819]" />
                       <span>{classFormId ? "Sửa thông tin lớp học" : "Thêm Lớp Học Mới"}</span>
                     </div>
 
@@ -4905,7 +4905,7 @@ NOTIFY pgrst, 'reload schema';`}
                           value={classFormName}
                           onChange={(e) => setClassFormName(e.target.value)}
                           placeholder="Ví dụ: 9A3, 8B2, 6A..."
-                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition uppercase"
+                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition uppercase"
                         />
                       </div>
 
@@ -4916,7 +4916,7 @@ NOTIFY pgrst, 'reload schema';`}
                         <select
                           value={classFormGrade}
                           onChange={(e) => setClassFormGrade(e.target.value as any)}
-                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                         >
                           <option value="6">Khối 6</option>
                           <option value="7">Khối 7</option>
@@ -4934,7 +4934,7 @@ NOTIFY pgrst, 'reload schema';`}
                           value={classFormAdvisor}
                           onChange={(e) => setClassFormAdvisor(e.target.value)}
                           placeholder="Ví dụ: Cô Nguyễn Thị Mai"
-                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                         />
                       </div>
 
@@ -4947,7 +4947,7 @@ NOTIFY pgrst, 'reload schema';`}
                           value={classFormRoom}
                           onChange={(e) => setClassFormRoom(e.target.value)}
                           placeholder="Ví dụ: Phòng 303, Nhà A"
-                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#0055A5] focus:outline-none transition"
+                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
                         />
                       </div>
 
@@ -4960,7 +4960,7 @@ NOTIFY pgrst, 'reload schema';`}
                       <div className="pt-3 flex gap-2">
                         <button
                           onClick={handleSaveClass}
-                          className="flex-1 bg-[#0055A5] hover:bg-blue-800 text-white font-black py-2 rounded text-[11px] uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1"
+                          className="flex-1 bg-[#337819] hover:bg-blue-800 text-white font-black py-2 rounded text-[11px] uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1"
                         >
                           <Check className="w-3.5 h-3.5 stroke-[3]" />
                           {classFormId ? "Lưu thay đổi" : "Thêm mới"}
@@ -4982,7 +4982,7 @@ NOTIFY pgrst, 'reload schema';`}
                   <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                     <div className="flex items-center justify-between border-b pb-2">
                       <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">Danh sách Lớp học hiện hữu ({classes.length})</span>
-                      <span className="text-[10px] bg-[#0055A5]/10 text-[#0055A5] px-2.5 py-1 rounded-full font-black tracking-wide uppercase">Hệ Thống Tra Cứu</span>
+                      <span className="text-[10px] bg-[#337819]/10 text-[#337819] px-2.5 py-1 rounded-full font-black tracking-wide uppercase">Hệ Thống Tra Cứu</span>
                     </div>
 
                     <div className="overflow-x-auto border rounded-lg">
@@ -5013,7 +5013,7 @@ NOTIFY pgrst, 'reload schema';`}
                                   <td className="px-4 py-2.5 text-center font-bold text-slate-400 font-mono">
                                     {index + 1}
                                   </td>
-                                  <td className="px-4 py-2.5 font-black text-[#0055A5] font-mono text-sm">
+                                  <td className="px-4 py-2.5 font-black text-[#337819] font-mono text-sm">
                                     {c.className}
                                   </td>
                                   <td className="px-4 py-2.5 text-center">
@@ -5085,7 +5085,7 @@ NOTIFY pgrst, 'reload schema';`}
       {isFormOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-xl max-w-2xl w-full shadow-2xl overflow-hidden border">
-            <div className="bg-[#0055A5] text-white p-4 flex items-center justify-between">
+            <div className="bg-[#337819] text-white p-4 flex items-center justify-between">
               <span className="font-bold uppercase text-xs tracking-wider">
                 {formMode === "create" ? "Thêm lý lịch học sinh mới" : "Cập nhật hồ sơ học tịch"}
               </span>

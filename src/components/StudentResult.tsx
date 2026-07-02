@@ -368,7 +368,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                 Ngày {new Date().getDate() < 10 ? `0${new Date().getDate()}` : new Date().getDate()} tháng {new Date().getMonth() + 1 < 10 ? `0${new Date().getMonth() + 1}` : new Date().getMonth() + 1} năm {new Date().getFullYear()}
               </span>
               <span className="font-medium text-[10px] sm:text-[12px]">Giáo viên chủ nhiệm</span>
-              <span className="mt-4 sm:mt-8 font-black uppercase text-[#0055A5] text-[11px] sm:text-[14px]">{advisorName}</span>
+              <span className="mt-4 sm:mt-8 font-black uppercase text-[#337819] text-[11px] sm:text-[14px]">{advisorName}</span>
             </div>
           </div>
         </div>

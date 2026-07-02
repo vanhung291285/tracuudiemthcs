@@ -60,7 +60,7 @@ export default function Footer() {
   const contactLines = footerContact.split("\n").map(l => l.trim()).filter(Boolean);
 
   return (
-    <footer className="w-full bg-gradient-to-br from-[#003366] to-[#0055A5] text-slate-100 pt-10 pb-6 px-6 mt-auto border-t border-white/10 no-print relative overflow-hidden">
+    <footer className="w-full bg-gradient-to-br from-[#003366] to-[#337819] text-slate-100 pt-10 pb-6 px-6 mt-auto border-t border-white/10 no-print relative overflow-hidden">
       {/* Decorative background element */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-[80px] rounded-full -mr-32 -mt-32 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-400/5 blur-[60px] rounded-full -ml-24 -mb-24 pointer-events-none" />
