@@ -97,14 +97,14 @@ html, body, .decorative-page-bg, #app-root {
 }
 
 @keyframes marquee-horizontal {
-  from { transform: translateX(100vw); }
-  to { transform: translateX(-100%); }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 .animate-marquee-horizontal {
   display: flex;
   white-space: nowrap;
-  animation: marquee-horizontal 60s linear infinite;
+  animation: marquee-horizontal 240s linear infinite;
   will-change: transform;
 }
 .animate-marquee-horizontal:hover {

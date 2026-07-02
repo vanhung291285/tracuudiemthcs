@@ -32,7 +32,9 @@ import {
   MessageCircle,
   Facebook,
   Globe,
-  School
+  School,
+  Medal,
+  Star
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import dbService from "../lib/supabase";
@@ -412,36 +414,34 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
       </header>
 
-      {/* Recent Lookups Marquee */}
-      {recentActivities.length > 0 && (
+      {/* Top Students Marquee */}
+      {topStudents.length > 0 && (
         <div className="w-full bg-white/90 border-b border-slate-200 shadow-sm overflow-hidden py-1.5 flex items-center relative z-20">
           <div className="bg-[#E53935] text-white text-[10px] font-black uppercase px-3 md:px-4 py-1.5 z-10 absolute left-0 h-full flex items-center shadow-[2px_0_10px_rgba(0,0,0,0.1)] whitespace-nowrap gap-1 md:gap-1.5">
-            <Zap className="w-3.5 h-3.5 animate-pulse text-amber-300" />
-            <span className="hidden sm:inline">Tra Cứu Gần Đây</span>
-            <span className="sm:hidden">Gần Đây</span>
+            <Medal className="w-3.5 h-3.5 animate-pulse text-amber-300" />
+            <span className="hidden sm:inline">Bảng Vàng Danh Dự</span>
+            <span className="sm:hidden">Bảng Vàng</span>
           </div>
-          <div className="w-full overflow-hidden flex items-center h-full pl-[95px] sm:pl-[145px] md:pl-[165px]">
-            <div className="animate-marquee-horizontal flex gap-6 md:gap-8 items-center h-full">
-              {recentActivities.map((activity, idx) => {
+          <div className="w-full overflow-hidden flex items-center h-full pl-[110px] sm:pl-[170px] md:pl-[190px]">
+            <div className="animate-marquee-horizontal flex gap-6 md:gap-8 items-center h-full w-max pr-8">
+              {/* Double the array for seamless infinite loop */}
+              {[...topStudents, ...topStudents].map((student, idx) => {
                 const colors = ["text-red-500", "text-orange-500", "text-emerald-500", "text-blue-500", "text-violet-500", "text-fuchsia-500", "text-rose-500"];
                 const colorClass = colors[idx % colors.length];
+                const isExcellent = student.distinction === "Học sinh Xuất sắc";
+                const icon = isExcellent ? <Crown className={`w-3.5 h-3.5 animate-pulse ${colorClass}`} /> : <Star className={`w-3.5 h-3.5 animate-pulse ${colorClass}`} />;
                 return (
-                  <div key={activity.id} className="flex items-center gap-1.5 font-bold text-[11px] md:text-xs uppercase tracking-tight bg-slate-50 px-2.5 md:px-3 py-1 rounded-full border border-slate-200 shrink-0">
-                    <User className={`w-3.5 h-3.5 animate-pulse ${colorClass}`} />
+                  <div key={`${student.studentCode}-${idx}`} className="flex items-center gap-1.5 font-bold text-[11px] md:text-xs uppercase tracking-tight bg-slate-50 px-2.5 md:px-3 py-1 rounded-full border border-slate-200 shrink-0">
+                    {icon}
                     <span className={`${colorClass} animate-pulse drop-shadow-sm`}>
-                      {toDisplayCase(activity.studentName)}
+                      {toDisplayCase(student.fullName)}
                     </span>
                     <span className="text-slate-500 lowercase font-medium">
-                      (Lớp {activity.className})
+                      (Lớp {student.className})
                     </span>
-                    <span className="text-[9px] md:text-[10px] font-sans font-black text-slate-400 bg-white px-1.5 py-0.5 rounded shadow-sm border border-slate-100 ml-0.5 md:ml-1">
-                      {new Date(activity.queriedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                    <span className={`text-[9px] md:text-[10px] font-sans font-black px-1.5 py-0.5 rounded shadow-sm border ml-0.5 md:ml-1 ${isExcellent ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'}`}>
+                      {student.distinction}
                     </span>
-                    {activity.count && activity.count > 1 && (
-                      <span className="bg-amber-100 text-amber-700 text-[9px] px-1.5 py-0.5 rounded-full border border-amber-200 ml-0.5 md:ml-1 shadow-sm">
-                        {activity.count} lần
-                      </span>
-                    )}
                   </div>
                 );
               })}
@@ -947,105 +947,68 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
               </div>
             </div>
 
-            {/* Board of Honor (Bảng Vàng) panel - Game Show Style */}
-            <div className="w-full bg-[#FFFBEB] border-2 border-amber-300 text-slate-900 p-5 md:p-6 rounded-3xl shadow-[0_15px_40px_-12px_rgba(251,191,36,0.2)] relative z-10 overflow-hidden">
-              {/* Decorative elements */}
-              <div className="absolute -top-24 -right-24 w-64 h-64 bg-amber-200/20 rounded-full blur-3xl animate-pulse" />
-              <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-amber-200/20 rounded-full blur-3xl animate-pulse" />
-              
-              <div className="flex flex-col items-center mb-6 pt-2">
-                <div className="relative flex items-center justify-center gap-4 md:gap-6">
-                  {/* Left Wreath Decoration */}
-                  <motion.div 
-                    animate={{ rotate: [-5, 5, -5] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="flex flex-col items-center opacity-90"
-                  >
-                    <Award className="w-8 h-8 md:w-10 md:h-10 text-amber-500 drop-shadow-sm" />
-                    <div className="w-0.5 h-3 bg-amber-400 rounded-full mt-1" />
-                  </motion.div>
-
-                  <div className="bg-white px-8 py-3 rounded-2xl border-2 border-amber-200 shadow-[0_6px_0_0_#FEF3C7] flex flex-col items-center justify-center relative">
-                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[8px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-sm">
-                      VINH DANH
-                    </div>
-                    <h3 className="text-xl md:text-2xl font-black text-amber-900 uppercase tracking-[0.12em] text-center leading-tight">
-                      BẢNG VÀNG
-                    </h3>
-                  </div>
-
-                  {/* Right Wreath Decoration */}
-                  <motion.div 
-                    animate={{ rotate: [5, -5, 5] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="flex flex-col items-center opacity-90"
-                  >
-                    <Award className="w-8 h-8 md:w-10 md:h-10 text-amber-500 drop-shadow-sm" />
-                    <div className="w-0.5 h-3 bg-amber-400 rounded-full mt-1" />
-                  </motion.div>
+            {/* Recent Lookups Board */}
+            <div className="w-full bg-white border border-slate-200 text-slate-900 p-5 md:p-6 rounded-3xl shadow-sm relative z-10 overflow-hidden">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+                <div className="bg-emerald-100 p-2.5 rounded-xl border border-emerald-200">
+                  <Clock className="w-5 h-5 text-emerald-600" />
                 </div>
-                
-                {/* Decorative separator */}
-                <div className="flex items-center gap-3 mt-5">
-                   <div className="h-0.5 w-6 bg-gradient-to-r from-transparent to-amber-400 rounded-full" />
-                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-                   <div className="h-0.5 w-6 bg-gradient-to-l from-transparent to-amber-400 rounded-full" />
+                <div>
+                  <h3 className="text-lg md:text-xl font-black text-slate-800 uppercase tracking-tight">
+                    Tra Cứu Gần Đây
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Danh sách các học sinh vừa được tra cứu</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-2 max-h-[400px] overflow-y-auto pr-1.5 custom-scrollbar">
-                {topStudents.length > 0 ? topStudents.map((student, idx) => {
-                  let badgeStyles = "bg-sky-50 text-sky-700 border-sky-100";
-                  let label = "Học sinh Giỏi";
-                  let icon = <Award className="w-4.5 h-4.5 text-sky-500" />;
-                  let cardStyles = "bg-white border-slate-100";
-                  let nameStyles = "text-slate-800";
-
-                  if (student.distinction === "Học sinh Xuất sắc") {
-                    badgeStyles = "bg-amber-50 text-amber-800 border-amber-100";
-                    label = "Xuất sắc";
-                    icon = <Crown className="w-4.5 h-4.5 text-amber-500" />; 
-                    cardStyles = "bg-white border-amber-200 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.15)]";
-                    nameStyles = "text-amber-900";
-                  }
-                  
-                  return (
-                    <motion.div
-                      key={student.id || idx}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: idx * 0.05 }}
-                      className={`p-3.5 ${cardStyles} border rounded-2xl text-left flex items-center justify-between group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 relative overflow-hidden`}
-                    >
-                      <div className="flex items-center gap-3 relative z-10 min-w-0 flex-1">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 border border-slate-50 shadow-sm ${student.distinction === "Học sinh Xuất sắc" ? "bg-amber-50/80" : "bg-sky-50/80"}`}>
-                          {icon}
-                        </div>
-                        <div className="space-y-0.5 min-w-0">
-                          <div className={`font-black ${nameStyles} text-[11px] md:text-[13px] uppercase leading-tight tracking-tight`}>{student.fullName}</div>
-                          <div className="text-[10px] text-slate-500 font-bold flex items-center gap-1.5 bg-slate-50/50 px-2 py-0.5 rounded-lg border border-slate-100/50 w-fit">
-                            <Users className="w-3 h-3 opacity-50" />
-                            {student.className}
+              <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <AnimatePresence initial={false}>
+                  {recentActivities.length > 0 ? (
+                    recentActivities.map((activity, idx) => (
+                      <motion.div 
+                        key={activity.id} 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="w-full bg-slate-50 p-3.5 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/30 transition-all duration-300 flex items-center justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-slate-200 shadow-sm">
+                            <User className="w-5 h-5 text-slate-400" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[13px] md:text-sm font-bold text-slate-800 truncate mb-1">
+                              {toDisplayCase(activity.studentName)}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-medium text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                                Lớp {activity.className}
+                              </span>
+                              {activity.count && activity.count > 1 && (
+                                <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-100">
+                                  {activity.count} lần
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end shrink-0 relative z-10 ml-2">
-                        <span className={`${badgeStyles} border px-2 py-0.5 rounded-lg font-black text-[9px] md:text-[10px] uppercase tracking-wider shadow-sm`}>
-                          {label}
-                        </span>
-                      </div>
-                      
-                      {/* Suble hover highlight */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-400/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    </motion.div>
-                  );
-                }) : (
-                  <div className="col-span-full text-center py-10 text-[10px] text-amber-600/40 font-black uppercase tracking-[0.2em] flex flex-col items-center gap-5 bg-white/40 rounded-3xl border-2 border-dashed border-amber-200/50">
-                    <RefreshCw className="w-6 h-6 animate-spin opacity-20" />
-                    Chưa có danh sách vinh danh...
-                  </div>
-                )}
+                        <div className="flex flex-col items-end shrink-0 gap-1.5">
+                          <div className="text-[11px] font-semibold text-slate-600 bg-white px-2 py-1 rounded-md border border-slate-200">
+                            {new Date(activity.queriedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                          <div className="text-[10px] font-medium text-slate-400">
+                             {isToday(activity.queriedAt) ? 'Hôm nay' : new Date(activity.queriedAt).toLocaleDateString('vi-VN')}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="w-full text-center py-12 text-sm font-medium text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      Chưa có hoạt động tra cứu mới
+                    </div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
