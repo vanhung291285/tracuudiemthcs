@@ -58,7 +58,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [dob, setDob] = useState("");
   const [availableClasses, setAvailableClasses] = useState<string[]>([]);
   const [searchClass, setSearchClass] = useState("");
-  const [selectedTerm, setSelectedTerm] = useState<"hk1" | "hk2" | "canam">("canam");
+  const [selectedTerm, setSelectedTerm] = useState<"hk1" | "hk2" | "canam">("hk1");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -525,41 +525,44 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                   {/* Academic Term Selector tabs */}
                   <div className="space-y-2 mt-2">
-                    <label className="block text-[11px] font-semibold text-slate-900 uppercase tracking-widest flex items-center gap-1.5 mt-2 mb-1.5">
-                      <Clock className="w-3.5 h-3.5 text-[#337819]" /> KỲ HỌC TẬP TRA CỨU <span className="text-[#E53935]">*</span>
+                    <label className="block text-[11px] font-semibold text-slate-900 uppercase tracking-widest flex items-center gap-1.5 mt-2 mb-2">
+                      <Clock className="w-3.5 h-3.5 text-[#337819]" /> CHỌN HỌC KÌ CẦN TRA CỨU <span className="text-[#E53935]">*</span>
                     </label>
-                    <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                    <div className="grid grid-cols-3 gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200/80 shadow-inner">
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("hk1")}
-                        className={`py-2 text-[11px] font-bold rounded-md transition duration-200 cursor-pointer text-center ${
+                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
                           selectedTerm === "hk1"
-                            ? "bg-[#337819] text-white shadow"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
+                            : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
                         }`}
                       >
+                        {selectedTerm === "hk1" && <CheckSquare className="w-3.5 h-3.5" />}
                         Học kỳ I
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("hk2")}
-                        className={`py-2 text-[11px] font-bold rounded-md transition duration-200 cursor-pointer text-center ${
+                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
                           selectedTerm === "hk2"
-                            ? "bg-[#337819] text-white shadow"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
+                            : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
                         }`}
                       >
+                        {selectedTerm === "hk2" && <CheckSquare className="w-3.5 h-3.5" />}
                         Học kỳ II
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("canam")}
-                        className={`py-2 text-[11px] font-bold rounded-md transition duration-200 cursor-pointer text-center ${
+                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
                           selectedTerm === "canam"
-                            ? "bg-[#337819] text-white shadow"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
+                            : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
                         }`}
                       >
+                        {selectedTerm === "canam" && <CheckSquare className="w-3.5 h-3.5" />}
                         Cả Năm
                       </button>
                     </div>
