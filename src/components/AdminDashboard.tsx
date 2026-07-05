@@ -142,7 +142,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         }
       }
     }
-  }, [students]);
+  }, [students, isAuthenticated]);
 
   // Form State for Classes Tab
   const [classFormId, setClassFormId] = useState<string | null>(null);
@@ -898,6 +898,30 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     }
   };
 
+  const handleDeleteAllStudentsOnly = async () => {
+    if (students.length === 0) {
+      alert("Hiện không có học sinh nào trong hệ thống.");
+      return;
+    }
+
+    if (confirm(`Bạn có chắc chắn muốn xóa TOÀN BỘ danh sách gồm ${students.length} học sinh trong toàn bộ hệ thống không? (Cấu hình lớp học và năm học vẫn được giữ nguyên). \n\nHành động này sẽ XÓA VĨNH VIỄN toàn bộ hồ sơ học sinh và điểm số, không thể khôi phục!`)) {
+      setAuthIsLoading(true);
+      try {
+        const success = await dbService.clearAllStudents();
+        if (success) {
+          setStudents([]);
+          alert("Đã xóa vĩnh viễn toàn bộ danh sách học sinh thành công.");
+        } else {
+          alert("Lỗi khi thực hiện xóa dữ liệu: " + (dbService.lastError || "Lỗi không xác định"));
+        }
+      } catch (err: any) {
+        alert("Lỗi khi thực hiện xóa dữ liệu: " + err.message);
+      } finally {
+        setAuthIsLoading(false);
+      }
+    }
+  };
+
   // Delete student
   const handleDeleteStudent = async (studentCode: string, academicYear: string) => {
     if (confirm(`Bạn có chắc chắn muốn xóa học sinh có mã ${studentCode} của năm học ${academicYear}?`)) {
@@ -1064,6 +1088,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     const behaviorGradeHK1 = formStudent.behaviorGradeHK1 || formStudent.behaviorGrade || "Tốt";
     const behaviorGradeHK2 = formStudent.behaviorGradeHK2 || formStudent.behaviorGrade || "Tốt";
 
+    const finalYear = formStudent.academicYear || (selectedAcademicYear !== "all" ? selectedAcademicYear : (academicYears.find(y => y.isActive)?.yearName || "2025-2026"));
+
     const preparedStudent = {
       ...formStudent,
       studentCode: cleanCode,
@@ -1076,7 +1102,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       behaviorGradeHK1,
       behaviorGradeHK2,
       distinction,
-      academicYear: formStudent.academicYear || (selectedAcademicYear !== "all" ? selectedAcademicYear : (academicYears.find(y => y.isActive)?.yearName || "2025-2026"))
+      academicYear: finalYear
     };
 
     setIsSavingStudent(true);
@@ -3296,6 +3322,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                   >
                     <Plus className="w-4 h-4" /> Thêm Học Sinh Mới
                   </button>
+                  
+                  {students.length > 0 && (
+                    <button
+                      onClick={handleDeleteAllStudentsOnly}
+                      className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm hover:shadow-md"
+                    >
+                      <UserX className="w-4 h-4" /> Xóa toàn bộ học sinh
+                    </button>
+                  )}
                   
                   {selectedClass !== "all" && filteredStudents.length > 0 && (
                     <button
