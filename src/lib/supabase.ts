@@ -1040,15 +1040,20 @@ class DatabaseService {
           
           // Merge logic: Supabase data takes priority, but keep local classes that aren't in Supabase yet
           const supabaseIds = new Set(mapped.map(c => c.id));
+          const supabaseLogicalKeys = new Set(mapped.map(c => `${c.className.trim().toUpperCase()}_${c.academicYear}`));
           const merged: SchoolClass[] = [...mapped];
           
           for (const lc of localClasses) {
-            if (!supabaseIds.has(lc.id)) {
+            const logicalKey = `${lc.className.trim().toUpperCase()}_${lc.academicYear}`;
+            if (!supabaseIds.has(lc.id) && !supabaseLogicalKeys.has(logicalKey)) {
               merged.push(lc);
             }
           }
           
-          return merged.sort((a, b) => a.className.localeCompare(b.className, "vi"));
+          // Sort and save back to local storage for offline consistency
+          const sorted = merged.sort((a, b) => a.className.localeCompare(b.className, "vi"));
+          localStorage.setItem("portal_classes", JSON.stringify(sorted));
+          return sorted;
         }
       } catch (err) {
         // Silent skip, use local fallback
@@ -1082,17 +1087,24 @@ class DatabaseService {
               id: c.id,
               class_name: c.className,
               grade_level: c.gradeLevel,
-              advisor_name: c.advisorName,
-              room_number: c.roomNumber
+              advisor_name: c.advisorName || "",
+              room_number: c.roomNumber || ""
             };
             if (this.hasAcademicYearClasses) {
               obj.academic_year = c.academicYear;
             }
             return obj;
           } else {
-            const obj: any = { ...c };
-            if (!this.hasAcademicYearClasses) {
-              delete obj.academicYear;
+            // CamelCase mapping (Mẫu 2)
+            const obj: any = {
+              id: c.id,
+              className: c.className,
+              gradeLevel: c.gradeLevel,
+              advisorName: c.advisorName || "",
+              roomNumber: c.roomNumber || ""
+            };
+            if (this.hasAcademicYearClasses) {
+              obj.academicYear = c.academicYear;
             }
             return obj;
           }
@@ -1100,7 +1112,7 @@ class DatabaseService {
 
         const result = await Promise.race([
           this.supabase.from("portal_classes").upsert(mapped, { onConflict: "id" }),
-          new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout saving classes")), 5000))
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Kết nối Supabase lưu lớp học quá lâu (Timeout)")), 8000))
         ]);
 
         if (result && result.error) {
