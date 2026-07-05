@@ -929,6 +929,55 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     }
   };
 
+  const handleDeleteAllClassesForYear = async (academicYear: string) => {
+    const classesToDelete = classes.filter(c => c.academicYear === academicYear);
+    if (classesToDelete.length === 0) {
+      alert(`Hiện không có lớp học nào trong năm học ${academicYear}.`);
+      return;
+    }
+
+    if (confirm(`Bạn có chắc chắn muốn xóa TOÀN BỘ ${classesToDelete.length} lớp học của năm học ${academicYear} không?\n\nLưu ý: Học sinh thuộc các lớp này sẽ không bị xóa mà sẽ chuyển về trạng thái "Chưa xếp lớp".`)) {
+      setAuthIsLoading(true);
+      try {
+        const success = await dbService.clearClassesByYear(academicYear);
+        if (success) {
+          const remainingClasses = classes.filter(c => c.academicYear !== academicYear);
+          setClasses(remainingClasses);
+          
+          // Update local cache as well (to simulate saving the array)
+          await dbService.saveClasses(remainingClasses);
+
+          // Update students in these classes to have empty className
+          let studentsUpdated = 0;
+          const updatedStudents = await Promise.all(students.map(async (s) => {
+            if (s.academicYear === academicYear && s.className) {
+              const matchedClass = classesToDelete.find(c => c.className === s.className);
+              if (matchedClass) {
+                const updatedS: Student = { ...s, className: "" };
+                await dbService.upsertStudent(updatedS);
+                studentsUpdated++;
+                return updatedS;
+              }
+            }
+            return s;
+          }));
+          
+          if (studentsUpdated > 0) {
+            setStudents(updatedStudents);
+          }
+          
+          alert(`Đã xóa toàn bộ lớp học của năm ${academicYear} thành công và đưa ${studentsUpdated} học sinh về trạng thái "Chưa xếp lớp".`);
+        } else {
+          alert("Lỗi khi thực hiện xóa dữ liệu lớp học: Lỗi không xác định từ Supabase");
+        }
+      } catch (err: any) {
+        alert("Lỗi khi thực hiện xóa dữ liệu: " + err.message);
+      } finally {
+        setAuthIsLoading(false);
+      }
+    }
+  };
+
   const handleDeleteAllStudentsOnly = async () => {
     if (students.length === 0) {
       alert("Hiện không có học sinh nào trong hệ thống.");
@@ -5589,6 +5638,16 @@ NOTIFY pgrst, 'reload schema';`}
                         </select>
                       </div>
                       <div className="flex items-center gap-2">
+                        {selectedClassYear !== "all" && classes.filter(c => c.academicYear === selectedClassYear).length > 0 && (
+                          <button
+                            onClick={() => handleDeleteAllClassesForYear(selectedClassYear)}
+                            title={`Xóa toàn bộ lớp học của năm ${selectedClassYear}`}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg hover:bg-rose-100 transition text-[10px] font-black uppercase tracking-tighter cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Xóa toàn bộ
+                          </button>
+                        )}
                         <button
                           onClick={handleSyncStudentsWithClasses}
                           title="Đồng bộ lại GVCN & Khối lớp cho tất cả học sinh"

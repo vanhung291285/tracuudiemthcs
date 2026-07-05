@@ -1150,6 +1150,39 @@ class DatabaseService {
     return true;
   }
 
+  // Clear all classes for a specific academic year
+  public async clearClassesByYear(academicYear: string): Promise<boolean> {
+    if (this.supabase) {
+      try {
+        // Find if using snake_case or camelCase schema
+        await Promise.race([this.checkClassesSchema(), new Promise(r => setTimeout(r, 2000))]);
+        
+        let result;
+        if (this.isSnakeCaseClasses) {
+          result = await Promise.race([
+            this.supabase.from("portal_classes").delete().eq("academic_year", academicYear),
+            new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
+          ]);
+        } else {
+          result = await Promise.race([
+            this.supabase.from("portal_classes").delete().eq("academicYear", academicYear),
+            new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
+          ]);
+        }
+
+        if (result && result.error) {
+          console.error("Supabase clear classes by year failed:", result.error.message);
+          return false;
+        }
+        return true;
+      } catch (err) {
+        console.error("Supabase exception on clear classes by year:", err);
+        return false;
+      }
+    }
+    return true;
+  }
+
   // Load academic years from Supabase if possible, otherwise fallback locally
   public async getAcademicYears(): Promise<SchoolYear[]> {
     if (this.supabase) {
