@@ -55,7 +55,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   // Academic Years state
   const [academicYears, setAcademicYears] = useState<SchoolYear[]>([]);
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(() => localStorage.getItem("portal_selected_academic_year") || "all");
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(() => { const v = localStorage.getItem("portal_selected_academic_year"); return v === "all" ? "" : (v || ""); });
 
   // Keep selected academic year persisted
   useEffect(() => {
@@ -126,7 +126,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               ? (match[0] as any) 
               : "9";
             return {
-              id: `class_${cName.trim().toUpperCase()}_${year.replace(/[^a-zA-Z0-9]/g, "")}`,
+              id: `class_${cName.trim().toUpperCase()}_${year.replace(/[^a-zA-Z0-9]/g, "")}_${Math.random().toString(36).substring(2, 7)}`,
               className: cName,
               gradeLevel: grade,
               academicYear: year,
@@ -156,7 +156,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [classFormAdvisor, setClassFormAdvisor] = useState("");
   const [classFormRoom, setClassFormRoom] = useState("");
   const [classFormYear, setClassFormYear] = useState(() => localStorage.getItem("portal_class_form_year") || "2025-2026");
-  const [selectedClassYear, setSelectedClassYear] = useState<string>(() => localStorage.getItem("portal_selected_class_year") || "all");
+  const [selectedClassYear, setSelectedClassYear] = useState<string>(() => { const v = localStorage.getItem("portal_selected_class_year"); return v === "all" ? "" : (v || ""); });
   const [classFormError, setClassFormError] = useState("");
 
   // Keep year selections persisted
@@ -315,7 +315,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   const loadStudents = async () => {
     try {
-      const targetYear = selectedAcademicYear === "all" ? undefined : selectedAcademicYear;
+      const targetYear = (!selectedAcademicYear || selectedAcademicYear === "all") ? undefined : selectedAcademicYear;
       const list = await dbService.getAllStudents(targetYear);
       setStudents(list);
     } catch (err) {
@@ -688,7 +688,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       } else {
         // Create mode
         const newClass: SchoolClass = {
-          id: `class_${cleanClassName.trim().toUpperCase()}_${classFormYear.replace(/[^a-zA-Z0-9]/g, "")}`,
+          id: `class_${cleanClassName.trim().toUpperCase()}_${classFormYear.replace(/[^a-zA-Z0-9]/g, "")}_${Math.random().toString(36).substring(2, 7)}`,
           className: cleanClassName,
           gradeLevel: classFormGrade,
           academicYear: classFormYear,
@@ -1922,7 +1922,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
              parsedResults.push({
                ...existing, // Preserve all existing fields (id, teacher, school, etc.)
-               id: existing?.id || `student_${studentCode}_${currentImportYear.replace(/\//g, '-')}`,
+               id: existing?.id || `student_${studentCode}_${currentImportYear.replace(/\//g, '-')}_${Math.random().toString(36).substring(2, 7)}`,
                studentCode: existing?.studentCode || studentCode,
                fullName,
                dob: existing?.dob || "",
@@ -2588,7 +2588,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
           parsedResults.push({
             ...existing, // Preserve all existing fields
-            id: existing?.id || `student_${studentCode}_${currentImportYear.replace(/\//g, '-')}`,
+            id: existing?.id || `student_${studentCode}_${currentImportYear.replace(/\//g, '-')}_${Math.random().toString(36).substring(2, 7)}`,
             studentCode: existing?.studentCode || studentCode,
             fullName,
             dob: finalDob,
@@ -3164,7 +3164,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     
     const matchesClass = selectedClass === "all" || student.className === selectedClass;
     const matchesGrade = selectedGrade === "all" || student.gradeLevel === selectedGrade;
-    const matchesYear = selectedAcademicYear === "all" || student.academicYear === selectedAcademicYear;
+    const matchesYear = (!selectedAcademicYear || selectedAcademicYear === "all") || student.academicYear === selectedAcademicYear;
 
     return matchesSearch && matchesClass && matchesGrade && matchesYear;
   }).sort((a, b) => {
@@ -3178,13 +3178,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   const uniqueClasses = Array.from(new Set(
     students
-      .filter(s => selectedAcademicYear === "all" || s.academicYear === selectedAcademicYear)
+      .filter(s => (!selectedAcademicYear || selectedAcademicYear === "all") || s.academicYear === selectedAcademicYear)
       .map(s => s.className)
       .filter(Boolean)
   )) as string[];
 
   // STATISTICS CALCULATOR (filtered by selected year if active)
-  const statsPool = students.filter(s => selectedAcademicYear === "all" || s.academicYear === selectedAcademicYear);
+  const statsPool = students.filter(s => (!selectedAcademicYear || selectedAcademicYear === "all") || s.academicYear === selectedAcademicYear);
   const totalStudentsCount = statsPool.length;
   const goodBehaviorCount = statsPool.filter(s => s.behaviorGrade === "Tốt").length;
   const badBehaviorCount = statsPool.filter(s => s.behaviorGrade === "Chưa đạt").length;
@@ -3484,7 +3484,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       onChange={(e) => setSelectedAcademicYear(e.target.value)}
                       className="border text-xs px-3 py-2 rounded-lg text-slate-700 bg-white font-bold border-[#337819]/30"
                     >
-                      <option value="all">Tất cả năm học</option>
+                      
                       {academicYears.map((y, idx) => (
                         <option key={`year-opt-${y.id || idx}`} value={y.yearName}>
                           {y.yearName}{y.isActive ? " (Hiện tại)" : ""}
@@ -3533,7 +3533,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       <tbody className="divide-y divide-slate-100">
                         {filteredStudents.length > 0 ? (
                           filteredStudents.map(student => (
-                            <tr key={student.studentCode} className="hover:bg-slate-50 transition">
+                            <tr key={student.id} className="hover:bg-slate-50 transition">
                               <td className="px-4 py-3.5 font-mono font-bold text-blue-800">{student.studentCode}</td>
                               <td className="px-4 py-3.5 font-bold text-slate-900">{student.fullName}</td>
                               <td className="px-4 py-3.5 font-bold text-blue-900">{student.className}</td>
@@ -3620,7 +3620,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       onChange={(e) => setSelectedAcademicYear(e.target.value)}
                       className="border text-xs px-3 py-2.5 rounded-lg text-slate-700 bg-white hover:border-slate-300 font-bold outline-none cursor-pointer w-full sm:w-48 border-[#337819]/30"
                     >
-                      <option value="all">Tất cả năm học</option>
+                      
                       {academicYears.map((y, idx) => (
                         <option key={`grade-year-opt-${y.id || idx}`} value={y.yearName}>
                           {y.yearName}{y.isActive ? " (Hiện tại)" : ""}
@@ -3740,7 +3740,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                           const termGpa = scoreCount > 0 ? (scoreSum / scoreCount) : 0.0;
 
                           return (
-                            <tr key={student.studentCode} className="hover:bg-slate-50/50 divide-x divide-slate-200">
+                            <tr key={student.id} className="hover:bg-slate-50/50 divide-x divide-slate-200">
                               
                               {/* Sticky identifier cell */}
                               <td className="px-4 py-2.5 sticky left-0 bg-white shadow-md font-bold z-10 animate-fadeIn">
@@ -4394,7 +4394,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       <div className="space-y-4">
                         <div className="border rounded-xl max-h-[310px] overflow-y-auto divide-y divide-slate-150 text-[11px] bg-slate-50/50">
                           {importPreview.map((stud) => (
-                            <div key={stud.studentCode} className="p-3 hover:bg-slate-100/50 flex justify-between items-center bg-white transition">
+                            <div key={stud.id} className="p-3 hover:bg-slate-100/50 flex justify-between items-center bg-white transition">
                               <div>
                                 <span className="font-mono font-bold text-blue-850 text-blue-800">{stud.studentCode}</span> - <span className="font-bold text-slate-900">{stud.fullName}</span>
                                 <div className="text-[10px] text-slate-500 mt-1 flex flex-wrap gap-x-3 gap-y-1">
@@ -5682,13 +5682,13 @@ NOTIFY pgrst, 'reload schema';`}
                   <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-2 gap-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">Danh sách Lớp học ({classes.filter(c => selectedClassYear === "all" || c.academicYear === selectedClassYear).length})</span>
+                        <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">Danh sách Lớp học ({classes.filter(c => (!selectedClassYear || selectedClassYear === "all") || c.academicYear === selectedClassYear).length})</span>
                         <select
                           value={selectedClassYear}
                           onChange={(e) => setSelectedClassYear(e.target.value)}
                           className="text-[11px] font-bold border rounded px-2 py-1 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-[#337819]"
                         >
-                          <option value="all">Tất cả năm học</option>
+                          
                           {academicYears.map(y => (
                             <option key={`filter-year-${y.id}`} value={y.yearName}>{y.yearName}</option>
                           ))}
@@ -5732,7 +5732,7 @@ NOTIFY pgrst, 'reload schema';`}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-150">
-                          {classes.filter(c => selectedClassYear === "all" || c.academicYear === selectedClassYear).length === 0 ? (
+                          {classes.filter(c => (!selectedClassYear || selectedClassYear === "all") || c.academicYear === selectedClassYear).length === 0 ? (
                             <tr>
                               <td colSpan={8} className="px-4 py-10 text-center text-slate-400 font-medium italic">
                                 Không tìm thấy lớp học nào cho năm học đã chọn.
@@ -5740,7 +5740,7 @@ NOTIFY pgrst, 'reload schema';`}
                             </tr>
                           ) : (
                             classes
-                              .filter(c => selectedClassYear === "all" || c.academicYear === selectedClassYear)
+                              .filter(c => (!selectedClassYear || selectedClassYear === "all") || c.academicYear === selectedClassYear)
                               .map((c, index) => {
                                 const rosterCount = students.filter(s => s.className === c.className && s.academicYear === c.academicYear).length;
                                 return (
