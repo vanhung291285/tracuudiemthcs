@@ -21,8 +21,10 @@ class DatabaseService {
   private isSnakeCaseSchema = false;
   private isModernSchema = false;
   private hasIdColumn = false;
+  private hasAcademicYearColumn = false;
   private classesFormatChecked = false;
   private isSnakeCaseClasses = false;
+  private hasAcademicYearClasses = false;
   private academicYearsFormatChecked = false;
   private isSnakeCaseAcademicYears = true;
 
@@ -231,11 +233,28 @@ class DatabaseService {
         this.isSnakeCaseSchema = !legacyError;
         this.isModernSchema = false;
       }
+
+      // 3. Check for academic_year column specifically
+      if (this.isSnakeCaseSchema) {
+        const { error: yearError } = await this.supabase
+          .from("students")
+          .select("academic_year")
+          .limit(1);
+        this.hasAcademicYearColumn = !yearError;
+      } else {
+        const { error: yearError } = await this.supabase
+          .from("students")
+          .select("academicYear")
+          .limit(1);
+        this.hasAcademicYearColumn = !yearError;
+      }
+
       this.mapFormatChecked = true;
     } catch {
       this.isSnakeCaseSchema = false;
       this.isModernSchema = false;
       this.hasIdColumn = false;
+      this.hasAcademicYearColumn = false;
     }
   }
 
@@ -249,9 +268,25 @@ class DatabaseService {
         .limit(1);
       
       this.isSnakeCaseClasses = !error;
+
+      if (this.isSnakeCaseClasses) {
+        const { error: yearError } = await this.supabase
+          .from("portal_classes")
+          .select("academic_year")
+          .limit(1);
+        this.hasAcademicYearClasses = !yearError;
+      } else {
+        const { error: yearError } = await this.supabase
+          .from("portal_classes")
+          .select("academicYear")
+          .limit(1);
+        this.hasAcademicYearClasses = !yearError;
+      }
+
       this.classesFormatChecked = true;
     } catch {
       this.isSnakeCaseClasses = false;
+      this.hasAcademicYearClasses = false;
     }
   }
 
@@ -330,7 +365,6 @@ class DatabaseService {
         school: student.school,
         class_name: student.className,
         grade_level: student.gradeLevel,
-        academic_year: student.academicYear,
         academic_grade: student.academicGrade,
         academic_grade_hk1: student.academicGradeHK1 || "",
         academic_grade_hk2: student.academicGradeHK2 || "",
@@ -347,6 +381,9 @@ class DatabaseService {
         teacher: student.teacher || "",
         subjects: student.subjects
       };
+      if (this.hasAcademicYearColumn) {
+        result.academic_year = student.academicYear;
+      }
     } 
     // 2. Legacy Schema (Fallback): Pack extra fields into JSONB column 'subjects'
     else if (this.isSnakeCaseSchema) {
@@ -377,10 +414,16 @@ class DatabaseService {
           teacher: student.teacher
         }
       };
+      if (this.hasAcademicYearColumn) {
+        result.academic_year = student.academicYear;
+      }
     }
     // 3. Default (CamelCase)
     else {
       result = { ...student };
+      if (!this.hasAcademicYearColumn) {
+        delete result.academicYear;
+      }
     }
 
     // Only include ID if column exists in database
@@ -647,7 +690,7 @@ class DatabaseService {
         await Promise.race([this.checkSchemaCase(), new Promise(r => setTimeout(r, 1000))]);
         
         let query = this.supabase.from("students").select("*");
-        if (academicYear) {
+        if (academicYear && this.hasAcademicYearColumn) {
           const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
           query = query.eq(yearField, academicYear);
         }
@@ -722,8 +765,8 @@ class DatabaseService {
         const mapped = this.mapStudentToDb(student);
 
         const onConflictCols = this.isSnakeCaseSchema 
-          ? ["student_code", "academic_year"] 
-          : ["studentCode", "academicYear"];
+          ? (this.hasAcademicYearColumn ? ["student_code", "academic_year"] : ["student_code"]) 
+          : (this.hasAcademicYearColumn ? ["studentCode", "academicYear"] : ["studentCode"]);
 
         const result = await Promise.race([
           this.supabase
@@ -765,9 +808,15 @@ class DatabaseService {
         
         let query = this.supabase.from("students").delete();
         if (this.isSnakeCaseSchema) {
-          query = query.eq("student_code", studentCode).eq("academic_year", academicYear);
+          query = query.eq("student_code", studentCode);
+          if (this.hasAcademicYearColumn) {
+            query = query.eq("academic_year", academicYear);
+          }
         } else {
-          query = query.eq("studentCode", studentCode).eq("academicYear", academicYear);
+          query = query.eq("studentCode", studentCode);
+          if (this.hasAcademicYearColumn) {
+            query = query.eq("academicYear", academicYear);
+          }
         }
         
         const result = await Promise.race([
@@ -885,12 +934,12 @@ class DatabaseService {
         let query = this.supabase.from("students").delete();
         if (this.isSnakeCaseSchema) {
           query = query.eq("class_name", className);
-          if (academicYear) {
+          if (academicYear && this.hasAcademicYearColumn) {
             query = query.eq("academic_year", academicYear);
           }
         } else {
           query = query.eq("className", className);
-          if (academicYear) {
+          if (academicYear && this.hasAcademicYearColumn) {
             query = query.eq("academicYear", academicYear);
           }
         }
@@ -967,16 +1016,23 @@ class DatabaseService {
         await Promise.race([this.checkClassesSchema(), new Promise(r => setTimeout(r, 2000))]);
         const mapped = classes.map(c => {
           if (this.isSnakeCaseClasses) {
-            return {
+            const obj: any = {
               id: c.id,
               class_name: c.className,
               grade_level: c.gradeLevel,
-              academic_year: c.academicYear,
               advisor_name: c.advisorName,
               room_number: c.roomNumber
             };
+            if (this.hasAcademicYearClasses) {
+              obj.academic_year = c.academicYear;
+            }
+            return obj;
           } else {
-            return c;
+            const obj: any = { ...c };
+            if (!this.hasAcademicYearClasses) {
+              delete obj.academicYear;
+            }
+            return obj;
           }
         });
 

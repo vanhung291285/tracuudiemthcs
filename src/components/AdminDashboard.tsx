@@ -10,7 +10,7 @@ import * as XLSX from "xlsx";
 import { 
   Users, Edit, Trash2, Plus, Upload, BarChart3, Database, LogOut, Check, X,
   RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet, UserX, SortAsc,
-  Calendar
+  Calendar, AlertTriangle
 } from "lucide-react";
 
 import { evaluateTT22, evaluateDistinctionTT22, roundScore } from "../lib/tt22";
@@ -4591,6 +4591,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         💡 Ứng dụng THCS Suối Lư đã thông minh tự động hỗ trợ cả 2 định dạng Snake Case và Camel Case. Hãy lựa chọn mẫu truy vấn phù hợp rồi nhấn Run!
                       </span>
                     </p>
+
+                    <div className="bg-rose-50 border border-rose-100 rounded-lg p-3">
+                      <div className="flex gap-2">
+                        <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[11px] font-bold text-rose-800 mb-1 leading-tight">Cần cập nhật Database Schema!</p>
+                          <p className="text-[10px] text-rose-700 leading-normal">
+                            Để tránh lỗi khi xóa học sinh, bạn <b>bắt buộc</b> phải chạy đoạn mã <code>0. NÂNG CẤP BẢNG CŨ</code> bên dưới trong <b>SQL Editor</b> của Supabase để thêm cột <code>academic_year</code>.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* SQL View Switcher */}
                     <div className="flex bg-slate-100 p-1 rounded-lg gap-1 border">

@@ -139,7 +139,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     try {
       const year = selectedAcademicYear || (academicYears.find(y => y.isActive)?.yearName);
       const list = await dbService.getAllStudents(year);
-      const filtered = list.filter(s => s.className === scoreboardClass);
+      const filtered = scoreboardClass === "all" ? list : list.filter(s => s.className === scoreboardClass);
       setScoreboardStudents(filtered);
     } catch (err) {
       console.error("Error loading scoreboard:", err);
@@ -159,12 +159,14 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       if (!searchClass || !availableClasses.includes(searchClass)) {
         setSearchClass(availableClasses[0]);
       }
-      if (!scoreboardClass || !availableClasses.includes(scoreboardClass)) {
-        setScoreboardClass(availableClasses[0]);
+      if (!scoreboardClass || (scoreboardClass !== "all" && !availableClasses.includes(scoreboardClass))) {
+        setScoreboardClass("all");
       }
     } else {
       setSearchClass("");
-      setScoreboardClass("");
+      if (!scoreboardClass || scoreboardClass !== "all") {
+        setScoreboardClass("all");
+      }
     }
   }, [availableClasses]);
 
@@ -587,9 +589,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       onChange={(e) => setScoreboardClass(e.target.value)}
                       className="bg-transparent border-none text-[11px] font-bold text-slate-800 outline-none cursor-pointer hover:text-[#337819] transition"
                     >
-                      {availableClasses.length > 0 ? availableClasses.map(cls => (
+                      <option value="all">Hiển thị toàn trường</option>
+                      {availableClasses.length > 0 && availableClasses.map(cls => (
                         <option key={cls} value={cls}>Lớp {cls}</option>
-                      )) : <option value="">Chọn lớp</option>}
+                      ))}
                     </select>
                   </div>
 
