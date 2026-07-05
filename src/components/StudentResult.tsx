@@ -82,14 +82,19 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     }
   }
 
+  const hasDataForTerm = (student.subjects || []).some(s => {
+    const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
+    return val !== undefined && val !== null && val !== "";
+  });
+
   if (!activeAcademicGrade) {
-    activeAcademicGrade = student.academicGrade || "Đạt";
+    activeAcademicGrade = hasDataForTerm ? (student.academicGrade || "Đạt") : "";
   }
 
   // Behavior Grade
   let activeBehaviorGrade = term === "hk1" ? student.behaviorGradeHK1 : term === "hk2" ? student.behaviorGradeHK2 : student.behaviorGrade;
   if (!activeBehaviorGrade) {
-    activeBehaviorGrade = student.behaviorGrade || "Tốt";
+    activeBehaviorGrade = hasDataForTerm ? (student.behaviorGrade || "Tốt") : "";
   }
 
   // Designation Distinction
@@ -127,10 +132,14 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       // Auto recalculate if it's currently marked as something but we have valid data to recalculate
       if (activeAcademicGrade && activeBehaviorGrade) {
         d = evaluateDistinctionTT22(activeAcademicGrade as string, activeBehaviorGrade as string, currentScores);
+      } else if (!hasDataForTerm) {
+        d = "Không";
       }
     } else {
       if (activeAcademicGrade && activeBehaviorGrade) {
         d = evaluateDistinctionTT22(activeAcademicGrade as string, activeBehaviorGrade as string, currentScores);
+      } else if (!hasDataForTerm) {
+        d = "Không";
       }
     }
     

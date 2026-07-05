@@ -5515,6 +5515,21 @@ NOTIFY pgrst, 'reload schema';`}
                   <h1 className="text-xl font-black text-slate-800 uppercase tracking-tight">Cấu hình Danh sách Lớp Học</h1>
                   <p className="text-xs text-slate-500">Quản lý các lớp trong nhà trường, phân công giáo viên chủ nhiệm và phòng học.</p>
                 </div>
+                {dbService.isMissingAcademicYearClasses && (
+                  <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-bold text-red-800">Cảnh báo: Thiếu cột "academic_year" trên Supabase</h4>
+                      <p className="text-xs text-red-700 mt-1">
+                        Bảng <strong>portal_classes</strong> trên Supabase của bạn hiện chưa có cột lưu năm học. Điều này khiến cấu hình lớp học không thể đồng bộ năm học giữa các trình duyệt.
+                      </p>
+                      <p className="text-xs text-red-700 mt-1">
+                        Vui lòng chuyển sang tab <strong>Thiết lập Supabase</strong>, cuộn xuống phần <strong>Cấu trúc SQL Cơ sở dữ liệu</strong>, và chạy lệnh SQL thêm cột <code>academic_year</code> hoặc <code>academicYear</code> vào bảng <code>portal_classes</code>.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* LEFT COLUMN: ADD / EDIT FORM */}
