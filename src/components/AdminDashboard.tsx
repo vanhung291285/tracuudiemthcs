@@ -939,7 +939,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     if (confirm(`Bạn có chắc chắn muốn xóa TOÀN BỘ ${classesToDelete.length} lớp học của năm học ${academicYear} không?\n\nLưu ý: Học sinh thuộc các lớp này sẽ không bị xóa mà sẽ chuyển về trạng thái "Chưa xếp lớp".`)) {
       setAuthIsLoading(true);
       try {
-        const result = await dbService.clearClassesByYear(academicYear);
+        const classIdsToDelete = classesToDelete.map(c => c.id);
+        const result = await dbService.clearClassesByYear(academicYear, classIdsToDelete);
         if (result.success) {
           const remainingClasses = classes.filter(c => c.academicYear !== academicYear);
           setClasses(remainingClasses);

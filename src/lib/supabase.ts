@@ -278,20 +278,20 @@ class DatabaseService {
         .select("class_name")
         .limit(1);
       
-      this.isSnakeCaseClasses = !(error && error.code === 'PGRST204');
+      this.isSnakeCaseClasses = !(error && (error.code === 'PGRST204' || error.code === '42703'));
 
       if (this.isSnakeCaseClasses) {
         const { error: yearError } = await this.supabase
           .from("portal_classes")
           .select("academic_year")
           .limit(1);
-        this.hasAcademicYearClasses = !(yearError && yearError.code === 'PGRST204');
+        this.hasAcademicYearClasses = !(yearError && (yearError.code === 'PGRST204' || yearError.code === '42703'));
       } else {
         const { error: yearError } = await this.supabase
           .from("portal_classes")
           .select("academicYear")
           .limit(1);
-        this.hasAcademicYearClasses = !(yearError && yearError.code === 'PGRST204');
+        this.hasAcademicYearClasses = !(yearError && (yearError.code === 'PGRST204' || yearError.code === '42703'));
       }
 
 
@@ -311,7 +311,7 @@ class DatabaseService {
         .select("year_name")
         .limit(1);
       
-      this.isSnakeCaseAcademicYears = !(error && error.code === 'PGRST204');
+      this.isSnakeCaseAcademicYears = !(error && (error.code === 'PGRST204' || error.code === '42703'));
       this.academicYearsFormatChecked = true;
     } catch {
       this.isSnakeCaseAcademicYears = true;
@@ -1034,7 +1034,7 @@ class DatabaseService {
             id: row.id,
             className: row.className || row.class_name || "",
             gradeLevel: row.gradeLevel || row.grade_level || "",
-            academicYear: row.academicYear || row.academic_year || "2025-2026",
+            academicYear: row.academicYear || row.academic_year || (localClasses.find(lc => lc.id === row.id)?.academicYear || "2025-2026"),
             advisorName: row.advisorName || row.advisor_name || "",
             roomNumber: row.roomNumber || row.room_number || ""
           }));
@@ -1152,30 +1152,38 @@ class DatabaseService {
   }
 
   // Clear all classes for a specific academic year
-  public async clearClassesByYear(academicYear: string): Promise<{success: boolean, error?: string}> {
+  public async clearClassesByYear(academicYear: string, classIds?: string[]): Promise<{success: boolean, error?: string}> {
     if (this.supabase) {
       try {
         // Find if using snake_case or camelCase schema
         await Promise.race([this.checkClassesSchema(), new Promise(r => setTimeout(r, 2000))]);
         
-        if (this.isSnakeCaseClasses && !this.hasAcademicYearClasses) {
-          return { 
-            success: false, 
-            error: "Bảng portal_classes chưa có cột academic_year. Vui lòng vào tab Supabase -> Cập nhật CSDL để chạy lệnh ALTER TABLE thêm cột này trước khi thao tác theo năm học."
-          };
-        }
-
         let result;
-        if (this.isSnakeCaseClasses) {
+        if (classIds && classIds.length > 0) {
+          // Delete by class ID instead of academic year column if IDs are provided
           result = await Promise.race([
-            this.supabase.from("portal_classes").delete().eq("academic_year", academicYear),
+            this.supabase.from("portal_classes").delete().in("id", classIds),
             new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
           ]);
         } else {
-          result = await Promise.race([
-            this.supabase.from("portal_classes").delete().eq("academicYear", academicYear),
-            new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
-          ]);
+          if (this.isSnakeCaseClasses && !this.hasAcademicYearClasses) {
+            return { 
+              success: false, 
+              error: "Bảng portal_classes chưa có cột academic_year. Vui lòng vào tab Supabase -> Cập nhật CSDL để chạy lệnh ALTER TABLE thêm cột này trước khi thao tác theo năm học."
+            };
+          }
+
+          if (this.isSnakeCaseClasses) {
+            result = await Promise.race([
+              this.supabase.from("portal_classes").delete().eq("academic_year", academicYear),
+              new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
+            ]);
+          } else {
+            result = await Promise.race([
+              this.supabase.from("portal_classes").delete().eq("academicYear", academicYear),
+              new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
+            ]);
+          }
         }
 
         if (result && result.error) {
