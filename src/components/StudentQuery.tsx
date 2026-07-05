@@ -231,7 +231,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const fetchTopStudents = async () => {
     try {
-      const activeYearName = selectedAcademicYear || (academicYears.find(y => y.isActive)?.yearName);
+      const activeYearName = academicYears.find(y => y.isActive)?.yearName;
       const all = await dbService.getAllStudents(activeYearName);
       const targetStudents = all.filter(s => {
         // Robust score check: counts subjects with actual numeric or valid string evaluations
@@ -312,7 +312,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     if (academicYears.length > 0) {
       fetchTopStudents();
     }
-  }, [academicYears, selectedAcademicYear]);
+  }, [academicYears]);
 
   const [headerTop, setHeaderTop] = useState(() => {
     const val = localStorage.getItem("portal_header_top");
