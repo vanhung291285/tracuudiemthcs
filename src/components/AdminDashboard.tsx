@@ -119,7 +119,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               ? (match[0] as any) 
               : "9";
             return {
-              id: `class_auto_${Date.now()}_${idx}`,
+              id: `class_${cName.trim().toUpperCase()}_${currentYear.replace(/[^a-zA-Z0-9]/g, "")}`,
               className: cName,
               gradeLevel: grade,
               academicYear: currentYear,
