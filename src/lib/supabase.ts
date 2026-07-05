@@ -833,13 +833,11 @@ class DatabaseService {
         // If the DB has a legacy unique constraint on student_code, this will throw an error,
         // which is better than silently deleting data. The user will be prompted to upgrade their schema.
         let onConflictCols = [];
-        if (this.hasIdColumn) {
-          onConflictCols = ["id"];
-        } else {
-          onConflictCols = this.isSnakeCaseSchema 
-            ? (this.hasAcademicYearColumn ? ["student_code", "academic_year"] : ["student_code"]) 
-            : (this.hasAcademicYearColumn ? ["studentCode", "academicYear"] : ["studentCode"]);
-        }
+        // Do not use 'id' as onConflict because in upgraded schemas it lacks a UNIQUE constraint, 
+        // causing 'no unique or exclusion constraint' errors.
+        onConflictCols = this.isSnakeCaseSchema 
+          ? (this.hasAcademicYearColumn ? ["student_code", "academic_year"] : ["student_code"]) 
+          : (this.hasAcademicYearColumn ? ["studentCode", "academicYear"] : ["studentCode"]);
 
         const result = await Promise.race([
           this.supabase
@@ -850,7 +848,11 @@ class DatabaseService {
 
         if (result.error) {
           console.error("Supabase upsert error:", result.error.message);
-          this.lastError = result.error.message;
+          if (result.error.message.includes("no unique or exclusion constraint")) {
+              this.lastError = "LỖI BỘ NHỚ ĐỆM: Bảng của bạn đã được nâng cấp nhưng Supabase chưa nhận diện được. Hãy vào SQL Editor chạy lệnh: NOTIFY pgrst, 'reload schema'; rồi tải lại trang.";
+          } else {
+              this.lastError = result.error.message;
+          }
           return false;
         }
         
@@ -928,7 +930,11 @@ class DatabaseService {
           const mapped = this.mapStudentToDb(student);
           const { error } = await this.supabase!
             .from("students")
-            .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" });
+            .upsert(mapped, { 
+              onConflict: this.isSnakeCaseSchema 
+                ? (this.hasAcademicYearColumn ? "student_code,academic_year" : "student_code") 
+                : (this.hasAcademicYearColumn ? "studentCode,academicYear" : "studentCode") 
+            });
           if (!error) uploadedCount++;
         }
         return uploadedCount;

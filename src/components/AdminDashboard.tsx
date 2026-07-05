@@ -3105,9 +3105,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const handleApplyImport = async () => {
     if (importPreview.length === 0) return;
 
+    if (dbService.supabase) {
+      await dbService.recheckSchema();
+    }
+    
     if (dbService.supabase && !dbService.hasAcademicYearColumn) {
-      alert("⚠️ CẢNH BÁO QUAN TRỌNG: Cấu trúc cơ sở dữ liệu Supabase của bạn đã CŨ (không hỗ trợ nhiều niên khóa).\n\nNếu tiếp tục nhập dữ liệu cho năm học mới, hệ thống sẽ GHI ĐÈ và làm MẤT TOÀN BỘ danh sách học sinh của năm học cũ!\n\n👉 CÁCH KHẮC PHỤC: Bạn hãy vào tab 'Cài đặt' -> 'Supabase & Database' -> copy đoạn mã '1. NÂNG CẤP BẢNG CŨ' và chạy trong mục SQL Editor của Supabase để cập nhật Cấu trúc bảng. Sau đó mới quay lại đây nhập danh sách.");
-      return;
+      const proceed = window.confirm("⚠️ CẢNH BÁO: Cấu trúc CSDL của bạn có vẻ đã CŨ hoặc Supabase chưa cập nhật bộ nhớ đệm (schema cache).\n\nNếu bạn chưa chạy mã SQL nâng cấp, việc tiếp tục có thể GHI ĐÈ dữ liệu học sinh năm cũ.\n\nNếu bạn VỪA MỚI chạy SQL nâng cấp, hãy bấm OK để tiếp tục thử (nếu lỗi, hệ thống sẽ báo chi tiết).\n\nBấm 'OK' để tiếp tục hoặc 'Cancel' để hủy.");
+      if (!proceed) return;
     }
 
     setAuthIsLoading(true);
@@ -3138,7 +3142,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         if (errorMsgText.includes("'id'")) missingCol = "(cột 'id')";
         else if (errorMsgText.includes("'academic_grade'")) missingCol = "(cột 'academic_grade')";
         
-        specificTip = `Hệ thống phát hiện Cấu trúc bảng Students của bạn đã CŨ (không hỗ trợ nhiều niên khóa hoặc thiếu cột ${missingCol}). \n\n👉 CÁCH SỬA: Bạn hãy vào tab 'Supabase & Database' trong Cài đặt, COPY đoạn mã ở phần "1. NÂNG CẤP BẢNG CŨ" và CHẠY trên SQL Editor của Supabase để cập nhật Cấu trúc bảng, sau đó thử nhập lại.`;
+        specificTip = `Hệ thống phát hiện Cấu trúc bảng Students của bạn đã CŨ (không hỗ trợ nhiều niên khóa hoặc thiếu cột ${missingCol}). \n\n👉 CÁCH SỬA: Bạn hãy vào tab 'Supabase & Database' trong Cài đặt, COPY đoạn mã ở phần "1. NÂNG CẤP BẢNG CŨ" (Lưu ý: Bấm chọn "Mẫu 1: Snake Case") và CHẠY trên SQL Editor của Supabase để cập nhật Cấu trúc bảng, sau đó thử nhập lại.`;
       }
 
       const errorMsg = uniqueErrors.length > 0 ? `\nChi tiết lỗi từ Supabase: ${errorMsgText}` : "";
@@ -4893,37 +4897,42 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 {`-- [MẪU 1] TẠO 6 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
 -- CÓ FIX LỖI "is duplicated" BẰNG CÁCH XÓA BẢN GHI TRÙNG LẶP
 
--- 0. DỌN DẸP DỮ LIỆU (Chạy nếu bạn muốn bắt đầu lại từ đầu hoặc sửa lỗi trùng lặp)
--- TRUNCATE students; -- Xóa sạch toàn bộ học sinh
--- TRUNCATE portal_classes; -- Xóa sạch toàn bộ lớp học
+-- 0. DỌN DẸP DỮ LIỆU (XÓA BẢN GHI TRÙNG LẶP NẾU CÓ - CHẠY 2 LỆNH DELETE DƯỚI ĐÂY)
+-- LƯU Ý: KHÔNG DÙNG LỆNH TRUNCATE NỮA ĐỂ TRÁNH XÓA NHẦM HẾT DỮ LIỆU!
 -- DELETE FROM portal_classes a USING portal_classes b WHERE a.id < b.id AND a.class_name = b.class_name AND a.academic_year = b.academic_year;
 -- DELETE FROM students a USING students b WHERE a.id < b.id AND a.student_code = b.student_code AND a.academic_year = b.academic_year;
 
 -- 1. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này)
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade TEXT DEFAULT 'Tốt';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade_hk1 TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade_hk2 TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade TEXT DEFAULT 'Tốt';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_hk1 TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_hk2 TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_summer TEXT DEFAULT 'Không';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS days_absent INTEGER DEFAULT 0;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS days_absent_unexcused INTEGER DEFAULT 0;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS distinction TEXT DEFAULT 'Không';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS verification_token TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
--- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
--- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS advisor_name TEXT;
--- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS room_number TEXT;
--- ALTER TABLE students DROP CONSTRAINT IF EXISTS students_student_code_key;
--- ALTER TABLE students ADD CONSTRAINT students_student_code_year_unique UNIQUE (student_code, academic_year);
--- ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_class_name_key;
--- ALTER TABLE portal_classes ADD CONSTRAINT portal_classes_name_year_unique UNIQUE (class_name, academic_year);
--- NOTIFY pgrst, 'reload schema';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
+-- NẾU HỌC SINH NĂM CŨ BỊ ĐỔI THÀNH 2025-2026, CHẠY LỆNH NÀY ĐỂ KHÔI PHỤC:
+-- UPDATE students SET academic_year = subjects->>'academicYear' WHERE subjects->>'academicYear' IS NOT NULL AND subjects->>'academicYear' != '';
+-- UPDATE portal_classes SET academic_year = '2024-2025' WHERE class_name = 'Tên Lớp Cũ'; -- (Tự chỉnh sửa nếu cần)
+ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade TEXT DEFAULT 'Tốt';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade_hk1 TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_grade_hk2 TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade TEXT DEFAULT 'Tốt';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_hk1 TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_hk2 TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS behavior_grade_summer TEXT DEFAULT 'Không';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS days_absent INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS days_absent_unexcused INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS skipped_periods INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS distinction TEXT DEFAULT 'Không';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS verification_token TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
+ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
+ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS advisor_name TEXT;
+ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS room_number TEXT;
+ALTER TABLE students DROP CONSTRAINT IF EXISTS students_student_code_key;
+ALTER TABLE students DROP CONSTRAINT IF EXISTS students_student_code_year_unique;
+ALTER TABLE students ADD CONSTRAINT students_student_code_year_unique UNIQUE (student_code, academic_year);
+ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_class_name_key;
+ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_name_year_unique;
+ALTER TABLE portal_classes ADD CONSTRAINT portal_classes_name_year_unique UNIQUE (class_name, academic_year);
+NOTIFY pgrst, 'reload schema';
 
 -- 2. TẠO BẢNG MỚI (Nếu chưa có bảng nào)
 CREATE TABLE IF NOT EXISTS students (
@@ -4945,6 +4954,7 @@ CREATE TABLE IF NOT EXISTS students (
   behavior_grade_summer TEXT,
   days_absent INTEGER NOT NULL,
   days_absent_unexcused INTEGER NOT NULL,
+  skipped_periods INTEGER DEFAULT 0,
   distinction TEXT NOT NULL,
   notes TEXT,
   verification_token TEXT NOT NULL,
@@ -5064,36 +5074,40 @@ NOTIFY pgrst, 'reload schema';`}
 {`-- [MẪU 2] TẠO 6 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
 -- CÓ FIX LỖI "is duplicated" BẰNG CÁCH XÓA BẢN GHI TRÙNG LẶP
 
--- 0. DỌN DẸP DỮ LIỆU (Chạy nếu bạn muốn bắt đầu lại từ đầu hoặc sửa lỗi trùng lặp)
--- TRUNCATE students; -- Xóa sạch toàn bộ học sinh
--- TRUNCATE portal_classes; -- Xóa sạch toàn bộ lớp học
+-- 0. DỌN DẸP DỮ LIỆU (XÓA BẢN GHI TRÙNG LẶP NẾU CÓ - CHẠY 2 LỆNH DELETE DƯỚI ĐÂY)
+-- LƯU Ý: KHÔNG DÙNG LỆNH TRUNCATE NỮA ĐỂ TRÁNH XÓA NHẦM HẾT DỮ LIỆU!
 -- DELETE FROM portal_classes a USING portal_classes b WHERE a.id < b.id AND a."className" = b."className" AND a."academicYear" = b."academicYear";
 -- DELETE FROM students a USING students b WHERE a.id < b.id AND a."studentCode" = b."studentCode" AND a."academicYear" = b."academicYear";
 
 -- 1. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này)
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGrade" TEXT DEFAULT 'Tốt';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGradeHK1" TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGradeHK2" TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGrade" TEXT DEFAULT 'Tốt';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeHK1" TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeHK2" TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeSummer" TEXT DEFAULT 'Không';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "daysAbsent" INTEGER DEFAULT 0;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "daysAbsentUnexcused" INTEGER DEFAULT 0;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS distinction TEXT DEFAULT 'Không';
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS "verificationToken" TEXT;
--- ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
--- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
--- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "advisorName" TEXT;
--- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "roomNumber" TEXT;
--- ALTER TABLE students DROP CONSTRAINT IF EXISTS students_studentCode_key;
--- ALTER TABLE students ADD CONSTRAINT students_studentCode_year_unique UNIQUE ("studentCode", "academicYear");
--- ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_name_year_unique UNIQUE ("className", "academicYear");
--- NOTIFY pgrst, 'reload schema';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
+-- NẾU HỌC SINH NĂM CŨ BỊ ĐỔI THÀNH 2025-2026, CHẠY LỆNH NÀY ĐỂ KHÔI PHỤC:
+-- UPDATE students SET "academicYear" = subjects->>'academicYear' WHERE subjects->>'academicYear' IS NOT NULL AND subjects->>'academicYear' != '';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGrade" TEXT DEFAULT 'Tốt';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGradeHK1" TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicGradeHK2" TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGrade" TEXT DEFAULT 'Tốt';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeHK1" TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeHK2" TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "behaviorGradeSummer" TEXT DEFAULT 'Không';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "daysAbsent" INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "daysAbsentUnexcused" INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "skippedPeriods" INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS distinction TEXT DEFAULT 'Không';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS "verificationToken" TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
+ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
+ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "advisorName" TEXT;
+ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "roomNumber" TEXT;
+ALTER TABLE students DROP CONSTRAINT IF EXISTS students_studentCode_key;
+ALTER TABLE students DROP CONSTRAINT IF EXISTS students_studentCode_year_unique;
+ALTER TABLE students ADD CONSTRAINT students_studentCode_year_unique UNIQUE ("studentCode", "academicYear");
+ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_name_year_unique;
+ALTER TABLE portal_classes ADD CONSTRAINT portal_classes_name_year_unique UNIQUE ("className", "academicYear");
+NOTIFY pgrst, 'reload schema';
 
 -- 2. TẠO BẢNG MỚI (Nếu chưa có bảng nào)
 CREATE TABLE IF NOT EXISTS students (
@@ -5115,6 +5129,7 @@ CREATE TABLE IF NOT EXISTS students (
   "behaviorGradeSummer" TEXT,
   "daysAbsent" INTEGER NOT NULL,
   "daysAbsentUnexcused" INTEGER NOT NULL,
+  "skippedPeriods" INTEGER DEFAULT 0,
   distinction TEXT NOT NULL,
   notes TEXT,
   "verificationToken" TEXT NOT NULL,
