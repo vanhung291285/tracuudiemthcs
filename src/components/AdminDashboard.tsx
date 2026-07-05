@@ -102,9 +102,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   // Sync missing classes from loaded students roster
   useEffect(() => {
     if (students.length > 0) {
+      const currentYear = selectedAcademicYear === "all" 
+        ? (academicYears.find(y => y.isActive)?.yearName || "2025-2026")
+        : selectedAcademicYear;
+        
       const studentClassNames = Array.from(new Set(students.map(s => s.className).filter(Boolean))) as string[];
-      const existingClassNames = classes.map(c => c.className);
+      const existingClassNames = classes.filter(c => c.academicYear === currentYear).map(c => c.className);
       const missingClassNames = studentClassNames.filter(cName => !existingClassNames.includes(cName));
+      
       if (missingClassNames.length > 0) {
         const newClasses = [
           ...classes,
@@ -117,12 +122,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               id: `class_auto_${Date.now()}_${idx}`,
               className: cName,
               gradeLevel: grade,
+              academicYear: currentYear,
               advisorName: "Chưa phân công chủ nhiệm",
               roomNumber: "Chưa xếp phòng"
             };
           })
         ];
         setClasses(newClasses);
+        
+        // Ensure auto-detected classes are also persisted to Supabase
+        if (isAuthenticated) {
+          dbService.saveClasses(newClasses).catch(err => console.error("Auto-sync saveClasses failed:", err));
+        }
       }
     }
   }, [students]);
