@@ -280,19 +280,15 @@ class DatabaseService {
       
       this.isSnakeCaseClasses = !(error && (error.code === 'PGRST204' || error.code === '42703'));
 
-      if (this.isSnakeCaseClasses) {
-        const { error: yearError } = await this.supabase
-          .from("portal_classes")
-          .select("academic_year")
-          .limit(1);
-        this.hasAcademicYearClasses = !(yearError && (yearError.code === 'PGRST204' || yearError.code === '42703'));
-      } else {
-        const { error: yearError } = await this.supabase
-          .from("portal_classes")
-          .select("academicYear")
-          .limit(1);
-        this.hasAcademicYearClasses = !(yearError && (yearError.code === 'PGRST204' || yearError.code === '42703'));
-      }
+      // Always check for both academic_year and academicYear to be safe
+      const { error: yearErrorSnake } = await this.supabase.from("portal_classes").select("academic_year").limit(1);
+      const hasSnakeYear = !(yearErrorSnake && (yearErrorSnake.code === 'PGRST204' || yearErrorSnake.code === '42703'));
+      
+      const { error: yearErrorCamel } = await this.supabase.from("portal_classes").select("academicYear").limit(1);
+      const hasCamelYear = !(yearErrorCamel && (yearErrorCamel.code === 'PGRST204' || yearErrorCamel.code === '42703'));
+      
+      this.hasAcademicYearClasses = hasSnakeYear || hasCamelYear;
+      this.isSnakeCaseYear = hasSnakeYear;
 
 
       this.classesFormatChecked = true;
@@ -1080,6 +1076,7 @@ class DatabaseService {
     localStorage.setItem("portal_classes", JSON.stringify(classes));
 
     if (this.supabase) {
+      if (classes.length === 0) return true;
       try {
         await Promise.race([this.checkClassesSchema(), new Promise(r => setTimeout(r, 2000))]);
         const mapped = classes.map(c => {
@@ -1092,7 +1089,8 @@ class DatabaseService {
               room_number: c.roomNumber || ""
             };
             if (this.hasAcademicYearClasses) {
-              obj.academic_year = c.academicYear;
+              if (this.isSnakeCaseYear) obj.academic_year = c.academicYear;
+              else obj.academicYear = c.academicYear;
             }
             return obj;
           } else {
@@ -1105,7 +1103,8 @@ class DatabaseService {
               roomNumber: c.roomNumber || ""
             };
             if (this.hasAcademicYearClasses) {
-              obj.academicYear = c.academicYear;
+              if (this.isSnakeCaseYear) obj.academic_year = c.academicYear;
+              else obj.academicYear = c.academicYear;
             }
             return obj;
           }
@@ -1166,24 +1165,18 @@ class DatabaseService {
             new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
           ]);
         } else {
-          if (this.isSnakeCaseClasses && !this.hasAcademicYearClasses) {
+          if (!this.hasAcademicYearClasses) {
             return { 
               success: false, 
               error: "Bảng portal_classes chưa có cột academic_year. Vui lòng vào tab Supabase -> Cập nhật CSDL để chạy lệnh ALTER TABLE thêm cột này trước khi thao tác theo năm học."
             };
           }
 
-          if (this.isSnakeCaseClasses) {
-            result = await Promise.race([
-              this.supabase.from("portal_classes").delete().eq("academic_year", academicYear),
-              new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
-            ]);
-          } else {
-            result = await Promise.race([
-              this.supabase.from("portal_classes").delete().eq("academicYear", academicYear),
-              new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
-            ]);
-          }
+          const yearCol = this.isSnakeCaseYear ? "academic_year" : "academicYear";
+          result = await Promise.race([
+            this.supabase.from("portal_classes").delete().eq(yearCol, academicYear),
+            new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout clearing classes by year")), 10000))
+          ]);
         }
 
         if (result && result.error) {
@@ -1241,6 +1234,7 @@ class DatabaseService {
     localStorage.setItem("portal_academic_years", JSON.stringify(years));
 
     if (this.supabase) {
+      if (years.length === 0) return true;
       try {
         await Promise.race([this.checkAcademicYearsSchema(), new Promise(r => setTimeout(r, 2000))]);
         const mapped = years.map(y => {

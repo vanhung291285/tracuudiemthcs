@@ -231,7 +231,11 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const fetchTopStudents = async () => {
     try {
-      const activeYearName = academicYears.find(y => y.isActive)?.yearName;
+      const activeYearName = selectedAcademicYear || academicYears.find(y => y.isActive)?.yearName;
+      if (!activeYearName) {
+         setTopStudents([]);
+         return;
+      }
       const all = await dbService.getAllStudents(activeYearName);
       const targetStudents = all.filter(s => {
         // Robust score check: counts subjects with actual numeric or valid string evaluations
@@ -312,7 +316,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     if (academicYears.length > 0) {
       fetchTopStudents();
     }
-  }, [academicYears]);
+  }, [academicYears, selectedAcademicYear]);
 
   const [headerTop, setHeaderTop] = useState(() => {
     const val = localStorage.getItem("portal_header_top");
@@ -490,21 +494,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       {/* Top Banner Navigation Header */}
       <header className="w-full bg-[#337819] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
         
-        {/* View Mode Toggle - Top Left */}
-        <div className="absolute top-4 left-4 md:top-5 md:left-6 no-print flex gap-1 bg-white/10 p-1 rounded-full border border-white/20">
-          <button 
-            onClick={() => setViewMode("search")}
-            className={`px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all cursor-pointer ${viewMode === "search" ? "bg-white text-[#337819] shadow-sm" : "text-white hover:bg-white/10"}`}
-          >
-            TRA CỨU
-          </button>
-          <button 
-            onClick={() => setViewMode("scoreboard")}
-            className={`px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all cursor-pointer ${viewMode === "scoreboard" ? "bg-white text-[#337819] shadow-sm" : "text-white hover:bg-white/10"}`}
-          >
-            TRA CỨU THEO NĂM HỌC
-          </button>
-        </div>
+
 
         {/* Admin Button - Floating in the top right corner */}
         <div className="absolute top-4 right-4 md:top-5 md:right-6 no-print">

@@ -97,6 +97,14 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     activeBehaviorGrade = hasDataForTerm ? (student.behaviorGrade || "Tốt") : "";
   }
 
+  // If calculating for the whole year (canam), ensure they actually have Semester 2 data
+  const hasSemester2Data = (student.subjects || []).some(s => s.semester2 !== undefined && s.semester2 !== null && s.semester2 !== "");
+  if (term === "canam" && !hasSemester2Data) {
+    activeAcademicGrade = "";
+    activeBehaviorGrade = "";
+  }
+
+
   // Designation Distinction
   const scoredCount = (student.subjects || []).filter(s => {
     const hasS1 = (typeof s.semester1 === "number") || (s.semester1 === "Đạt" || s.semester1 === "Chưa đạt");
@@ -132,7 +140,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       // Auto recalculate if it's currently marked as something but we have valid data to recalculate
       if (activeAcademicGrade && activeBehaviorGrade) {
         d = evaluateDistinctionTT22(activeAcademicGrade as string, activeBehaviorGrade as string, currentScores);
-      } else if (!hasDataForTerm) {
+      } else if (!hasDataForTerm || !hasSemester2Data) {
         d = "Không";
       }
     } else {
