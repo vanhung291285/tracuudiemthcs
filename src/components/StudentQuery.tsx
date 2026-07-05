@@ -231,7 +231,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const fetchTopStudents = async () => {
     try {
-      const activeYearName = selectedAcademicYear || academicYears.find(y => y.isActive)?.yearName;
+      // Chỉ lấy danh sách học sinh của năm học hiện tại (được cấu hình isActive trong Admin)
+      const activeYearName = academicYears.find(y => y.isActive)?.yearName;
       if (!activeYearName) {
          setTopStudents([]);
          return;
@@ -264,7 +265,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       });
 
       setTopStudents(targetStudents);
-      setStudentCount(all.length);
+      // removed setStudentCount here, now handled in useEffect for selectedAcademicYear
     } catch (err) {
       console.warn("Could not load top students:", err);
     }
@@ -309,6 +310,14 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   useEffect(() => {
     if (selectedAcademicYear) {
       fetchClassesList(selectedAcademicYear);
+      // Fetch student count for the selected academic year
+      dbService.getAllStudents(selectedAcademicYear).then(students => {
+        setStudentCount(students.length);
+      }).catch(() => {
+        setStudentCount(0);
+      });
+    } else {
+      setStudentCount(0);
     }
   }, [selectedAcademicYear]);
 
@@ -316,7 +325,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     if (academicYears.length > 0) {
       fetchTopStudents();
     }
-  }, [academicYears, selectedAcademicYear]);
+  }, [academicYears]);
 
   const [headerTop, setHeaderTop] = useState(() => {
     const val = localStorage.getItem("portal_header_top");
@@ -496,17 +505,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         
 
 
-        {/* Admin Button - Floating in the top right corner */}
-        <div className="absolute top-4 right-4 md:top-5 md:right-6 no-print">
-          <button 
-            onClick={onNavigateToAdmin}
-            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 transition-all px-3 py-1.5 rounded-full border border-white/20 text-[10px] md:text-xs font-bold uppercase tracking-wider cursor-pointer active:scale-95"
-            title="Quản trị hệ thống"
-          >
-            <LayoutDashboard className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            <span className="hidden sm:inline">Quản trị</span>
-          </button>
-        </div>
+
 
         <div className="max-w-6xl mx-auto space-y-1.5">
           <div className="flex flex-col items-center">
@@ -761,27 +760,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     />
                   </div>
 
-                  {/* Academic Year Selection */}
-                  {academicYears.length > 0 && (
-                    <div>
-                      <label htmlFor="student-year" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
-                      </label>
-                      <select
-                        id="student-year"
-                        value={selectedAcademicYear}
-                        onChange={(e) => setSelectedAcademicYear(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
-                      >
-                        {academicYears.map((year, idx) => (
-                          <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
-                            {year.yearName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
                   {/* Student Class Input */}
                   <div>
                     <label htmlFor="student-class" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
@@ -809,6 +787,27 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       Vui lòng chọn đúng lớp của học sinh để tra cứu điểm.
                     </p>
                   </div>
+
+                  {/* Academic Year Selection */}
+                  {academicYears.length > 0 && (
+                    <div>
+                      <label htmlFor="student-year" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
+                      </label>
+                      <select
+                        id="student-year"
+                        value={selectedAcademicYear}
+                        onChange={(e) => setSelectedAcademicYear(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
+                      >
+                        {academicYears.map((year, idx) => (
+                          <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
+                            {year.yearName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {/* Academic Term Selector tabs */}
                   <div className="space-y-2 mt-2">
@@ -910,23 +909,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   </button>
                 </form>
 
-                {/* Prominent link to Scoreboard mode */}
-                <div className="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-between gap-3 animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white">
-                      <BarChartHorizontal className="w-4 h-4" />
-                    </div>
-                    <div className="text-[11px] font-bold text-slate-700 leading-tight">
-                      Bạn muốn xem <span className="text-[#337819]">Bảng điểm toàn trường</span> theo năm học?
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setViewMode("scoreboard")}
-                    className="px-3 py-1.5 bg-[#337819] text-white rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition shadow-sm cursor-pointer"
-                  >
-                    XEM NGAY
-                  </button>
-                </div>
+
 
                 <div className="mt-6 pt-5 border-t border-slate-200 flex items-start gap-2 text-slate-500 text-xs text-justify">
                   <HelpCircle className="w-4 h-4 text-[#337819] shrink-0 mt-0.5" />
@@ -968,7 +951,16 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                 {/* Step 3 */}
                 <div className="flex items-start gap-4 p-1">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E53935] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
+                  <div className="space-y-1">
+                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN NĂM HỌC</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Chọn năm học tương ứng với kết quả bạn muốn xem.</p>
+                  </div>
+                </div>
+
+                {/* Step 4 */}
+                <div className="flex items-start gap-4 p-1">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E53935] flex items-center justify-center text-white font-black text-base shadow-sm">4</div>
                   <div className="space-y-1">
                     <h4 className="text-[13px] font-black uppercase text-[#E53935] tracking-tight">TRA CỨU KẾT QUẢ</h4>
                     <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để xem chi tiết bảng điểm thành phần môn học và kết quả rèn luyện.</p>

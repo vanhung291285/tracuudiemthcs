@@ -830,17 +830,37 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   };
 
   const handleDeleteYear = async (id: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa năm học này? Dữ liệu học sinh liên quan sẽ không bị xóa nhưng sẽ không thể truy cập qua năm học này nữa.")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa năm học này? ĐỒNG NGHĨA VỚI VIỆC SẼ XÓA TOÀN BỘ HỌC SINH VÀ LỚP HỌC CỦA NĂM HỌC NÀY.")) return;
 
+    setAuthIsLoading(true);
     try {
+      const yearObj = academicYears.find(y => y.id === id);
       const success = await dbService.deleteAcademicYear(id);
+      
       if (success) {
         const updated = academicYears.filter(y => y.id !== id);
         setAcademicYears(updated);
         localStorage.setItem("portal_academic_years", JSON.stringify(updated));
+        
+        if (yearObj) {
+          // Xóa tất cả học sinh của năm học này
+          await dbService.deleteStudentsByYear(yearObj.yearName);
+          const remainingStudents = students.filter(s => s.academicYear !== yearObj.yearName);
+          setStudents(remainingStudents);
+          
+          // Xóa tất cả lớp học của năm học này
+          const remainingClasses = classes.filter(c => c.academicYear !== yearObj.yearName);
+          setClasses(remainingClasses);
+          const classesToDelete = classes.filter(c => c.academicYear === yearObj.yearName).map(c => c.id);
+          if (classesToDelete.length > 0) {
+            await dbService.clearClassesByYear(yearObj.yearName, classesToDelete);
+          }
+        }
       }
     } catch (err) {
       alert("Lỗi khi xóa năm học");
+    } finally {
+      setAuthIsLoading(false);
     }
   };
 
