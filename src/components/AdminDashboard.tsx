@@ -55,7 +55,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   // Academic Years state
   const [academicYears, setAcademicYears] = useState<SchoolYear[]>([]);
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>("all");
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(() => localStorage.getItem("portal_selected_academic_year") || "all");
+
+  // Keep selected academic year persisted
+  useEffect(() => {
+    localStorage.setItem("portal_selected_academic_year", selectedAcademicYear);
+  }, [selectedAcademicYear]);
   const [yearFormId, setYearFormId] = useState<string | null>(null);
   const [yearFormName, setYearFormName] = useState("");
   const [yearFormIsActive, setYearFormIsActive] = useState(false);
@@ -150,17 +155,30 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [classFormGrade, setClassFormGrade] = useState<"6" | "7" | "8" | "9">("9");
   const [classFormAdvisor, setClassFormAdvisor] = useState("");
   const [classFormRoom, setClassFormRoom] = useState("");
-  const [classFormYear, setClassFormYear] = useState("2025-2026");
-  const [selectedClassYear, setSelectedClassYear] = useState<string>("all");
+  const [classFormYear, setClassFormYear] = useState(() => localStorage.getItem("portal_class_form_year") || "2025-2026");
+  const [selectedClassYear, setSelectedClassYear] = useState<string>(() => localStorage.getItem("portal_selected_class_year") || "all");
   const [classFormError, setClassFormError] = useState("");
+
+  // Keep year selections persisted
+  useEffect(() => {
+    localStorage.setItem("portal_class_form_year", classFormYear);
+  }, [classFormYear]);
+
+  useEffect(() => {
+    localStorage.setItem("portal_selected_class_year", selectedClassYear);
+  }, [selectedClassYear]);
 
   // Sync class year when academicYears load
   useEffect(() => {
     if (academicYears.length > 0) {
       const active = academicYears.find(y => y.isActive);
       const yearName = active ? active.yearName : academicYears[0].yearName;
-      if (classFormYear === "2025-2026") setClassFormYear(yearName);
-      if (selectedClassYear === "all") setSelectedClassYear(yearName);
+      
+      const storedFormYear = localStorage.getItem("portal_class_form_year");
+      const storedSelectedYear = localStorage.getItem("portal_selected_class_year");
+      
+      if (!storedFormYear || storedFormYear === "2025-2026") setClassFormYear(yearName);
+      if (!storedSelectedYear || storedSelectedYear === "all") setSelectedClassYear(yearName);
     }
   }, [academicYears]);
 
@@ -243,14 +261,22 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [importPreview, setImportPreview] = useState<Student[]>([]);
   const [importStatus, setImportStatus] = useState("");
   const [importErrors, setImportErrors] = useState<string[]>([]);
-  const [importYear, setImportYear] = useState("2025-2026");
+  const [importYear, setImportYear] = useState(() => localStorage.getItem("portal_import_year") || "2025-2026");
+
+  // Persist import year
+  useEffect(() => {
+    localStorage.setItem("portal_import_year", importYear);
+  }, [importYear]);
 
   // Sync importYear when academicYears load
   useEffect(() => {
-    if (academicYears.length > 0 && importYear === "2025-2026") {
-      const active = academicYears.find(y => y.isActive);
-      if (active) setImportYear(active.yearName);
-      else setImportYear(academicYears[0].yearName);
+    if (academicYears.length > 0) {
+      const storedImportYear = localStorage.getItem("portal_import_year");
+      if (!storedImportYear || storedImportYear === "2025-2026") {
+        const active = academicYears.find(y => y.isActive);
+        if (active) setImportYear(active.yearName);
+        else setImportYear(academicYears[0].yearName);
+      }
     }
   }, [academicYears]);
   
@@ -308,8 +334,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       setAcademicYears(years);
       
       const activeYear = years.find(y => y.isActive);
-      if (activeYear && selectedAcademicYear === "all") {
-        setSelectedAcademicYear(activeYear.yearName);
+      const storedSelectedYear = localStorage.getItem("portal_selected_academic_year");
+      if (!storedSelectedYear || storedSelectedYear === "all") {
+        if (activeYear) {
+          setSelectedAcademicYear(activeYear.yearName);
+        } else if (years.length > 0) {
+          setSelectedAcademicYear(years[0].yearName);
+        }
       }
 
       const top = await dbService.getPortalSetting("portal_header_top", "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ");
@@ -4786,7 +4817,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 {`-- [MẪU 1] TẠO 6 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
 -- CÓ FIX LỖI "is duplicated" BẰNG CÁCH XÓA BẢN GHI TRÙNG LẶP
 
--- 0. DỌN DẸP DỮ LIỆU TRÙNG (Nếu bạn gặp lỗi "is duplicated" hãy chạy đoạn này trước)
+-- 0. DỌN DẸP DỮ LIỆU (Chạy nếu bạn muốn bắt đầu lại từ đầu hoặc sửa lỗi trùng lặp)
+-- TRUNCATE students; -- Xóa sạch toàn bộ học sinh
+-- TRUNCATE portal_classes; -- Xóa sạch toàn bộ lớp học
 -- DELETE FROM portal_classes a USING portal_classes b WHERE a.id < b.id AND a.class_name = b.class_name AND a.academic_year = b.academic_year;
 -- DELETE FROM students a USING students b WHERE a.id < b.id AND a.student_code = b.student_code AND a.academic_year = b.academic_year;
 
@@ -4955,7 +4988,9 @@ NOTIFY pgrst, 'reload schema';`}
 {`-- [MẪU 2] TẠO 6 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
 -- CÓ FIX LỖI "is duplicated" BẰNG CÁCH XÓA BẢN GHI TRÙNG LẶP
 
--- 0. DỌN DẸP DỮ LIỆU TRÙNG (Nếu bạn gặp lỗi "is duplicated" hãy chạy đoạn này trước)
+-- 0. DỌN DẸP DỮ LIỆU (Chạy nếu bạn muốn bắt đầu lại từ đầu hoặc sửa lỗi trùng lặp)
+-- TRUNCATE students; -- Xóa sạch toàn bộ học sinh
+-- TRUNCATE portal_classes; -- Xóa sạch toàn bộ lớp học
 -- DELETE FROM portal_classes a USING portal_classes b WHERE a.id < b.id AND a."className" = b."className" AND a."academicYear" = b."academicYear";
 -- DELETE FROM students a USING students b WHERE a.id < b.id AND a."studentCode" = b."studentCode" AND a."academicYear" = b."academicYear";
 
