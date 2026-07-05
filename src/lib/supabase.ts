@@ -1013,6 +1013,14 @@ class DatabaseService {
 
   // Load classes from Supabase if possible, otherwise fallback locally
   public async getClasses(): Promise<SchoolClass[]> {
+    let localClasses: SchoolClass[] = [];
+    const cached = localStorage.getItem("portal_classes");
+    if (cached) {
+      try {
+        localClasses = JSON.parse(cached) as SchoolClass[];
+      } catch (e) { }
+    }
+
     if (this.supabase) {
       try {
         await this.checkClassesSchema();
@@ -1021,7 +1029,7 @@ class DatabaseService {
           .select("*");
 
         if (!error && data) {
-          const mapped = data.map((row: any) => ({
+          const mapped: SchoolClass[] = data.map((row: any) => ({
             id: row.id,
             className: row.className || row.class_name || "",
             gradeLevel: row.gradeLevel || row.grade_level || "",
@@ -1029,22 +1037,27 @@ class DatabaseService {
             advisorName: row.advisorName || row.advisor_name || "",
             roomNumber: row.roomNumber || row.room_number || ""
           }));
-          return mapped.sort((a, b) => a.className.localeCompare(b.className));
+          
+          // Merge logic: Supabase data takes priority, but keep local classes that aren't in Supabase yet
+          const supabaseIds = new Set(mapped.map(c => c.id));
+          const merged: SchoolClass[] = [...mapped];
+          
+          for (const lc of localClasses) {
+            if (!supabaseIds.has(lc.id)) {
+              merged.push(lc);
+            }
+          }
+          
+          return merged.sort((a, b) => a.className.localeCompare(b.className, "vi"));
         }
       } catch (err) {
-        // Silent skip
+        // Silent skip, use local fallback
       }
     }
 
-    // Fallback to local storage load
-    const cached = localStorage.getItem("portal_classes");
-    if (cached) {
-      try {
-        return JSON.parse(cached) as SchoolClass[];
-      } catch (e) {
-        // error parsing, fallback to base
-      }
-    }
+    if (localClasses.length > 0) return localClasses;
+    
+    // Default base classes if everything is empty
     return [
       { id: "class_01", className: "9A1", gradeLevel: "9", academicYear: "2025-2026", advisorName: "Cô Nguyễn Minh Thảo", roomNumber: "Phòng 301" },
       { id: "class_02", className: "9A2", gradeLevel: "9", academicYear: "2025-2026", advisorName: "Thầy Trương Văn Lâm", roomNumber: "Phòng 302" },
