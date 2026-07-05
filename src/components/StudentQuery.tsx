@@ -790,33 +790,26 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     <label htmlFor="student-class" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
                       <School className="w-3.5 h-3.5 text-[#337819]" /> Lớp học <span className="text-[#E53935]">*</span>
                     </label>
-                    {availableClasses.length > 0 ? (
-                      <select
-                        id="student-class"
-                        value={searchClass}
-                        onChange={(e) => setSearchClass(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
-                      >
-                        {availableClasses.map((cls, idx) => (
+                    <select
+                      id="student-class"
+                      value={searchClass}
+                      onChange={(e) => setSearchClass(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
+                      required
+                    >
+                      <option value="">-- Chọn lớp học --</option>
+                      {availableClasses.length > 0 ? (
+                        availableClasses.map((cls, idx) => (
                           <option key={`cls-${cls || idx}`} value={cls}>
                             Lớp {cls}
                           </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        id="student-class"
-                        value={searchClass}
-                        onChange={(e) => setSearchClass(e.target.value)}
-                        placeholder="Nhập tên lớp (Ví dụ: 9A1)"
-                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition"
-                        autoComplete="off"
-                        required
-                      />
-                    )}
+                        ))
+                      ) : (
+                        <option disabled value="">Chưa có lớp học cho năm này</option>
+                      )}
+                    </select>
                     <p className="text-[11px] text-slate-500 mt-1.5 pl-1 font-medium italic">
-                      Vui lòng nhập hoặc chọn đúng lớp của học sinh để tra cứu điểm.
+                      Vui lòng chọn đúng lớp của học sinh để tra cứu điểm.
                     </p>
                   </div>
 
