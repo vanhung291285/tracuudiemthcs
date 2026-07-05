@@ -26,7 +26,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       try {
         const classes = await dbService.getClasses();
         if (!active) return;
-        const matched = classes.find(c => c.className === student.className);
+        const matched = classes.find(c => c.className === student.className && c.academicYear === student.academicYear);
         if (matched && matched.advisorName) {
           setAdvisorName(matched.advisorName);
         }
@@ -37,10 +37,10 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     };
     fetchAdvisor();
     return () => { active = false; };
-  }, [student.className, student.teacher]);
+  }, [student.className, student.teacher, student.academicYear]);
   
   const headerTop = localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
-  const schoolYearRaw = localStorage.getItem("portal_school_year") || student.academicYear || "Năm học 2025-2026";
+  const schoolYearRaw = student.academicYear || localStorage.getItem("portal_school_year") || "Năm học 2025-2026";
   const schoolYear = schoolYearRaw.replace(/năm học/i, "").trim();
 
   // Compute live term summary as required under Circular 22 rules

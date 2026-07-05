@@ -258,6 +258,17 @@ class DatabaseService {
     }
   }
 
+  public async recheckSchema() {
+    this.mapFormatChecked = false;
+    this.classesFormatChecked = false;
+    this.academicYearsFormatChecked = false;
+    await Promise.all([
+      this.checkSchemaCase(),
+      this.checkClassesSchema(),
+      this.checkAcademicYearsSchema()
+    ]);
+  }
+
   // Check classes table casing
   private async checkClassesSchema() {
     if (this.classesFormatChecked || !this.supabase) return;
@@ -489,14 +500,19 @@ class DatabaseService {
           .select("*")
           .eq(classField, cleanClass);
 
-        if (targetYear) {
+        if (targetYear && this.hasAcademicYearColumn) {
           query = query.eq(yearField, targetYear);
         }
 
         const { data, error } = await query;
 
         if (!error && data && data.length > 0) {
-          const mappedList = data.map((d: any) => this.mapDbToStudent(d));
+          let mappedList = data.map((d: any) => this.mapDbToStudent(d));
+          
+          // Post-fetch filter if column was missing on server
+          if (targetYear && !this.hasAcademicYearColumn) {
+            mappedList = mappedList.filter(s => s.academicYear === targetYear);
+          }
           
           // 1. Try strict match with normalization
           let found = mappedList.filter((m: Student) => 
@@ -549,14 +565,19 @@ class DatabaseService {
           .select("*")
           .ilike(nameField, `%${lastName}%`);
 
-        if (targetYear) {
+        if (targetYear && this.hasAcademicYearColumn) {
           query = query.eq(yearField, targetYear);
         }
 
         const { data, error } = await query;
 
         if (!error && data && data.length > 0) {
-          const mappedList = data.map((d: any) => this.mapDbToStudent(d));
+          let mappedList = data.map((d: any) => this.mapDbToStudent(d));
+          
+          // Post-fetch filter if column was missing on server
+          if (targetYear && !this.hasAcademicYearColumn) {
+            mappedList = mappedList.filter(s => s.academicYear === targetYear);
+          }
           
           // 1. Try strict match with normalization
           let found = mappedList.filter((m: Student) => 
@@ -717,6 +738,34 @@ class DatabaseService {
       }
     }
     return [...this.localStudentsList];
+  }
+
+  public async getStudentsByClass(className: string, academicYear: string): Promise<Student[]> {
+    if (this.supabase) {
+      try {
+        await Promise.race([this.checkSchemaCase(), new Promise(r => setTimeout(r, 1000))]);
+        const classField = this.isSnakeCaseSchema ? "class_name" : "className";
+        const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
+        
+        let query = this.supabase.from("students").select("*").eq(classField, className);
+        if (this.hasAcademicYearColumn) {
+          query = query.eq(yearField, academicYear);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) {
+          const mappedList = data.map(row => this.mapDbToStudent(row));
+          if (!this.hasAcademicYearColumn) {
+            return mappedList.filter(s => s.academicYear === academicYear);
+          }
+          return mappedList;
+        }
+      } catch (err) {
+        // Suppress
+      }
+    }
+    const all = await this.getAllStudents(academicYear);
+    return all.filter(s => s.className === className);
   }
 
   // Get total count of students

@@ -587,6 +587,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
     setAuthIsLoading(true);
     try {
+      // Re-verify schema to ensure columns are detected
+      await dbService.recheckSchema();
+
       if (classFormId) {
         // Edit mode
         const originClass = classes.find(c => c.id === classFormId);
@@ -609,10 +612,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         setClasses(updatedClasses);
         await dbService.saveClasses(updatedClasses);
 
-        // Synchronize with students roster (only if name or year changed)
-        if (oldName && (oldName !== cleanClassName || oldYear !== classFormYear)) {
-          const updatedStudents = await Promise.all(students.map(async (s) => {
-            if (s.className === oldName && s.academicYear === oldYear) {
+        // Synchronize with students roster from database to ensure consistency
+        const searchName = oldName || cleanClassName;
+        const searchYear = oldYear || classFormYear;
+        
+        try {
+          const targetStudents = await dbService.getStudentsByClass(searchName, searchYear);
+          if (targetStudents.length > 0) {
+            for (const s of targetStudents) {
               const updatedS: Student = { 
                 ...s, 
                 className: cleanClassName, 
@@ -621,24 +628,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                 teacher: classFormAdvisor
               };
               await dbService.upsertStudent(updatedS);
-              return updatedS;
             }
-            return s;
-          }));
-          setStudents(updatedStudents);
-        } else {
-          // If only grade level, advisorName or roomNumber changed
-          const updatedStudents = await Promise.all(students.map(async (s) => {
-            if (s.className === cleanClassName && s.academicYear === classFormYear && (s.gradeLevel !== classFormGrade || s.teacher !== classFormAdvisor)) {
-              const updatedS: Student = { ...s, gradeLevel: classFormGrade, teacher: classFormAdvisor };
-              await dbService.upsertStudent(updatedS);
-              return updatedS;
-            }
-            return s;
-          }));
-          setStudents(updatedStudents);
+          }
+        } catch (syncErr) {
+          console.error("Non-critical: Student sync failed during class edit:", syncErr);
         }
 
+        loadStudents();
         alert(`Đã cập nhật cấu hình lớp ${cleanClassName} (${classFormYear}) và đồng bộ lên Supabase thành công!`);
         setClassFormId(null);
       } else {
@@ -676,6 +672,44 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     setClassFormAdvisor(c.advisorName || "");
     setClassFormRoom(c.roomNumber || "");
     setClassFormError("");
+  };
+
+  const handleSyncStudentsWithClasses = async () => {
+    if (!confirm("Hệ thống sẽ kiểm tra TẤT CẢ học sinh và cập nhật GVCN, Khối lớp dựa trên cấu hình lớp học hiện tại. \n\nBạn có chắc chắn muốn thực hiện? Việc này có thể mất một lúc.")) return;
+    
+    setAuthIsLoading(true);
+    try {
+      // Re-verify schema first
+      await dbService.recheckSchema();
+      
+      const allStudents = await dbService.getAllStudents();
+      let updatedCount = 0;
+      let totalChecked = 0;
+
+      for (const s of allStudents) {
+        totalChecked++;
+        const matched = classes.find(c => c.className === s.className && c.academicYear === s.academicYear);
+        if (matched) {
+          const needsUpdate = s.teacher !== (matched.advisorName || "") || s.gradeLevel !== matched.gradeLevel;
+          if (needsUpdate) {
+            const updatedS = { 
+              ...s, 
+              teacher: matched.advisorName || "", 
+              gradeLevel: matched.gradeLevel 
+            };
+            await dbService.upsertStudent(updatedS);
+            updatedCount++;
+          }
+        }
+      }
+      
+      alert(`Đã hoàn tất đồng bộ!\n- Tổng số học sinh kiểm tra: ${totalChecked}\n- Số học sinh được cập nhật: ${updatedCount}`);
+      loadStudents();
+    } catch (err: any) {
+      alert("Lỗi trong quá trình đồng bộ: " + err.message);
+    } finally {
+      setAuthIsLoading(false);
+    }
   };
 
   const handleCancelEditClass = () => {
@@ -1294,10 +1328,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     try {
       const lines = textToParse.split("\n");
       const parsedResults: Student[] = [];
-      const targetClassObj = classes.find(c => c.className === importClass);
+      const currentImportYear = importYear || (academicYears.find(y => y.isActive)?.yearName || "2025-2026");
+      const targetClassObj = classes.find(c => c.className === importClass && c.academicYear === currentImportYear);
       const gradeLvl = targetClassObj?.gradeLevel || "9";
       const collectedErrors: string[] = [];
-      const currentImportYear = importYear || (academicYears.find(y => y.isActive)?.yearName || "2025-2026");
 
       const cleanSpaceSeparatedScores = (val: string): string => {
         if (!val) return "";
@@ -2988,14 +3022,20 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     return compareVietnameseNames(a.fullName, b.fullName);
   });
 
-  const uniqueClasses = Array.from(new Set(students.map(s => s.className).filter(Boolean))) as string[];
+  const uniqueClasses = Array.from(new Set(
+    students
+      .filter(s => selectedAcademicYear === "all" || s.academicYear === selectedAcademicYear)
+      .map(s => s.className)
+      .filter(Boolean)
+  )) as string[];
 
-  // STATISTICS CALCULATOR
-  const totalStudentsCount = students.length;
-  const goodBehaviorCount = students.filter(s => s.behaviorGrade === "Tốt").length;
-  const badBehaviorCount = students.filter(s => s.behaviorGrade === "Chưa đạt").length;
+  // STATISTICS CALCULATOR (filtered by selected year if active)
+  const statsPool = students.filter(s => selectedAcademicYear === "all" || s.academicYear === selectedAcademicYear);
+  const totalStudentsCount = statsPool.length;
+  const goodBehaviorCount = statsPool.filter(s => s.behaviorGrade === "Tốt").length;
+  const badBehaviorCount = statsPool.filter(s => s.behaviorGrade === "Chưa đạt").length;
   
-  const gotExcellentTitle = students.filter(s => {
+  const gotExcellentTitle = statsPool.filter(s => {
     const scoredCount = (s.subjects || []).filter(sub => {
       const hasS1 = (typeof sub.semester1 === "number") || (sub.semester1 === "Đạt" || sub.semester1 === "Chưa đạt");
       const hasS2 = (typeof sub.semester2 === "number") || (sub.semester2 === "Đạt" || sub.semester2 === "Chưa đạt");
@@ -3006,7 +3046,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     return s.distinction === "Học sinh Xuất sắc";
   }).length;
   
-  const gotGoodTitle = students.filter(s => {
+  const gotGoodTitle = statsPool.filter(s => {
     const scoredCount = (s.subjects || []).filter(sub => {
       const hasS1 = (typeof sub.semester1 === "number") || (sub.semester1 === "Đạt" || sub.semester1 === "Chưa đạt");
       const hasS2 = (typeof sub.semester2 === "number") || (sub.semester2 === "Đạt" || sub.semester2 === "Chưa đạt");
@@ -3017,12 +3057,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     return s.distinction === "Học sinh Giỏi";
   }).length;
   
-  const gotNoneTitle = students.length - gotExcellentTitle - gotGoodTitle;
+  const gotNoneTitle = statsPool.length - gotExcellentTitle - gotGoodTitle;
 
-  const academicTốtCount = students.filter(s => s.academicGrade === "Tốt").length;
-  const academicKháCount = students.filter(s => s.academicGrade === "Khá").length;
-  const academicĐạtCount = students.filter(s => s.academicGrade === "Đạt").length;
-  const academicChuaDatCount = students.filter(s => s.academicGrade === "Chưa đạt").length;
+  const academicTốtCount = statsPool.filter(s => s.academicGrade === "Tốt").length;
+  const academicKháCount = statsPool.filter(s => s.academicGrade === "Khá").length;
+  const academicĐạtCount = statsPool.filter(s => s.academicGrade === "Đạt").length;
+  const academicChuaDatCount = statsPool.filter(s => s.academicGrade === "Chưa đạt").length;
 
   return (
     <div className="w-full min-h-screen bg-sky-50 flex flex-col" id="admin-dashboard-container">
@@ -3409,7 +3449,23 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                   </p>
                 </div>
 
-                <div className="bg-white border rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
+                <div className="bg-white border rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-start shadow-sm">
+                  <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Chọn Năm Học</span>
+                    <select
+                      value={selectedAcademicYear}
+                      onChange={(e) => setSelectedAcademicYear(e.target.value)}
+                      className="border text-xs px-3 py-2.5 rounded-lg text-slate-700 bg-white hover:border-slate-300 font-bold outline-none cursor-pointer w-full sm:w-48 border-[#337819]/30"
+                    >
+                      <option value="all">Tất cả năm học</option>
+                      {academicYears.map((y, idx) => (
+                        <option key={`grade-year-opt-${y.id || idx}`} value={y.yearName}>
+                          {y.yearName}{y.isActive ? " (Hiện tại)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="flex flex-col gap-1.5 w-full sm:w-auto">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Chọn Lớp Quản Lý</span>
                     <select
@@ -3421,6 +3477,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       {uniqueClasses.map((c, idx) => <option key={`grade-class-opt-${c || idx}`} value={c}>Lớp {c}</option>)}
                     </select>
                   </div>
+
+                  <div className="flex-1"></div>
 
                   <div className="flex flex-col gap-1.5 w-full sm:w-auto">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Học Kỳ Khảo Sát</span>
@@ -4310,7 +4368,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                     
                     <div className="divide-y divide-slate-100 pt-1 text-xs">
                       {["6", "7", "8", "9"].map((lvl) => {
-                        const sameLvl = students.filter(s => s.gradeLevel === lvl);
+                        const sameLvl = statsPool.filter(s => s.gradeLevel === lvl);
                         const excCount = sameLvl.filter(s => s.academicGrade === "Tốt" || s.academicGrade === "Khá").length;
                         const pct = sameLvl.length > 0 ? ((excCount / sameLvl.length) * 100).toFixed(1) : "0";
                         
@@ -5434,7 +5492,17 @@ NOTIFY pgrst, 'reload schema';`}
                           ))}
                         </select>
                       </div>
-                      <span className="text-[10px] bg-[#337819]/10 text-[#337819] px-2.5 py-1 rounded-full font-black tracking-wide uppercase self-start sm:self-center">Hệ Thống Tra Cứu</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleSyncStudentsWithClasses}
+                          title="Đồng bộ lại GVCN & Khối lớp cho tất cả học sinh"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition text-[10px] font-black uppercase tracking-tighter cursor-pointer"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          Đồng bộ GVCN & Khối
+                        </button>
+                        <span className="text-[10px] bg-[#337819]/10 text-[#337819] px-2.5 py-1 rounded-full font-black tracking-wide uppercase self-start sm:self-center">Hệ Thống Tra Cứu</span>
+                      </div>
                     </div>
 
                     <div className="overflow-x-auto border rounded-lg">
@@ -5638,17 +5706,20 @@ NOTIFY pgrst, 'reload schema';`}
                       value={formStudent.className || ""}
                       onChange={(e) => {
                         const selectedClassName = e.target.value;
-                        const matchedClass = classes.find(c => c.className === selectedClassName);
+                        const matchedClass = classes.find(c => c.className === selectedClassName && c.academicYear === (formStudent.academicYear || "2025-2026"));
                         setFormStudent({
                           ...formStudent,
                           className: selectedClassName,
-                          gradeLevel: matchedClass ? matchedClass.gradeLevel : formStudent.gradeLevel
+                          gradeLevel: matchedClass ? matchedClass.gradeLevel : formStudent.gradeLevel,
+                          teacher: matchedClass ? matchedClass.advisorName : formStudent.teacher
                         });
                       }}
                       className="w-full border p-2 rounded bg-white font-bold"
                     >
                       <option value="">-- Chọn lớp học --</option>
-                      {classes.map(c => (
+                      {classes
+                        .filter(c => !formStudent.academicYear || c.academicYear === formStudent.academicYear)
+                        .map(c => (
                         <option key={c.id} value={c.className}>
                           Lớp {c.className} (Khối {c.gradeLevel})
                         </option>
