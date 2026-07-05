@@ -102,37 +102,43 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   // Sync missing classes from loaded students roster
   useEffect(() => {
     if (students.length > 0) {
-      const currentYear = selectedAcademicYear === "all" 
-        ? (academicYears.find(y => y.isActive)?.yearName || "2025-2026")
-        : selectedAcademicYear;
-        
-      const studentClassNames = Array.from(new Set(students.map(s => s.className).filter(Boolean))) as string[];
-      const existingClassNames = classes.filter(c => c.academicYear === currentYear).map(c => c.className);
-      const missingClassNames = studentClassNames.filter(cName => !existingClassNames.includes(cName));
+      let hasNew = false;
+      let updatedClasses = [...classes];
       
-      if (missingClassNames.length > 0) {
-        const newClasses = [
-          ...classes,
-          ...missingClassNames.map((cName, idx) => {
+      // Group students by academic year to sync correctly per year
+      const yearsInStudents = Array.from(new Set(students.map(s => s.academicYear).filter(Boolean))) as string[];
+      
+      for (const year of yearsInStudents) {
+        const studentClassNames = Array.from(new Set(students.filter(s => s.academicYear === year).map(s => s.className).filter(Boolean))) as string[];
+        const existingClassNames = updatedClasses.filter(c => c.academicYear === year).map(c => c.className);
+        const missingClassNames = studentClassNames.filter(cName => !existingClassNames.includes(cName));
+        
+        if (missingClassNames.length > 0) {
+          hasNew = true;
+          const added = missingClassNames.map(cName => {
             const match = cName.match(/\d/);
             const grade: "6" | "7" | "8" | "9" = match && ["6", "7", "8", "9"].includes(match[0]) 
               ? (match[0] as any) 
               : "9";
             return {
-              id: `class_${cName.trim().toUpperCase()}_${currentYear.replace(/[^a-zA-Z0-9]/g, "")}`,
+              id: `class_${cName.trim().toUpperCase()}_${year.replace(/[^a-zA-Z0-9]/g, "")}`,
               className: cName,
               gradeLevel: grade,
-              academicYear: currentYear,
+              academicYear: year,
               advisorName: "Chưa phân công chủ nhiệm",
               roomNumber: "Chưa xếp phòng"
             };
-          })
-        ];
-        setClasses(newClasses);
+          });
+          updatedClasses = [...updatedClasses, ...added];
+        }
+      }
+      
+      if (hasNew) {
+        setClasses(updatedClasses);
         
         // Ensure auto-detected classes are also persisted to Supabase
         if (isAuthenticated) {
-          dbService.saveClasses(newClasses).catch(err => console.error("Auto-sync saveClasses failed:", err));
+          dbService.saveClasses(updatedClasses).catch(err => console.error("Auto-sync saveClasses failed:", err));
         }
       }
     }
@@ -651,7 +657,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       } else {
         // Create mode
         const newClass: SchoolClass = {
-          id: "class_" + Date.now(),
+          id: `class_${cleanClassName.trim().toUpperCase()}_${classFormYear.replace(/[^a-zA-Z0-9]/g, "")}`,
           className: cleanClassName,
           gradeLevel: classFormGrade,
           academicYear: classFormYear,
@@ -4743,8 +4749,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       <div id="sql_snake_case" className="block">
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
 {`-- [MẪU 1] TẠO 6 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
+-- CÓ FIX LỖI "is duplicated" BẰNG CÁCH XÓA BẢN GHI TRÙNG LẶP
 
--- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này trước)
+-- 0. DỌN DẸP DỮ LIỆU TRÙNG (Nếu bạn gặp lỗi "is duplicated" hãy chạy đoạn này trước)
+-- DELETE FROM portal_classes a USING portal_classes b WHERE a.id < b.id AND a.class_name = b.class_name AND a.academic_year = b.academic_year;
+-- DELETE FROM students a USING students b WHERE a.id < b.id AND a.student_code = b.student_code AND a.academic_year = b.academic_year;
+
+-- 1. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này)
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
@@ -4770,7 +4781,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 -- ALTER TABLE portal_classes ADD CONSTRAINT portal_classes_name_year_unique UNIQUE (class_name, academic_year);
 -- NOTIFY pgrst, 'reload schema';
 
--- 1. Tạo bảng học sinh (students)
+-- 2. TẠO BẢNG MỚI (Nếu chưa có bảng nào)
 CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,
   student_code TEXT NOT NULL,
@@ -4907,8 +4918,13 @@ NOTIFY pgrst, 'reload schema';`}
                       <div id="sql_camel_case" className="hidden">
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
 {`-- [MẪU 2] TẠO 6 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
+-- CÓ FIX LỖI "is duplicated" BẰNG CÁCH XÓA BẢN GHI TRÙNG LẶP
 
--- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này trước)
+-- 0. DỌN DẸP DỮ LIỆU TRÙNG (Nếu bạn gặp lỗi "is duplicated" hãy chạy đoạn này trước)
+-- DELETE FROM portal_classes a USING portal_classes b WHERE a.id < b.id AND a."className" = b."className" AND a."academicYear" = b."academicYear";
+-- DELETE FROM students a USING students b WHERE a.id < b.id AND a."studentCode" = b."studentCode" AND a."academicYear" = b."academicYear";
+
+-- 1. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này)
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
@@ -4930,11 +4946,10 @@ NOTIFY pgrst, 'reload schema';`}
 -- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "roomNumber" TEXT;
 -- ALTER TABLE students DROP CONSTRAINT IF EXISTS students_studentCode_key;
 -- ALTER TABLE students ADD CONSTRAINT students_studentCode_year_unique UNIQUE ("studentCode", "academicYear");
--- ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_className_key;
--- ALTER TABLE portal_classes ADD CONSTRAINT portal_classes_name_year_unique UNIQUE ("className", "academicYear");
+-- ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_name_year_unique UNIQUE ("className", "academicYear");
 -- NOTIFY pgrst, 'reload schema';
 
--- 1. Tạo bảng học sinh (students)
+-- 2. TẠO BẢNG MỚI (Nếu chưa có bảng nào)
 CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,
   "studentCode" TEXT NOT NULL,
