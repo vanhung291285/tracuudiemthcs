@@ -163,8 +163,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   useEffect(() => {
     if (availableClasses.length > 0) {
-      if (!searchClass || !availableClasses.includes(searchClass)) {
-        setSearchClass(availableClasses[0]);
+      if (searchClass && !availableClasses.includes(searchClass)) {
+        setSearchClass("");
       }
       if (!scoreboardClass || (scoreboardClass !== "all" && !availableClasses.includes(scoreboardClass))) {
         setScoreboardClass("all");
