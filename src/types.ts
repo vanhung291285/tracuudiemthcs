@@ -56,6 +56,12 @@ export interface Student {
   subjects: SubjectResult[];
 }
 
+export interface SchoolYear {
+  id: string;
+  yearName: string; // e.g. "2024-2025"
+  isActive: boolean;
+}
+
 export interface SupabaseConfig {
   url: string;
   anonKey: string;
@@ -67,6 +73,7 @@ export interface SchoolClass {
   id: string;
   className: string; // e.g. "9A1"
   gradeLevel: "6" | "7" | "8" | "9";
+  academicYear: string; // e.g. "2025-2026"
   advisorName?: string; // Giáo viên chủ nhiệm
   roomNumber?: string; // Phòng học
 }

@@ -82,13 +82,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     }
   }
 
-  if (!activeAcademicGrade || activeAcademicGrade === "") {
+  if (!activeAcademicGrade) {
     activeAcademicGrade = student.academicGrade || "Đạt";
   }
 
   // Behavior Grade
   let activeBehaviorGrade = term === "hk1" ? student.behaviorGradeHK1 : term === "hk2" ? student.behaviorGradeHK2 : student.behaviorGrade;
-  if (!activeBehaviorGrade || activeBehaviorGrade === "") {
+  if (!activeBehaviorGrade) {
     activeBehaviorGrade = student.behaviorGrade || "Tốt";
   }
 

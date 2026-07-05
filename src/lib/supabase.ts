@@ -4,7 +4,7 @@
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { Student, SchoolClass, VisitorMonthlyStats, RecentActivity } from "../types";
+import { Student, SchoolClass, SchoolYear, VisitorMonthlyStats, RecentActivity } from "../types";
 import { DEFAULT_STUDENTS } from "./mockData";
 
 // Environment variables
@@ -23,6 +23,8 @@ class DatabaseService {
   private hasIdColumn = false;
   private classesFormatChecked = false;
   private isSnakeCaseClasses = false;
+  private academicYearsFormatChecked = false;
+  private isSnakeCaseAcademicYears = true;
 
   constructor() {
     this.initialize();
@@ -253,6 +255,22 @@ class DatabaseService {
     }
   }
 
+  // Check academic years table casing
+  private async checkAcademicYearsSchema() {
+    if (this.academicYearsFormatChecked || !this.supabase) return;
+    try {
+      const { error } = await this.supabase
+        .from("portal_academic_years")
+        .select("year_name")
+        .limit(1);
+      
+      this.isSnakeCaseAcademicYears = !error;
+      this.academicYearsFormatChecked = true;
+    } catch {
+      this.isSnakeCaseAcademicYears = true;
+    }
+  }
+
   // Bidirectional mapping from Postgres Row to standard react Student
   private mapDbToStudent(row: any): Student {
     const studentCode = row.studentCode || row.student_code || "";
@@ -408,10 +426,11 @@ class DatabaseService {
     return normalized;
   }
 
-  public async queryStudentByNameAndClass(fullName: string, className: string): Promise<Student[]> {
+  public async queryStudentByNameAndClass(fullName: string, className: string, academicYear?: string): Promise<Student[]> {
     const cleanName = this.normalizeName(fullName);
     const noDiacriticInput = this.removeDiacritics(fullName);
     const cleanClass = className.trim().toUpperCase();
+    const targetYear = academicYear?.trim();
 
     if (!cleanName && !noDiacriticInput) return [];
 
@@ -420,11 +439,18 @@ class DatabaseService {
         await this.checkSchemaCase();
         const nameField = this.isSnakeCaseSchema ? "full_name" : "fullName";
         const classField = this.isSnakeCaseSchema ? "class_name" : "className";
+        const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
         
-        const { data, error } = await this.supabase
+        let query = this.supabase
           .from("students")
           .select("*")
           .eq(classField, cleanClass);
+
+        if (targetYear) {
+          query = query.eq(yearField, targetYear);
+        }
+
+        const { data, error } = await query;
 
         if (!error && data && data.length > 0) {
           const mappedList = data.map((d: any) => this.mapDbToStudent(d));
@@ -445,6 +471,8 @@ class DatabaseService {
       const isClassMatch = (s.className || "").trim().toUpperCase() === cleanClass;
       if (!isClassMatch) return false;
 
+      if (targetYear && s.academicYear !== targetYear) return false;
+
       const dbNameNormalized = this.normalizeName(s.fullName);
       
       if (dbNameNormalized === cleanName) return true;
@@ -455,10 +483,11 @@ class DatabaseService {
     return localFound;
   }
 
-  public async queryStudentsByName(fullName: string, dob: string): Promise<Student[]> {
+  public async queryStudentsByName(fullName: string, dob: string, academicYear?: string): Promise<Student[]> {
     const cleanName = this.normalizeName(fullName);
     const noDiacriticInput = this.removeDiacritics(fullName);
     const cleanDob = dob.trim();
+    const targetYear = academicYear?.trim();
 
     if (!cleanName && !noDiacriticInput) return [];
 
@@ -466,15 +495,22 @@ class DatabaseService {
       try {
         await this.checkSchemaCase();
         const nameField = this.isSnakeCaseSchema ? "full_name" : "fullName";
+        const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
         
         // Fetch candidates by the last name (personal name) to handle normalization in JS
         const searchTerms = fullName.trim().split(" ");
         const lastName = searchTerms[searchTerms.length - 1];
         
-        const { data, error } = await this.supabase
+        let query = this.supabase
           .from("students")
           .select("*")
           .ilike(nameField, `%${lastName}%`);
+
+        if (targetYear) {
+          query = query.eq(yearField, targetYear);
+        }
+
+        const { data, error } = await query;
 
         if (!error && data && data.length > 0) {
           const mappedList = data.map((d: any) => this.mapDbToStudent(d));
@@ -507,15 +543,16 @@ class DatabaseService {
     return localFound;
   }
 
-  public async queryStudentByName(fullName: string, dob: string): Promise<Student | null> {
-    const results = await this.queryStudentsByName(fullName, dob);
+  public async queryStudentByName(fullName: string, dob: string, academicYear?: string): Promise<Student | null> {
+    const results = await this.queryStudentsByName(fullName, dob, academicYear);
     return results.length > 0 ? results[0] : null;
   }
 
   // Query student records
-  public async queryStudent(studentCode: string, dob: string): Promise<Student | null> {
+  public async queryStudent(studentCode: string, dob: string, academicYear?: string): Promise<Student | null> {
     const formattedCode = studentCode.trim().toUpperCase();
     const cleanDob = dob.trim(); // format: YYYY-MM-DD or DD-MM-YY etc depending on input
+    const targetYear = academicYear?.trim();
 
     if (this.supabase) {
       try {
@@ -524,10 +561,12 @@ class DatabaseService {
         let query = this.supabase.from("students").select("*");
         if (this.isSnakeCaseSchema) {
           query = query.eq("student_code", formattedCode);
+          if (targetYear) query = query.eq("academic_year", targetYear);
         } else {
           query = query.eq("studentCode", formattedCode);
+          if (targetYear) query = query.eq("academicYear", targetYear);
         }
-        const { data, error } = await query.single();
+        const { data, error } = await query.maybeSingle();
 
         if (error) {
           // Query info status
@@ -599,7 +638,7 @@ class DatabaseService {
   }
 
   // Fetch all students (for admin panel)
-  public async getAllStudents(): Promise<Student[]> {
+  public async getAllStudents(academicYear?: string): Promise<Student[]> {
     if (this.supabase) {
       try {
         const timeoutPromise = new Promise<{data: any, error: any}>((_, resolve) => 
@@ -607,8 +646,14 @@ class DatabaseService {
         );
         await Promise.race([this.checkSchemaCase(), new Promise(r => setTimeout(r, 1000))]);
         
+        let query = this.supabase.from("students").select("*");
+        if (academicYear) {
+          const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
+          query = query.eq(yearField, academicYear);
+        }
+
         const result = await Promise.race([
-          this.supabase.from("students").select("*"),
+          query,
           timeoutPromise
         ]);
 
@@ -632,12 +677,15 @@ class DatabaseService {
   }
 
   // Get total count of students
-  public async getStudentCount(): Promise<number> {
+  public async getStudentCount(academicYear?: string): Promise<number> {
     if (this.supabase) {
       try {
-        const { count, error } = await this.supabase
-          .from("students")
-          .select("*", { count: "exact", head: true });
+        let query = this.supabase.from("students").select("*", { count: "exact", head: true });
+        if (academicYear) {
+          const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
+          query = query.eq(yearField, academicYear);
+        }
+        const { count, error } = await query;
         
         if (!error && count !== null) {
           return count;
@@ -652,7 +700,9 @@ class DatabaseService {
   // Create or Update student
   public async upsertStudent(student: Student): Promise<boolean> {
     // 1. Update in local memory immediately
-    const existingIdx = this.localStudentsList.findIndex(s => s.studentCode === student.studentCode);
+    const existingIdx = this.localStudentsList.findIndex(
+      s => s.studentCode === student.studentCode && s.academicYear === student.academicYear
+    );
     if (existingIdx !== -1) {
       this.localStudentsList[existingIdx] = student;
     } else {
@@ -671,10 +721,14 @@ class DatabaseService {
         
         const mapped = this.mapStudentToDb(student);
 
+        const onConflictCols = this.isSnakeCaseSchema 
+          ? ["student_code", "academic_year"] 
+          : ["studentCode", "academicYear"];
+
         const result = await Promise.race([
           this.supabase
             .from("students")
-            .upsert(mapped, { onConflict: this.isSnakeCaseSchema ? "student_code" : "studentCode" }),
+            .upsert(mapped, { onConflict: onConflictCols.join(",") }),
           timeoutPromise
         ]);
 
@@ -699,8 +753,10 @@ class DatabaseService {
   }
 
   // Delete student
-  public async deleteStudent(studentCode: string): Promise<boolean> {
-    this.localStudentsList = this.localStudentsList.filter(s => s.studentCode !== studentCode);
+  public async deleteStudent(studentCode: string, academicYear: string): Promise<boolean> {
+    this.localStudentsList = this.localStudentsList.filter(
+      s => !(s.studentCode === studentCode && s.academicYear === academicYear)
+    );
     this.saveLocally();
 
     if (this.supabase) {
@@ -709,9 +765,9 @@ class DatabaseService {
         
         let query = this.supabase.from("students").delete();
         if (this.isSnakeCaseSchema) {
-          query = query.eq("student_code", studentCode);
+          query = query.eq("student_code", studentCode).eq("academic_year", academicYear);
         } else {
-          query = query.eq("studentCode", studentCode);
+          query = query.eq("studentCode", studentCode).eq("academicYear", academicYear);
         }
         
         const result = await Promise.race([
@@ -813,8 +869,13 @@ class DatabaseService {
   }
 
   // Delete all students of a specific class
-  public async deleteStudentsByClass(className: string): Promise<boolean> {
-    this.localStudentsList = this.localStudentsList.filter(s => s.className !== className);
+  public async deleteStudentsByClass(className: string, academicYear?: string): Promise<boolean> {
+    this.localStudentsList = this.localStudentsList.filter(s => {
+      if (academicYear) {
+        return !(s.className === className && s.academicYear === academicYear);
+      }
+      return s.className !== className;
+    });
     this.saveLocally();
 
     if (this.supabase) {
@@ -824,8 +885,14 @@ class DatabaseService {
         let query = this.supabase.from("students").delete();
         if (this.isSnakeCaseSchema) {
           query = query.eq("class_name", className);
+          if (academicYear) {
+            query = query.eq("academic_year", academicYear);
+          }
         } else {
           query = query.eq("className", className);
+          if (academicYear) {
+            query = query.eq("academicYear", academicYear);
+          }
         }
         const { error } = await query;
 
@@ -860,6 +927,7 @@ class DatabaseService {
             id: row.id,
             className: row.className || row.class_name || "",
             gradeLevel: row.gradeLevel || row.grade_level || "",
+            academicYear: row.academicYear || row.academic_year || "2025-2026",
             advisorName: row.advisorName || row.advisor_name || "",
             roomNumber: row.roomNumber || row.room_number || ""
           }));
@@ -880,12 +948,12 @@ class DatabaseService {
       }
     }
     return [
-      { id: "class_01", className: "9A1", gradeLevel: "9", advisorName: "Cô Nguyễn Minh Thảo", roomNumber: "Phòng 301" },
-      { id: "class_02", className: "9A2", gradeLevel: "9", advisorName: "Thầy Trương Văn Lâm", roomNumber: "Phòng 302" },
-      { id: "class_03", className: "8B1", gradeLevel: "8", advisorName: "Cô Phạm Thị Thanh", roomNumber: "Phòng 201" },
-      { id: "class_04", className: "8B2", gradeLevel: "8", advisorName: "Cô Lò Thị Mai", roomNumber: "Phòng 202" },
-      { id: "class_05", className: "7C1", gradeLevel: "7", advisorName: "Thầy Nguyễn Tiến Dũng", roomNumber: "Phòng 101" },
-      { id: "class_06", className: "6A1", gradeLevel: "6", advisorName: "Cô Hoàng Lan Anh", roomNumber: "Phòng 102" }
+      { id: "class_01", className: "9A1", gradeLevel: "9", academicYear: "2025-2026", advisorName: "Cô Nguyễn Minh Thảo", roomNumber: "Phòng 301" },
+      { id: "class_02", className: "9A2", gradeLevel: "9", academicYear: "2025-2026", advisorName: "Thầy Trương Văn Lâm", roomNumber: "Phòng 302" },
+      { id: "class_03", className: "8B1", gradeLevel: "8", academicYear: "2025-2026", advisorName: "Cô Phạm Thị Thanh", roomNumber: "Phòng 201" },
+      { id: "class_04", className: "8B2", gradeLevel: "8", academicYear: "2025-2026", advisorName: "Cô Lò Thị Mai", roomNumber: "Phòng 202" },
+      { id: "class_05", className: "7C1", gradeLevel: "7", academicYear: "2025-2026", advisorName: "Thầy Nguyễn Tiến Dũng", roomNumber: "Phòng 101" },
+      { id: "class_06", className: "6A1", gradeLevel: "6", academicYear: "2025-2026", advisorName: "Cô Hoàng Lan Anh", roomNumber: "Phòng 102" }
     ];
   }
 
@@ -903,6 +971,7 @@ class DatabaseService {
               id: c.id,
               class_name: c.className,
               grade_level: c.gradeLevel,
+              academic_year: c.academicYear,
               advisor_name: c.advisorName,
               room_number: c.roomNumber
             };
@@ -945,6 +1014,109 @@ class DatabaseService {
         return true;
       } catch (err) {
         console.error("Supabase portal_classes exception on delete:", err);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Load academic years from Supabase if possible, otherwise fallback locally
+  public async getAcademicYears(): Promise<SchoolYear[]> {
+    if (this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from("portal_academic_years")
+          .select("*");
+
+        if (!error && data) {
+          const mapped = data.map((row: any, idx: number) => ({
+            id: (row.id && String(row.id) !== "undefined") ? String(row.id) : `db_year_${idx}`,
+            yearName: row.yearName || row.year_name || "N/A",
+            isActive: row.isActive !== undefined ? row.isActive : (row.is_active !== undefined ? row.is_active : false)
+          }));
+          return mapped.sort((a, b) => b.yearName.localeCompare(a.yearName));
+        }
+      } catch (err) {
+        // Silent skip
+      }
+    }
+
+    // Fallback to local storage load
+    const cached = localStorage.getItem("portal_academic_years");
+    if (cached) {
+      try {
+        return JSON.parse(cached) as SchoolYear[];
+      } catch (e) {
+        // error parsing, fallback to base
+      }
+    }
+    return [
+      { id: "year_01", yearName: "2025-2026", isActive: true },
+      { id: "year_02", yearName: "2024-2025", isActive: false }
+    ];
+  }
+
+  // Save/Upsert academic years to Supabase
+  public async saveAcademicYears(years: SchoolYear[]): Promise<boolean> {
+    // Save to local storage first
+    localStorage.setItem("portal_academic_years", JSON.stringify(years));
+
+    if (this.supabase) {
+      try {
+        await Promise.race([this.checkAcademicYearsSchema(), new Promise(r => setTimeout(r, 2000))]);
+        const mapped = years.map(y => {
+          if (this.isSnakeCaseAcademicYears) {
+            return {
+              id: y.id,
+              year_name: y.yearName,
+              is_active: y.isActive
+            };
+          } else {
+            return {
+              id: y.id,
+              yearName: y.yearName,
+              isActive: y.isActive
+            };
+          }
+        });
+
+        const result = await Promise.race([
+          this.supabase.from("portal_academic_years").upsert(mapped, { onConflict: "id" }),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout saving academic years")), 5000))
+        ]);
+
+        if (result && result.error) {
+          console.error("Supabase portal_academic_years upsert failed:", result.error.message);
+          this.lastError = result.error.message;
+          return false;
+        }
+        this.lastError = null;
+        return true;
+      } catch (err: any) {
+        console.error("Supabase portal_academic_years exception on save:", err);
+        this.lastError = err.message || String(err);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Delete an academic year from Supabase
+  public async deleteAcademicYear(yearId: string): Promise<boolean> {
+    if (this.supabase) {
+      try {
+        const result = await Promise.race([
+          this.supabase.from("portal_academic_years").delete().eq("id", yearId),
+          new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout deleting academic year")), 5000))
+        ]);
+
+        if (result && result.error) {
+          console.error("Supabase portal_academic_years delete failed:", result.error.message);
+          return false;
+        }
+        return true;
+      } catch (err) {
+        console.error("Supabase portal_academic_years exception on delete:", err);
         return false;
       }
     }

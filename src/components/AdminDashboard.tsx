@@ -4,12 +4,13 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Student, SubjectResult, SchoolClass, VisitorMonthlyStats } from "../types";
+import { Student, SubjectResult, SchoolClass, SchoolYear, VisitorMonthlyStats } from "../types";
 import dbService from "../lib/supabase";
 import * as XLSX from "xlsx";
 import { 
   Users, Edit, Trash2, Plus, Upload, BarChart3, Database, LogOut, Check, X,
-  RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet, UserX, SortAsc
+  RefreshCw, Info, Lock, Eye, Copy, ArrowLeft, Layers, School, FileCheck, Keyboard, Download, FileSpreadsheet, UserX, SortAsc,
+  Calendar
 } from "lucide-react";
 
 import { evaluateTT22, evaluateDistinctionTT22, roundScore } from "../lib/tt22";
@@ -47,10 +48,18 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   // States
   const [students, setStudents] = useState<Student[]>([]);
   const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
-  const [activeTab, setActiveTab] = useState<"students" | "grades" | "import" | "stats" | "supabase" | "settings" | "classes">("students");
+  const [activeTab, setActiveTab] = useState<"students" | "grades" | "import" | "stats" | "supabase" | "settings" | "classes" | "years">("students");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedGrade, setSelectedGrade] = useState("all");
+
+  // Academic Years state
+  const [academicYears, setAcademicYears] = useState<SchoolYear[]>([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>("all");
+  const [yearFormId, setYearFormId] = useState<string | null>(null);
+  const [yearFormName, setYearFormName] = useState("");
+  const [yearFormIsActive, setYearFormIsActive] = useState(false);
+  const [yearFormError, setYearFormError] = useState("");
 
   const handleSortStudentsABC = () => {
     const sorted = [...students].sort((a, b) => {
@@ -76,12 +85,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       }
     }
     return [
-      { id: "class_01", className: "9A1", gradeLevel: "9", advisorName: "Cô Nguyễn Minh Thảo", roomNumber: "Phòng 301" },
-      { id: "class_02", className: "9A2", gradeLevel: "9", advisorName: "Thầy Trương Văn Lâm", roomNumber: "Phòng 302" },
-      { id: "class_03", className: "8B1", gradeLevel: "8", advisorName: "Cô Phạm Thị Thanh", roomNumber: "Phòng 201" },
-      { id: "class_04", className: "8B2", gradeLevel: "8", advisorName: "Cô Lò Thị Mai", roomNumber: "Phòng 202" },
-      { id: "class_05", className: "7C1", gradeLevel: "7", advisorName: "Thầy Nguyễn Tiến Dũng", roomNumber: "Phòng 101" },
-      { id: "class_06", className: "6A1", gradeLevel: "6", advisorName: "Cô Hoàng Lan Anh", roomNumber: "Phòng 102" }
+      { id: "class_01", className: "9A1", gradeLevel: "9", academicYear: "2025-2026", advisorName: "Cô Nguyễn Minh Thảo", roomNumber: "Phòng 301" },
+      { id: "class_02", className: "9A2", gradeLevel: "9", academicYear: "2025-2026", advisorName: "Thầy Trương Văn Lâm", roomNumber: "Phòng 302" },
+      { id: "class_03", className: "8B1", gradeLevel: "8", academicYear: "2025-2026", advisorName: "Cô Phạm Thị Thanh", roomNumber: "Phòng 201" },
+      { id: "class_04", className: "8B2", gradeLevel: "8", academicYear: "2025-2026", advisorName: "Cô Lò Thị Mai", roomNumber: "Phòng 202" },
+      { id: "class_05", className: "7C1", gradeLevel: "7", academicYear: "2025-2026", advisorName: "Thầy Nguyễn Tiến Dũng", roomNumber: "Phòng 101" },
+      { id: "class_06", className: "6A1", gradeLevel: "6", academicYear: "2025-2026", advisorName: "Cô Hoàng Lan Anh", roomNumber: "Phòng 102" }
     ];
   });
 
@@ -124,7 +133,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [classFormGrade, setClassFormGrade] = useState<"6" | "7" | "8" | "9">("9");
   const [classFormAdvisor, setClassFormAdvisor] = useState("");
   const [classFormRoom, setClassFormRoom] = useState("");
+  const [classFormYear, setClassFormYear] = useState("2025-2026");
+  const [selectedClassYear, setSelectedClassYear] = useState<string>("all");
   const [classFormError, setClassFormError] = useState("");
+
+  // Sync class year when academicYears load
+  useEffect(() => {
+    if (academicYears.length > 0) {
+      const active = academicYears.find(y => y.isActive);
+      const yearName = active ? active.yearName : academicYears[0].yearName;
+      if (classFormYear === "2025-2026") setClassFormYear(yearName);
+      if (selectedClassYear === "all") setSelectedClassYear(yearName);
+    }
+  }, [academicYears]);
 
   // Portal Title Config States
   const [headerTop, setHeaderTop] = useState(() => {
@@ -205,17 +226,32 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const [importPreview, setImportPreview] = useState<Student[]>([]);
   const [importStatus, setImportStatus] = useState("");
   const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importYear, setImportYear] = useState("2025-2026");
+
+  // Sync importYear when academicYears load
+  useEffect(() => {
+    if (academicYears.length > 0 && importYear === "2025-2026") {
+      const active = academicYears.find(y => y.isActive);
+      if (active) setImportYear(active.yearName);
+      else setImportYear(academicYears[0].yearName);
+    }
+  }, [academicYears]);
   
   // Visitor stats state
   const [visitorMonthlyStats, setVisitorMonthlyStats] = useState<VisitorMonthlyStats[]>([]);
   const [totalVisitors, setTotalVisitors] = useState(0);
 
-  // Keep importClass valid based on available classes
+  // Keep importClass valid based on available classes and year
   useEffect(() => {
-    if (classes.length > 0 && !classes.find(c => c.className === importClass)) {
-      setImportClass(classes[0].className);
+    const yearClasses = classes.filter(c => c.academicYear === importYear);
+    if (yearClasses.length > 0) {
+      if (!yearClasses.find(c => c.className === importClass)) {
+        setImportClass(yearClasses[0].className);
+      }
+    } else {
+      if (importClass !== "") setImportClass("");
     }
-  }, [classes, importClass]);
+  }, [classes, importClass, importYear]);
 
   // Load initial students list
   useEffect(() => {
@@ -236,7 +272,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   const loadStudents = async () => {
     try {
-      const list = await dbService.getAllStudents();
+      const targetYear = selectedAcademicYear === "all" ? undefined : selectedAcademicYear;
+      const list = await dbService.getAllStudents(targetYear);
       setStudents(list);
     } catch (err) {
       console.error("Critical: Failed to sync students list from server:", err);
@@ -249,6 +286,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     try {
       const cls = await dbService.getClasses();
       setClasses(cls);
+
+      const years = await dbService.getAcademicYears();
+      setAcademicYears(years);
+      
+      const activeYear = years.find(y => y.isActive);
+      if (activeYear && selectedAcademicYear === "all") {
+        setSelectedAcademicYear(activeYear.yearName);
+      }
 
       const top = await dbService.getPortalSetting("portal_header_top", "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ");
       setHeaderTop(top);
@@ -293,6 +338,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       console.log("Portal settings deferred load info:", (e as any).message);
     }
   };
+
+  // Effect to reload students when selected academic year changes
+  useEffect(() => {
+    if (isAuthenticated && isInitialLoadDone) {
+      loadStudents();
+    }
+  }, [selectedAcademicYear]);
 
   const loadSupabaseConfig = () => {
     const config = dbService.getConfig();
@@ -522,10 +574,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       return;
     }
 
-    // Check for duplicates
-    const duplicate = classes.find(c => c.className.toLowerCase() === cleanClassName.toLowerCase() && c.id !== classFormId);
+    // Check for duplicates within the same year
+    const duplicate = classes.find(c => 
+      c.className.toLowerCase() === cleanClassName.toLowerCase() && 
+      c.academicYear === classFormYear && 
+      c.id !== classFormId
+    );
     if (duplicate) {
-      setClassFormError(`Lớp học với tên "${cleanClassName}" đã tồn tại.`);
+      setClassFormError(`Lớp học với tên "${cleanClassName}" trong năm học ${classFormYear} đã tồn tại.`);
       return;
     }
 
@@ -535,6 +591,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         // Edit mode
         const originClass = classes.find(c => c.id === classFormId);
         const oldName = originClass ? originClass.className : "";
+        const oldYear = originClass ? originClass.academicYear : "";
         
         const updatedClasses = classes.map(c => {
           if (c.id === classFormId) {
@@ -542,6 +599,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               ...c,
               className: cleanClassName,
               gradeLevel: classFormGrade,
+              academicYear: classFormYear,
               advisorName: classFormAdvisor,
               roomNumber: classFormRoom
             };
@@ -551,11 +609,17 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         setClasses(updatedClasses);
         await dbService.saveClasses(updatedClasses);
 
-        // Synchronize with students roster
-        if (oldName && oldName !== cleanClassName) {
+        // Synchronize with students roster (only if name or year changed)
+        if (oldName && (oldName !== cleanClassName || oldYear !== classFormYear)) {
           const updatedStudents = await Promise.all(students.map(async (s) => {
-            if (s.className === oldName) {
-              const updatedS: Student = { ...s, className: cleanClassName, gradeLevel: classFormGrade };
+            if (s.className === oldName && s.academicYear === oldYear) {
+              const updatedS: Student = { 
+                ...s, 
+                className: cleanClassName, 
+                gradeLevel: classFormGrade,
+                academicYear: classFormYear,
+                teacher: classFormAdvisor
+              };
               await dbService.upsertStudent(updatedS);
               return updatedS;
             }
@@ -563,10 +627,10 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           }));
           setStudents(updatedStudents);
         } else {
-          // If only grade level, advisorName or roomNumber changed, we can also update gradeLevel on students
+          // If only grade level, advisorName or roomNumber changed
           const updatedStudents = await Promise.all(students.map(async (s) => {
-            if (s.className === cleanClassName && s.gradeLevel !== classFormGrade) {
-              const updatedS: Student = { ...s, gradeLevel: classFormGrade };
+            if (s.className === cleanClassName && s.academicYear === classFormYear && (s.gradeLevel !== classFormGrade || s.teacher !== classFormAdvisor)) {
+              const updatedS: Student = { ...s, gradeLevel: classFormGrade, teacher: classFormAdvisor };
               await dbService.upsertStudent(updatedS);
               return updatedS;
             }
@@ -575,7 +639,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           setStudents(updatedStudents);
         }
 
-        alert(`Đã cập nhật cấu hình lớp ${cleanClassName} và đồng bộ lên Supabase thành công!`);
+        alert(`Đã cập nhật cấu hình lớp ${cleanClassName} (${classFormYear}) và đồng bộ lên Supabase thành công!`);
         setClassFormId(null);
       } else {
         // Create mode
@@ -583,6 +647,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           id: "class_" + Date.now(),
           className: cleanClassName,
           gradeLevel: classFormGrade,
+          academicYear: classFormYear,
           advisorName: classFormAdvisor,
           roomNumber: classFormRoom
         };
@@ -607,6 +672,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     setClassFormId(c.id);
     setClassFormName(c.className);
     setClassFormGrade(c.gradeLevel);
+    setClassFormYear(c.academicYear || "2025-2026");
     setClassFormAdvisor(c.advisorName || "");
     setClassFormRoom(c.roomNumber || "");
     setClassFormError("");
@@ -620,14 +686,104 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     setClassFormError("");
   };
 
+  const handleSaveYear = async () => {
+    if (!yearFormName.trim()) {
+      setYearFormError("Vui lòng nhập tên năm học");
+      return;
+    }
+
+    try {
+      // Kiểm tra trùng tên trước khi lưu
+      const isDuplicate = academicYears.some(y => 
+        y.yearName.trim().toLowerCase() === yearFormName.trim().toLowerCase() && 
+        y.id !== yearFormId
+      );
+
+      if (isDuplicate) {
+        setYearFormError(`Năm học "${yearFormName}" đã tồn tại.`);
+        return;
+      }
+
+      let updatedYears = [...academicYears];
+      if (yearFormId) {
+        // Update existing
+        updatedYears = updatedYears.map(y => y.id === yearFormId ? { ...y, yearName: yearFormName, isActive: yearFormIsActive } : y);
+      } else {
+        // Create new
+        const newYear: SchoolYear = {
+          id: `year_${Date.now()}`,
+          yearName: yearFormName,
+          isActive: yearFormIsActive
+        };
+        updatedYears.push(newYear);
+      }
+
+      // If this year is set as active, deactivate others
+      if (yearFormIsActive) {
+        updatedYears = updatedYears.map(y => {
+          const isTarget = yearFormId ? y.id === yearFormId : y.yearName === yearFormName;
+          return isTarget ? { ...y, isActive: true } : { ...y, isActive: false };
+        });
+      }
+
+      const success = await dbService.saveAcademicYears(updatedYears);
+      if (success) {
+        setAcademicYears(updatedYears);
+        setYearFormId(null);
+        setYearFormName("");
+        setYearFormIsActive(false);
+        setYearFormError("");
+        
+        // Sync portal settings if active year changed
+        if (yearFormIsActive) {
+          await dbService.savePortalSetting("portal_school_year", yearFormName);
+          localStorage.setItem("portal_school_year", yearFormName);
+        }
+      } else {
+        setYearFormError(dbService.lastError || "Lưu thất bại trên máy chủ");
+      }
+    } catch (err) {
+      setYearFormError("Lỗi khi lưu năm học");
+    }
+  };
+
+  const handleDeleteYear = async (id: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa năm học này? Dữ liệu học sinh liên quan sẽ không bị xóa nhưng sẽ không thể truy cập qua năm học này nữa.")) return;
+
+    try {
+      const success = await dbService.deleteAcademicYear(id);
+      if (success) {
+        const updated = academicYears.filter(y => y.id !== id);
+        setAcademicYears(updated);
+        localStorage.setItem("portal_academic_years", JSON.stringify(updated));
+      }
+    } catch (err) {
+      alert("Lỗi khi xóa năm học");
+    }
+  };
+
+  const handleStartEditYear = (year: SchoolYear) => {
+    setYearFormId(year.id);
+    setYearFormName(year.yearName);
+    setYearFormIsActive(year.isActive);
+    setYearFormError("");
+  };
+
+  const handleCancelEditYear = () => {
+    setYearFormId(null);
+    setYearFormName("");
+    setYearFormIsActive(false);
+    setYearFormError("");
+  };
+
   const handleDeleteClass = async (classId: string) => {
     const classToDel = classes.find(c => c.id === classId);
     if (!classToDel) return;
 
-    const rosterCount = students.filter(s => s.className === classToDel.className).length;
+    const rosterCount = students.filter(s => s.className === classToDel.className && s.academicYear === classToDel.academicYear).length;
     const confirmMsg = rosterCount > 0 
-      ? `Bạn có chắc chắn muốn xóa lớp ${classToDel.className}? Lớp đang có ${rosterCount} học sinh. Xóa lớp sẽ đưa trạng thái lớp học của các học sinh này về trạng thái "Chưa xếp lớp".`
-      : `Bạn có chắc chắn muốn xóa lớp ${classToDel.className} không?`;
+      ? `Bạn có chắc chắn muốn xóa lớp ${classToDel.className} (${classToDel.academicYear})? Lớp đang có ${rosterCount} học sinh. Xóa lớp sẽ đưa trạng thái lớp học của các học sinh này về trạng thái "Chưa xếp lớp".`
+      : `Bạn có chắc chắn muốn xóa lớp ${classToDel.className} (${classToDel.academicYear}) không?`;
 
     if (confirm(confirmMsg)) {
       setAuthIsLoading(true);
@@ -639,7 +795,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
         if (rosterCount > 0) {
           const updatedStudents = await Promise.all(students.map(async (s) => {
-            if (s.className === classToDel.className) {
+            if (s.className === classToDel.className && s.academicYear === classToDel.academicYear) {
               const updatedS: Student = { ...s, className: "" };
               await dbService.upsertStudent(updatedS);
               return updatedS;
@@ -659,20 +815,26 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     }
   };
 
-  const handleDeleteClassStudents = async (className: string) => {
-    const rosterCount = students.filter(s => s.className === className).length;
+  const handleDeleteClassStudents = async (className: string, academicYear?: string) => {
+    const rosterCount = students.filter(s => 
+      s.className === className && (academicYear ? s.academicYear === academicYear : true)
+    ).length;
+    
     if (rosterCount === 0) {
-      alert(`Lớp ${className} hiện không có học sinh nào để xóa.`);
+      alert(`Lớp ${className} ${academicYear ? `(${academicYear}) ` : ""}hiện không có học sinh nào để xóa.`);
       return;
     }
 
-    if (confirm(`Bạn có chắc chắn muốn xóa HOÀN TOÀN danh sách gồm ${rosterCount} học sinh của lớp ${className}? \nHành động này sẽ XÓA VĨNH VIỄN toàn bộ hồ sơ điểm số của các học sinh này trên cả hệ thống và Supabase, và không thể khôi phục!`)) {
+    const yearMsg = academicYear ? ` (${academicYear})` : "";
+    if (confirm(`Bạn có chắc chắn muốn xóa HOÀN TOÀN danh sách gồm ${rosterCount} học sinh của lớp ${className}${yearMsg}? \nHành động này sẽ XÓA VĨNH VIỄN toàn bộ hồ sơ điểm số của các học sinh này trên cả hệ thống và Supabase, và không thể khôi phục!`)) {
       setAuthIsLoading(true);
       try {
-        const success = await dbService.deleteStudentsByClass(className);
+        const success = await dbService.deleteStudentsByClass(className, academicYear);
         if (success) {
-          setStudents(students.filter(s => s.className !== className));
-          alert(`Đã xóa thành công toàn bộ danh sách gồm ${rosterCount} học sinh của lớp ${className}!`);
+          setStudents(students.filter(s => 
+            !(s.className === className && (academicYear ? s.academicYear === academicYear : true))
+          ));
+          alert(`Đã xóa thành công toàn bộ danh sách gồm ${rosterCount} học sinh của lớp ${className}${yearMsg}!`);
         } else {
           const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
           alert(`Có lỗi xảy ra khi xóa danh sách học sinh trên Supabase.${dbErr}`);
@@ -686,11 +848,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   };
 
   // Delete student
-  const handleDeleteStudent = async (studentCode: string) => {
-    if (confirm(`Bạn có chắc chắn muốn xóa học sinh có mã ${studentCode}?`)) {
-      const res = await dbService.deleteStudent(studentCode);
+  const handleDeleteStudent = async (studentCode: string, academicYear: string) => {
+    if (confirm(`Bạn có chắc chắn muốn xóa học sinh có mã ${studentCode} của năm học ${academicYear}?`)) {
+      const res = await dbService.deleteStudent(studentCode, academicYear);
       if (res) {
-        setStudents(students.filter(s => s.studentCode !== studentCode));
+        setStudents(students.filter(s => !(s.studentCode === studentCode && s.academicYear === academicYear)));
       } else {
         const dbErr = dbService.lastError ? `\n\nChi tiết lỗi từ Supabase: ${dbService.lastError}` : "";
         alert(`Có lỗi xảy ra khi xóa học sinh.${dbErr}`);
@@ -862,7 +1024,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       behaviorGrade,
       behaviorGradeHK1,
       behaviorGradeHK2,
-      distinction
+      distinction,
+      academicYear: formStudent.academicYear || (selectedAcademicYear !== "all" ? selectedAcademicYear : (academicYears.find(y => y.isActive)?.yearName || "2025-2026"))
     };
 
     setIsSavingStudent(true);
@@ -1134,6 +1297,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       const targetClassObj = classes.find(c => c.className === importClass);
       const gradeLvl = targetClassObj?.gradeLevel || "9";
       const collectedErrors: string[] = [];
+      const currentImportYear = importYear || (academicYears.find(y => y.isActive)?.yearName || "2025-2026");
 
       const cleanSpaceSeparatedScores = (val: string): string => {
         if (!val) return "";
@@ -1236,14 +1400,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
              // Priority 1: Match by Student Code (CCCD) if we parsed it from this card
              let existing = students.find(
-               s => studentCode && s.studentCode === studentCode
+               s => studentCode && s.studentCode === studentCode && s.academicYear === currentImportYear
              );
 
              // Priority 2: Fallback to Name + Class matching
              if (!existing) {
                existing = students.find(
                  s => cleanString(s.fullName) === rowNameClean && 
-                      s.className.trim().toUpperCase() === className.trim().toUpperCase()
+                      s.className.trim().toUpperCase() === className.trim().toUpperCase() &&
+                      s.academicYear === currentImportYear
                );
              }
 
@@ -1463,7 +1628,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                if (def.isEvaluatedByScore) {
                  const s1 = typeof targetSub.semester1 === "number" ? targetSub.semester1 : null;
                  const s2 = typeof targetSub.semester2 === "number" ? targetSub.semester2 : null;
-                 if (importTerm !== "canam") {
+                 if (importTerm === "hk1") {
+                   if (s2 === null) targetSub.yearAvg = "";
+                 } else if (importTerm === "hk2") {
                    if (s1 !== null && s2 !== null) {
                      targetSub.yearAvg = roundScore((s2 * 2 + s1) / 3);
                    }
@@ -1471,7 +1638,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                } else {
                  const s1 = targetSub.semester1;
                  const s2 = targetSub.semester2;
-                 if (importTerm !== "canam") {
+                 if (importTerm === "hk1") {
+                   if (s2 === null || s2 === "") targetSub.yearAvg = "";
+                 } else if (importTerm === "hk2") {
                    if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
                      targetSub.yearAvg = "Chưa đạt";
                    } else if (s1 === "Đạt" && s2 === "Đạt") {
@@ -1575,7 +1744,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
              parsedResults.push({
                ...existing, // Preserve all existing fields (id, teacher, school, etc.)
-               id: existing?.id || `student_${studentCode}`,
+               id: existing?.id || `student_${studentCode}_${currentImportYear.replace(/\//g, '-')}`,
                studentCode: existing?.studentCode || studentCode,
                fullName,
                dob: existing?.dob || "",
@@ -1583,7 +1752,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                school: existing?.school || "Trường PTDTBT Tiểu Học và THCS Suối Lư",
                className: className,
                gradeLevel: (targetClassObj?.gradeLevel || "9") as any,
-               academicYear: existing?.academicYear || "2025-2026",
+               academicYear: currentImportYear,
                academicGrade,
                academicGradeHK1,
                academicGradeHK2,
@@ -1597,6 +1766,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                distinction,
                notes,
                verificationToken: existing?.verificationToken || `VERIFY-CCCD-${studentCode}-${className}`,
+               teacher: targetClassObj?.advisorName || existing?.teacher || "",
                subjects: cardSubjects
              });
           });
@@ -1771,14 +1941,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           // Priority 1: Match by Student Code (CCCD) if provided in Excel
           const cleanedInputCode = rawCode.replace(/[^0-9A-Za-z-]/g, "").toUpperCase();
           let existing = students.find(
-            s => cleanedInputCode && s.studentCode === cleanedInputCode
+            s => cleanedInputCode && s.studentCode === cleanedInputCode && s.academicYear === currentImportYear
           );
 
           // Priority 2: Fallback to Name + Class matching
           if (!existing) {
             existing = students.find(
               s => cleanString(s.fullName) === rowNameClean && 
-                   s.className.trim().toUpperCase() === rowClass.trim().toUpperCase()
+                   s.className.trim().toUpperCase() === rowClass.trim().toUpperCase() &&
+                   s.academicYear === currentImportYear
             );
           }
 
@@ -2060,7 +2231,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               const s1 = typeof targetSub.semester1 === "number" ? targetSub.semester1 : null;
               const s2 = typeof targetSub.semester2 === "number" ? targetSub.semester2 : null;
               
-              if (importTerm !== "canam") {
+              if (importTerm === "hk1") {
+                if (s2 === null) targetSub.yearAvg = "";
+              } else if (importTerm === "hk2") {
                 if (s1 !== null && s2 !== null) {
                   targetSub.yearAvg = roundScore((s2 * 2 + s1) / 3);
                 }
@@ -2068,7 +2241,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             } else {
                const s1 = targetSub.semester1;
                const s2 = targetSub.semester2;
-               if (importTerm !== "canam") {
+               if (importTerm === "hk1") {
+                 if (s2 === null || s2 === "") targetSub.yearAvg = "";
+               } else if (importTerm === "hk2") {
                  if (s1 === "Chưa đạt" || s2 === "Chưa đạt") {
                    targetSub.yearAvg = "Chưa đạt";
                  } else if (s1 === "Đạt" && s2 === "Đạt") {
@@ -2235,7 +2410,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
           parsedResults.push({
             ...existing, // Preserve all existing fields
-            id: existing?.id || `student_${studentCode}`,
+            id: existing?.id || `student_${studentCode}_${currentImportYear.replace(/\//g, '-')}`,
             studentCode: existing?.studentCode || studentCode,
             fullName,
             dob: finalDob,
@@ -2243,7 +2418,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             school: existing?.school || "Trường PTDTBT Tiểu Học và THCS Suối Lư",
             className: importClass,
             gradeLevel: gradeLvl as any,
-            academicYear: existing?.academicYear || "2025-2026",
+            academicYear: currentImportYear,
             academicGrade,
             academicGradeHK1,
             academicGradeHK2,
@@ -2801,8 +2976,9 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     
     const matchesClass = selectedClass === "all" || student.className === selectedClass;
     const matchesGrade = selectedGrade === "all" || student.gradeLevel === selectedGrade;
+    const matchesYear = selectedAcademicYear === "all" || student.academicYear === selectedAcademicYear;
 
-    return matchesSearch && matchesClass && matchesGrade;
+    return matchesSearch && matchesClass && matchesGrade && matchesYear;
   }).sort((a, b) => {
     // Primary sort by Class Name
     const classCompare = (a.className || "").localeCompare(b.className || "", "vi");
@@ -2812,7 +2988,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     return compareVietnameseNames(a.fullName, b.fullName);
   });
 
-  const uniqueClasses = Array.from(new Set(students.map(s => s.className)));
+  const uniqueClasses = Array.from(new Set(students.map(s => s.className).filter(Boolean))) as string[];
 
   // STATISTICS CALCULATOR
   const totalStudentsCount = students.length;
@@ -3000,6 +3176,14 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               <Layers className="w-4 h-4" /> Cấu hình lớp học
             </button>
             <button
+              onClick={() => setActiveTab("years")}
+              className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
+                activeTab === "years" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <Calendar className="w-4 h-4" /> Cấu hình năm học
+            </button>
+            <button
               onClick={() => setActiveTab("supabase")}
               className={`w-full flex items-center gap-2.5 font-bold px-4 py-2.5 rounded-lg text-left transition cursor-pointer ${
                 activeTab === "supabase" ? "bg-[#337819]/10 text-[#337819]" : "text-slate-600 hover:bg-slate-50"
@@ -3058,7 +3242,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                   
                   {selectedClass !== "all" && filteredStudents.length > 0 && (
                     <button
-                      onClick={() => handleDeleteClassStudents(selectedClass)}
+                      onClick={() => handleDeleteClassStudents(selectedClass, selectedAcademicYear !== "all" ? selectedAcademicYear : undefined)}
                       className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer shadow-sm hover:shadow-md"
                     >
                       <UserX className="w-4 h-4" /> Xóa toàn bộ học sinh lớp {selectedClass}
@@ -3093,12 +3277,25 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
                   <div className="flex gap-2 w-full sm:w-auto">
                     <select
+                      value={selectedAcademicYear}
+                      onChange={(e) => setSelectedAcademicYear(e.target.value)}
+                      className="border text-xs px-3 py-2 rounded-lg text-slate-700 bg-white font-bold border-[#337819]/30"
+                    >
+                      <option value="all">Tất cả năm học</option>
+                      {academicYears.map((y, idx) => (
+                        <option key={`year-opt-${y.id || idx}`} value={y.yearName}>
+                          {y.yearName}{y.isActive ? " (Hiện tại)" : ""}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
                       value={selectedClass}
                       onChange={(e) => setSelectedClass(e.target.value)}
                       className="border text-xs px-3 py-2 rounded-lg text-slate-700 bg-white"
                     >
                       <option value="all">Tất cả lớp</option>
-                      {uniqueClasses.map(c => <option key={c} value={c}>{c}</option>)}
+                      {uniqueClasses.map((c, idx) => <option key={`class-opt-${c || idx}`} value={c}>{c}</option>)}
                     </select>
 
                     <select
@@ -3178,7 +3375,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                                       <span className="text-[10px] font-bold">Sửa</span>
                                     </button>
                                     <button
-                                      onClick={() => handleDeleteStudent(student.studentCode)}
+                                      onClick={() => handleDeleteStudent(student.studentCode, student.academicYear)}
                                       className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
                                       title="Xóa học sinh"
                                     >
@@ -3221,7 +3418,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                       className="border text-xs px-3 py-2.5 rounded-lg text-slate-700 bg-white hover:border-slate-300 font-bold outline-none cursor-pointer w-full sm:w-48"
                     >
                       <option value="all">Hiển thị toàn trường</option>
-                      {uniqueClasses.map(c => <option key={c} value={c}>Lớp {c}</option>)}
+                      {uniqueClasses.map((c, idx) => <option key={`grade-class-opt-${c || idx}`} value={c}>Lớp {c}</option>)}
                     </select>
                   </div>
 
@@ -3662,6 +3859,27 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
                     {/* Class selector */}
                     <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border">
+                      <label className="text-xs font-black text-slate-700 whitespace-nowrap">Năm học:</label>
+                      <select
+                        value={importYear}
+                        onChange={(e) => {
+                          setImportYear(e.target.value);
+                          setImportPreview([]);
+                          setImportErrors([]);
+                          setImportStatus("");
+                        }}
+                        className="bg-white cursor-pointer border hover:border-blue-400 font-bold text-xs px-2.5 py-1 rounded-lg outline-none transition text-slate-800"
+                      >
+                        {academicYears.map(y => (
+                          <option key={`import-year-${y.id}`} value={y.yearName}>
+                            {y.yearName} {y.isActive ? "(Hiện tại)" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Class selector */}
+                    <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border">
                       <label className="text-xs font-black text-slate-700 whitespace-nowrap">Lớp nhập tịch:</label>
                       <select
                         value={importClass}
@@ -3673,9 +3891,13 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         }}
                         className="bg-white cursor-pointer border hover:border-blue-400 font-bold text-xs px-2.5 py-1 rounded-lg outline-none transition text-slate-800"
                       >
-                        {classes.map(c => (
-                          <option key={c.id} value={c.className}>Lớp {c.className}</option>
-                        ))}
+                        {classes.filter(c => c.academicYear === importYear).length === 0 ? (
+                          <option value="">(Không có lớp)</option>
+                        ) : (
+                          classes.filter(c => c.academicYear === importYear).map(c => (
+                            <option key={c.id} value={c.className}>Lớp {c.className}</option>
+                          ))
+                        )}
                       </select>
                     </div>
                   </div>
@@ -4150,6 +4372,147 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
               </div>
             )}
 
+            {activeTab === "years" && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h1 className="text-xl font-bold text-slate-800">Quản lý Niên khóa & Năm học</h1>
+                    <p className="text-xs text-slate-500">Cấu hình các năm học cho hệ thống. Dữ liệu học sinh sẽ được phân tách theo từng năm học.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* LEFT PANEL: YEAR FORM */}
+                  <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2 border-b pb-2">
+                      <Calendar className="w-5 h-5 text-[#337819]" />
+                      <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">{yearFormId ? "Sửa Năm học" : "Thêm Năm học mới"}</span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tên Năm Học (*)</label>
+                        <input
+                          type="text"
+                          value={yearFormName}
+                          onChange={(e) => setYearFormName(e.target.value)}
+                          placeholder="Ví dụ: 2025-2026"
+                          className="w-full border border-slate-200 px-3 py-2 rounded text-xs focus:ring-2 focus:ring-[#337819] outline-none font-bold"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 py-2">
+                        <input
+                          type="checkbox"
+                          id="yearActive"
+                          checked={yearFormIsActive}
+                          onChange={(e) => setYearFormIsActive(e.target.checked)}
+                          className="w-4 h-4 text-[#337819] rounded"
+                        />
+                        <label htmlFor="yearActive" className="text-xs font-bold text-slate-700 cursor-pointer select-none">Thiết lập làm Năm học hiện tại</label>
+                      </div>
+
+                      {yearFormError && (
+                        <div className="p-4 bg-[#FFF5F6] text-[#FF0040] text-xs font-bold rounded-lg border-none animate-shake">
+                          {yearFormError}
+                        </div>
+                      )}
+
+                      <div className="pt-3 flex gap-2">
+                        <button
+                          onClick={handleSaveYear}
+                          className="flex-1 bg-[#337819] hover:bg-blue-800 text-white font-black py-2 rounded text-[11px] uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1"
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          {yearFormId ? "Lưu thay đổi" : "Thêm mới"}
+                        </button>
+
+                        {yearFormId && (
+                          <button
+                            onClick={handleCancelEditYear}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold px-3 py-2 rounded text-[11px] uppercase transition cursor-pointer border border-slate-300"
+                          >
+                            Hủy
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RIGHT PANEL: YEARS TABLE */}
+                  <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">Danh sách Năm học ({academicYears.length})</span>
+                    </div>
+
+                    <div className="overflow-x-auto border rounded-lg">
+                      <table className="w-full text-left text-xs text-slate-700 border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-600 uppercase border-b text-[10px] tracking-wider">
+                            <th className="px-4 py-2.5 font-bold w-16 text-center">STT</th>
+                            <th className="px-4 py-2.5 font-bold">Năm học</th>
+                            <th className="px-4 py-2.5 font-bold w-32 text-center">Trạng thái</th>
+                            <th className="px-4 py-2.5 font-bold w-32 text-center">Ngày tạo</th>
+                            <th className="px-4 py-2.5 font-bold w-24 text-center">Thao tác</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-150">
+                          {academicYears.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="px-4 py-10 text-center text-slate-400 font-medium italic">
+                                Chưa cấu hình bất kỳ năm học nào.
+                              </td>
+                            </tr>
+                          ) : (
+                            academicYears.map((y, index) => (
+                              <tr key={`year-row-${y.id && y.id !== "undefined" ? y.id : `idx-${index}`}`} className="hover:bg-slate-50/70 transition">
+                                <td className="px-4 py-2.5 text-center font-bold text-slate-400 font-mono">
+                                  {index + 1}
+                                </td>
+                                <td className="px-4 py-2.5 font-black text-[#337819] font-mono text-sm">
+                                  {y.yearName}
+                                </td>
+                                <td className="px-4 py-2.5 text-center">
+                                  {y.isActive ? (
+                                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-black text-[9px] uppercase">Hiện tại</span>
+                                  ) : (
+                                    <span className="bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full font-bold text-[9px] uppercase">Lưu trữ</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2.5 text-center text-slate-500 font-mono text-[10px]">
+                                  {y.id && typeof y.id === "string" && y.id.startsWith("year_") && !isNaN(parseInt(y.id.split("_")[1])) 
+                                    ? new Date(parseInt(y.id.split("_")[1])).toLocaleDateString("vi-VN")
+                                    : "Mặc định"}
+                                </td>
+                                <td className="px-4 py-2.5">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <button
+                                      onClick={() => handleStartEditYear(y)}
+                                      title="Sửa năm học"
+                                      className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition cursor-pointer border border-blue-100"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteYear(y.id)}
+                                      title="Xóa năm học"
+                                      className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition cursor-pointer border border-rose-100"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* TAB 5: SUPABASE INTEGRATION CONSOLE */}
             {activeTab === "supabase" && (
               <div className="space-y-6 animate-fadeIn">
@@ -4300,7 +4663,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
 {`-- [MẪU 1] TẠO 6 BẢNG SỬ DỤNG SNAKE_CASE (CHẰN CHẶN CHUẨN POSTGRES)
 
--- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng students nhưng thiếu cột, hãy chạy đoạn này trước)
+-- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này trước)
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
@@ -4317,12 +4680,19 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS verification_token TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
+-- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
+-- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS advisor_name TEXT;
+-- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS room_number TEXT;
+-- ALTER TABLE students DROP CONSTRAINT IF EXISTS students_student_code_key;
+-- ALTER TABLE students ADD CONSTRAINT students_student_code_year_unique UNIQUE (student_code, academic_year);
+-- ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_class_name_key;
+-- ALTER TABLE portal_classes ADD CONSTRAINT portal_classes_name_year_unique UNIQUE (class_name, academic_year);
 -- NOTIFY pgrst, 'reload schema';
 
 -- 1. Tạo bảng học sinh (students)
 CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,
-  student_code TEXT UNIQUE NOT NULL,
+  student_code TEXT NOT NULL,
   full_name TEXT NOT NULL,
   date_of_birth TEXT NOT NULL,
   gender TEXT NOT NULL,
@@ -4344,17 +4714,20 @@ CREATE TABLE IF NOT EXISTS students (
   verification_token TEXT NOT NULL,
   teacher TEXT,
   subjects JSONB NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT students_student_code_year_unique UNIQUE (student_code, academic_year)
 );
 
 -- 2. Tạo bảng danh sách lớp học (portal_classes)
 CREATE TABLE IF NOT EXISTS portal_classes (
   id TEXT PRIMARY KEY,
-  class_name TEXT UNIQUE NOT NULL,
+  class_name TEXT NOT NULL,
   grade_level TEXT NOT NULL,
+  academic_year TEXT NOT NULL,
   advisor_name TEXT,
   room_number TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT portal_classes_name_year_unique UNIQUE (class_name, academic_year)
 );
 
 -- 3. Tạo bảng lưu trữ cấu hình cổng tra cứu (portal_settings)
@@ -4385,6 +4758,14 @@ CREATE TABLE IF NOT EXISTS search_activity (
   class_name TEXT NOT NULL,
   queried_at TIMESTAMPTZ DEFAULT NOW(),
   count INTEGER DEFAULT 1
+);
+
+-- 6. Tạo bảng Niên khóa (portal_academic_years)
+CREATE TABLE IF NOT EXISTS portal_academic_years (
+  id TEXT PRIMARY KEY,
+  year_name TEXT UNIQUE NOT NULL,
+  is_active BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- BẬT CHÍNH SÁCH BẢO MẬT ROW LEVEL SECURITY (RLS) & CHO PHÉP ĐỌC GHI CÔNG KHAI
@@ -4429,7 +4810,14 @@ DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác search_activity" 
 CREATE POLICY "Cho phép đọc công khai search_activity" ON search_activity FOR SELECT USING (true);
 CREATE POLICY "Cho phép thực hiện mọi thao tác search_activity" ON search_activity FOR ALL USING (true) WITH CHECK (true);
 
--- F. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
+-- F. Áp dụng cho bảng niên khóa (portal_academic_years)
+ALTER TABLE portal_academic_years ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai portal_academic_years" ON portal_academic_years;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_academic_years" ON portal_academic_years;
+CREATE POLICY "Cho phép đọc công khai portal_academic_years" ON portal_academic_years FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_academic_years" ON portal_academic_years FOR ALL USING (true) WITH CHECK (true);
+
+-- G. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
 NOTIFY pgrst, 'reload schema';`}
                         </pre>
                       </div>
@@ -4439,7 +4827,7 @@ NOTIFY pgrst, 'reload schema';`}
                         <pre className="text-[10px] font-mono bg-slate-900 text-slate-200 p-4 rounded-lg overflow-x-auto leading-normal selection:bg-blue-800 max-h-[350px] overflow-y-auto">
 {`-- [MẪU 2] TẠO 6 BẢNG SỬ DỤNG CAMELCASE (SỬ DỤNG DẤU NHÁY ĐỒNG BỘ NGUYÊN BẢN)
 
--- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng students nhưng thiếu cột, hãy chạy đoạn này trước)
+-- 0. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này trước)
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
@@ -4456,12 +4844,19 @@ NOTIFY pgrst, 'reload schema';`}
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS "verificationToken" TEXT;
 -- ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
+-- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
+-- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "advisorName" TEXT;
+-- ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "roomNumber" TEXT;
+-- ALTER TABLE students DROP CONSTRAINT IF EXISTS students_studentCode_key;
+-- ALTER TABLE students ADD CONSTRAINT students_studentCode_year_unique UNIQUE ("studentCode", "academicYear");
+-- ALTER TABLE portal_classes DROP CONSTRAINT IF EXISTS portal_classes_className_key;
+-- ALTER TABLE portal_classes ADD CONSTRAINT portal_classes_name_year_unique UNIQUE ("className", "academicYear");
 -- NOTIFY pgrst, 'reload schema';
 
 -- 1. Tạo bảng học sinh (students)
 CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,
-  "studentCode" TEXT UNIQUE NOT NULL,
+  "studentCode" TEXT NOT NULL,
   "fullName" TEXT NOT NULL,
   dob TEXT NOT NULL,
   gender TEXT NOT NULL,
@@ -4483,17 +4878,20 @@ CREATE TABLE IF NOT EXISTS students (
   "verificationToken" TEXT NOT NULL,
   teacher TEXT,
   subjects JSONB NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT students_studentCode_year_unique UNIQUE ("studentCode", "academicYear")
 );
 
 -- 2. Tạo bảng danh sách lớp học (portal_classes)
 CREATE TABLE IF NOT EXISTS portal_classes (
   id TEXT PRIMARY KEY,
-  "className" TEXT UNIQUE NOT NULL,
+  "className" TEXT NOT NULL,
   "gradeLevel" TEXT NOT NULL,
+  "academicYear" TEXT NOT NULL,
   "advisorName" TEXT,
   "roomNumber" TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT portal_classes_name_year_unique UNIQUE ("className", "academicYear")
 );
 
 -- 3. Tạo bảng lưu trữ cấu hình cổng tra cứu (portal_settings)
@@ -4524,6 +4922,14 @@ CREATE TABLE IF NOT EXISTS search_activity (
   class_name TEXT NOT NULL,
   queried_at TIMESTAMPTZ DEFAULT NOW(),
   count INTEGER DEFAULT 1
+);
+
+-- 6. Tạo bảng Niên khóa (portal_academic_years)
+CREATE TABLE IF NOT EXISTS portal_academic_years (
+  id TEXT PRIMARY KEY,
+  year_name TEXT UNIQUE NOT NULL,
+  is_active BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- BẬT CHÍNH SÁCH BẢO MẬT ROW LEVEL SECURITY (RLS) & CHO PHÉP ĐỌC GHI CÔNG KHAI
@@ -4568,7 +4974,14 @@ DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác search_activity" 
 CREATE POLICY "Cho phép đọc công khai search_activity" ON search_activity FOR SELECT USING (true);
 CREATE POLICY "Cho phép thực hiện mọi thao tác search_activity" ON search_activity FOR ALL USING (true) WITH CHECK (true);
 
--- F. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
+-- F. Áp dụng cho bảng niên khóa (portal_academic_years)
+ALTER TABLE portal_academic_years ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Cho phép đọc công khai portal_academic_years" ON portal_academic_years;
+DROP POLICY IF EXISTS "Cho phép thực hiện mọi thao tác portal_academic_years" ON portal_academic_years;
+CREATE POLICY "Cho phép đọc công khai portal_academic_years" ON portal_academic_years FOR SELECT USING (true);
+CREATE POLICY "Cho phép thực hiện mọi thao tác portal_academic_years" ON portal_academic_years FOR ALL USING (true) WITH CHECK (true);
+
+-- G. Báo cho Supabase làm mới schema cache (khắc phục lỗi không tìm thấy cột)
 NOTIFY pgrst, 'reload schema';`}
                         </pre>
                       </div>
@@ -4927,6 +5340,21 @@ NOTIFY pgrst, 'reload schema';`}
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase mb-1 tracking-wide">
+                          Năm học
+                        </label>
+                        <select
+                          value={classFormYear}
+                          onChange={(e) => setClassFormYear(e.target.value)}
+                          className="w-full text-xs font-bold px-3 py-2 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#337819] focus:outline-none transition"
+                        >
+                          {academicYears.map(y => (
+                            <option key={y.id} value={y.yearName}>{y.yearName}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1 tracking-wide">
                           Giáo viên chủ nhiệm
                         </label>
                         <input
@@ -4980,9 +5408,21 @@ NOTIFY pgrst, 'reload schema';`}
 
                   {/* RIGHT PANEL: CLASSES TABLE */}
                   <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between border-b pb-2">
-                      <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">Danh sách Lớp học hiện hữu ({classes.length})</span>
-                      <span className="text-[10px] bg-[#337819]/10 text-[#337819] px-2.5 py-1 rounded-full font-black tracking-wide uppercase">Hệ Thống Tra Cứu</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-2 gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-slate-800 uppercase tracking-wider">Danh sách Lớp học ({classes.filter(c => selectedClassYear === "all" || c.academicYear === selectedClassYear).length})</span>
+                        <select
+                          value={selectedClassYear}
+                          onChange={(e) => setSelectedClassYear(e.target.value)}
+                          className="text-[11px] font-bold border rounded px-2 py-1 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-[#337819]"
+                        >
+                          <option value="all">Tất cả năm học</option>
+                          {academicYears.map(y => (
+                            <option key={`filter-year-${y.id}`} value={y.yearName}>{y.yearName}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <span className="text-[10px] bg-[#337819]/10 text-[#337819] px-2.5 py-1 rounded-full font-black tracking-wide uppercase self-start sm:self-center">Hệ Thống Tra Cứu</span>
                     </div>
 
                     <div className="overflow-x-auto border rounded-lg">
@@ -4992,6 +5432,7 @@ NOTIFY pgrst, 'reload schema';`}
                             <th className="px-4 py-2.5 font-bold w-16 text-center">STT</th>
                             <th className="px-4 py-2.5 font-bold">Lớp</th>
                             <th className="px-4 py-2.5 font-bold w-20 text-center">Khối</th>
+                            <th className="px-4 py-2.5 font-bold w-32 text-center">Năm học</th>
                             <th className="px-4 py-2.5 font-bold">Giáo viên chủ nhiệm</th>
                             <th className="px-4 py-2.5 font-bold w-24 text-center">Phòng học</th>
                             <th className="px-4 py-2.5 font-bold w-16 text-center">Sĩ số</th>
@@ -4999,74 +5440,81 @@ NOTIFY pgrst, 'reload schema';`}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-150">
-                          {classes.length === 0 ? (
+                          {classes.filter(c => selectedClassYear === "all" || c.academicYear === selectedClassYear).length === 0 ? (
                             <tr>
-                              <td colSpan={7} className="px-4 py-10 text-center text-slate-400 font-medium italic">
-                                Chưa cấu hình bất kỳ lớp học nào. Hãy thêm một lớp học mới ở khung bên trái.
+                              <td colSpan={8} className="px-4 py-10 text-center text-slate-400 font-medium italic">
+                                Không tìm thấy lớp học nào cho năm học đã chọn.
                               </td>
                             </tr>
                           ) : (
-                            classes.map((c, index) => {
-                              const rosterCount = students.filter(s => s.className === c.className).length;
-                              return (
-                                <tr key={c.id} className="hover:bg-slate-50/70 transition">
-                                  <td className="px-4 py-2.5 text-center font-bold text-slate-400 font-mono">
-                                    {index + 1}
-                                  </td>
-                                  <td className="px-4 py-2.5 font-black text-[#337819] font-mono text-sm">
-                                    {c.className}
-                                  </td>
-                                  <td className="px-4 py-2.5 text-center">
-                                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">
-                                      Khối {c.gradeLevel}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-2.5 font-bold text-slate-800">
-                                    {c.advisorName || <span className="text-slate-400 italic font-normal text-[11px]">Chưa thiết lập</span>}
-                                  </td>
-                                  <td className="px-4 py-2.5 text-center font-semibold text-slate-600">
-                                    {c.roomNumber || <span className="text-slate-400 italic font-normal">--</span>}
-                                  </td>
-                                  <td className="px-4 py-2.5 text-center">
-                                    <span className={`px-2 py-0.5 rounded font-black font-mono text-[11px] ${
-                                      rosterCount > 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-slate-100 text-slate-400 border border-slate-200"
-                                    }`}>
-                                      {rosterCount}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-2.5">
-                                    <div className="flex items-center justify-center gap-2">
-                                      <button
-                                        onClick={() => handleStartEditClass(c)}
-                                        title="Chỉnh sửa thông tin lớp"
-                                        className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition cursor-pointer border border-blue-100"
-                                      >
-                                        <Edit className="w-3.5 h-3.5" />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteClassStudents(c.className)}
-                                        disabled={rosterCount === 0}
-                                        title={rosterCount > 0 ? `Xóa toàn bộ ${rosterCount} học sinh của lớp ${c.className}` : "Lớp trống"}
-                                        className={`p-1.5 rounded-lg transition border ${
-                                          rosterCount > 0 
-                                            ? "text-rose-600 hover:text-rose-800 hover:bg-rose-50 border-rose-100 cursor-pointer" 
-                                            : "text-slate-300 border-slate-100 cursor-not-allowed"
-                                        }`}
-                                      >
-                                        <UserX className="w-3.5 h-3.5" />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteClass(c.id)}
-                                        title="Xóa lớp học khỏi hệ thống"
-                                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer border border-slate-100"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })
+                            classes
+                              .filter(c => selectedClassYear === "all" || c.academicYear === selectedClassYear)
+                              .map((c, index) => {
+                                const rosterCount = students.filter(s => s.className === c.className && s.academicYear === c.academicYear).length;
+                                return (
+                                  <tr key={`class-row-${c.id && c.id !== "undefined" ? c.id : `idx-${index}`}`} className="hover:bg-slate-50/70 transition">
+                                    <td className="px-4 py-2.5 text-center font-bold text-slate-400 font-mono">
+                                      {index + 1}
+                                    </td>
+                                    <td className="px-4 py-2.5 font-black text-[#337819] font-mono text-sm">
+                                      {c.className}
+                                    </td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">
+                                        Khối {c.gradeLevel}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <span className="text-slate-500 font-bold font-mono">
+                                        {c.academicYear || "2025-2026"}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-2.5 font-bold text-slate-800">
+                                      {c.advisorName || <span className="text-slate-400 italic font-normal text-[11px]">Chưa thiết lập</span>}
+                                    </td>
+                                    <td className="px-4 py-2.5 text-center font-semibold text-slate-600">
+                                      {c.roomNumber || <span className="text-slate-400 italic font-normal">--</span>}
+                                    </td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <span className={`px-2 py-0.5 rounded font-black font-mono text-[11px] ${
+                                        rosterCount > 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-slate-100 text-slate-400 border border-slate-200"
+                                      }`}>
+                                        {rosterCount}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-2.5">
+                                      <div className="flex items-center justify-center gap-2">
+                                        <button
+                                          onClick={() => handleStartEditClass(c)}
+                                          title="Chỉnh sửa thông tin lớp"
+                                          className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition cursor-pointer border border-blue-100"
+                                        >
+                                          <Edit className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteClassStudents(c.className, c.academicYear)}
+                                          disabled={rosterCount === 0}
+                                          title={rosterCount > 0 ? `Xóa toàn bộ ${rosterCount} học sinh của lớp ${c.className} (${c.academicYear})` : "Lớp trống"}
+                                          className={`p-1.5 rounded-lg transition border ${
+                                            rosterCount > 0 
+                                              ? "text-rose-600 hover:text-rose-800 hover:bg-rose-50 border-rose-100 cursor-pointer" 
+                                              : "text-slate-300 border-slate-100 cursor-not-allowed"
+                                          }`}
+                                        >
+                                          <UserX className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteClass(c.id)}
+                                          title="Xóa lớp học khỏi hệ thống"
+                                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer border border-slate-100"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })
                           )}
                         </tbody>
                       </table>

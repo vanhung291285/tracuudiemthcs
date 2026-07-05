@@ -38,7 +38,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import dbService from "../lib/supabase";
-import { Student, RecentActivity } from "../types";
+import { Student, RecentActivity, SchoolYear } from "../types";
 
 interface StudentQueryProps {
   onQueryResult: (student: Student, term: "hk1" | "hk2" | "canam") => void;
@@ -79,12 +79,34 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [multipleMatches, setMultipleMatches] = useState<Student[]>([]);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [studentCount, setStudentCount] = useState<number>(0);
+  const [academicYears, setAcademicYears] = useState<SchoolYear[]>([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>("");
+
+  const [viewMode, setViewMode] = useState<"search" | "scoreboard">("search");
+  const [scoreboardClass, setScoreboardClass] = useState("");
+  const [scoreboardStudents, setScoreboardStudents] = useState<Student[]>([]);
+  const [isScoreboardLoading, setIsScoreboardLoading] = useState(false);
+  const [scoreboardTerm, setScoreboardTerm] = useState<"hk1" | "hk2" | "canam">("hk1");
 
   const toDisplayCase = (str: string) => {
     if (!str) return "Học sinh";
-    // Tự động nhận diện nếu tên đã có dấu tiếng việt hoặc đã là Title Case thì giữ nguyên một số phần
-    // Ở đây ta dùng regex đơn giản để viết hoa chữ cái đầu mỗi từ
     return str.toLowerCase().split(' ').map(s => s.charAt(0).toUpperCase() + s.substring(1)).join(' ');
+  };
+
+  const roundScore = (num: number): number => {
+    return Math.round(num * 10) / 10;
+  };
+
+  const compareVietnameseNames = (nameA: string, nameB: string): number => {
+    const getLastName = (full: string) => {
+      const parts = full.trim().split(' ');
+      return parts[parts.length - 1];
+    };
+    const lastA = getLastName(nameA);
+    const lastB = getLastName(nameB);
+    const res = lastA.localeCompare(lastB, 'vi', { sensitivity: 'base' });
+    if (res !== 0) return res;
+    return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
   };
 
   const isToday = (dateString: string) => {
@@ -110,6 +132,41 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       }
     } catch (err) { }
   };
+
+  const loadScoreboard = async () => {
+    if (!scoreboardClass) return;
+    setIsScoreboardLoading(true);
+    try {
+      const year = selectedAcademicYear || (academicYears.find(y => y.isActive)?.yearName);
+      const list = await dbService.getAllStudents(year);
+      const filtered = list.filter(s => s.className === scoreboardClass);
+      setScoreboardStudents(filtered);
+    } catch (err) {
+      console.error("Error loading scoreboard:", err);
+    } finally {
+      setIsScoreboardLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === "scoreboard" && scoreboardClass) {
+      loadScoreboard();
+    }
+  }, [viewMode, scoreboardClass, selectedAcademicYear]);
+
+  useEffect(() => {
+    if (availableClasses.length > 0) {
+      if (!searchClass || !availableClasses.includes(searchClass)) {
+        setSearchClass(availableClasses[0]);
+      }
+      if (!scoreboardClass || !availableClasses.includes(scoreboardClass)) {
+        setScoreboardClass(availableClasses[0]);
+      }
+    } else {
+      setSearchClass("");
+      setScoreboardClass("");
+    }
+  }, [availableClasses]);
 
   const fetchNews = async (url?: string) => {
     try {
@@ -165,7 +222,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const fetchTopStudents = async () => {
     try {
-      const all = await dbService.getAllStudents();
+      const activeYearName = selectedAcademicYear || (academicYears.find(y => y.isActive)?.yearName);
+      const all = await dbService.getAllStudents(activeYearName);
       const targetStudents = all.filter(s => {
         // Robust score check: counts subjects with actual numeric or valid string evaluations
         const scoredCount = (s.subjects || []).filter(sub => {
@@ -199,26 +257,53 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     }
   };
 
-  const fetchClassesList = async () => {
+  const fetchClassesList = async (year?: string) => {
     try {
       const clsList = await dbService.getClasses();
-      const names = clsList.map(c => c.className).filter(Boolean);
+      const targetYear = year || selectedAcademicYear;
+      
+      const filtered = targetYear && targetYear !== "all" 
+        ? clsList.filter(c => c.academicYear === targetYear)
+        : clsList;
+
+      const names = filtered.map(c => c.className).filter(Boolean);
       const uniqueNames = Array.from(new Set(names)).sort((a, b) => a.localeCompare(b, "vi"));
       setAvailableClasses(uniqueNames);
-      if (uniqueNames.length > 0) {
-        setSearchClass(uniqueNames[0]);
-      }
     } catch (err) {
       console.warn("Could not load classes:", err);
     }
   };
 
+  const fetchAcademicYears = async () => {
+    try {
+      const years = await dbService.getAcademicYears();
+      setAcademicYears(years);
+      const activeYear = years.find(y => y.isActive);
+      if (activeYear) {
+        setSelectedAcademicYear(activeYear.yearName);
+      }
+    } catch (err) {
+      console.warn("Could not load academic years:", err);
+    }
+  };
+
   useEffect(() => {
     fetchNews();
-    fetchTopStudents();
     fetchRecentActivities();
-    fetchClassesList();
+    fetchAcademicYears();
   }, []);
+
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      fetchClassesList(selectedAcademicYear);
+    }
+  }, [selectedAcademicYear]);
+
+  useEffect(() => {
+    if (academicYears.length > 0) {
+      fetchTopStudents();
+    }
+  }, [academicYears, selectedAcademicYear]);
 
   const [headerTop, setHeaderTop] = useState(() => {
     const val = localStorage.getItem("portal_header_top");
@@ -324,7 +409,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     setMultipleMatches([]);
     
     try {
-      const results = await dbService.queryStudentByNameAndClass(cleanName, cleanClass);
+      const results = await dbService.queryStudentByNameAndClass(cleanName, cleanClass, selectedAcademicYear);
 
       if (results && results.length > 0) {
         if (results.length === 1) {
@@ -395,7 +480,34 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       
       {/* Top Banner Navigation Header */}
       <header className="w-full bg-[#337819] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
+        
+        {/* View Mode Toggle - Top Left */}
+        <div className="absolute top-4 left-4 md:top-5 md:left-6 no-print flex gap-1 bg-white/10 p-1 rounded-full border border-white/20">
+          <button 
+            onClick={() => setViewMode("search")}
+            className={`px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all cursor-pointer ${viewMode === "search" ? "bg-white text-[#337819] shadow-sm" : "text-white hover:bg-white/10"}`}
+          >
+            TRA CỨU
+          </button>
+          <button 
+            onClick={() => setViewMode("scoreboard")}
+            className={`px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all cursor-pointer ${viewMode === "scoreboard" ? "bg-white text-[#337819] shadow-sm" : "text-white hover:bg-white/10"}`}
+          >
+            BẢNG ĐIỂM
+          </button>
+        </div>
 
+        {/* Admin Button - Floating in the top right corner */}
+        <div className="absolute top-4 right-4 md:top-5 md:right-6 no-print">
+          <button 
+            onClick={onNavigateToAdmin}
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 transition-all px-3 py-1.5 rounded-full border border-white/20 text-[10px] md:text-xs font-bold uppercase tracking-wider cursor-pointer active:scale-95"
+            title="Quản trị hệ thống"
+          >
+            <LayoutDashboard className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Quản trị</span>
+          </button>
+        </div>
 
         <div className="max-w-6xl mx-auto space-y-1.5">
           <div className="flex flex-col items-center">
@@ -431,7 +543,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 const isExcellent = student.distinction === "Học sinh Xuất sắc";
                 const icon = isExcellent ? <Crown className={`w-3.5 h-3.5 animate-pulse ${colorClass}`} /> : <Star className={`w-3.5 h-3.5 animate-pulse ${colorClass}`} />;
                 return (
-                  <div key={`${student.studentCode}-${idx}`} className="flex items-center gap-1.5 font-bold text-[11px] md:text-xs uppercase tracking-tight bg-slate-50 px-2.5 md:px-3 py-1 rounded-full border border-slate-200 shrink-0">
+                  <div key={`top-${student.studentCode || idx}-${idx}`} className="flex items-center gap-1.5 font-bold text-[11px] md:text-xs uppercase tracking-tight bg-slate-50 px-2.5 md:px-3 py-1 rounded-full border border-slate-200 shrink-0">
                     {icon}
                     <span className={`${colorClass} animate-pulse drop-shadow-sm`}>
                       {toDisplayCase(student.fullName)}
@@ -452,12 +564,173 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
       {/* Main Content Area: Side-By-Side Redesigned Portal */}
       <main className="flex-1 max-w-6xl w-full mx-auto pt-8 pb-4 md:pt-12 md:pb-6 px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
-          
-          {/* LEFT SIDE: LOOKUP TOOL & QUICK CANDIDATES (col-span-5) */}
-          <div className="lg:col-span-5 space-y-6">
-            
-            {/* Core Query Card */}
+        
+        {viewMode === "scoreboard" ? (
+          <div className="w-full space-y-6 animate-fadeIn">
+            <div className="glass-card overflow-hidden rounded-2xl border border-white/50 shadow-2xl relative z-10 p-6">
+              <div className="flex flex-col md:flex-row items-center justify-between mb-6 border-b pb-4 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#337819]/10 flex items-center justify-center border border-[#337819]/20">
+                    <BarChartHorizontal className="w-6 h-6 text-[#337819]" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-black text-[#337819] uppercase tracking-wider">BẢNG ĐIỂM TỔNG HỢP LỚP</h2>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Dữ liệu học bạ số công khai</p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                    <School className="w-3.5 h-3.5 text-slate-500" />
+                    <select
+                      value={scoreboardClass}
+                      onChange={(e) => setScoreboardClass(e.target.value)}
+                      className="bg-transparent border-none text-[11px] font-bold text-slate-800 outline-none cursor-pointer hover:text-[#337819] transition"
+                    >
+                      {availableClasses.length > 0 ? availableClasses.map(cls => (
+                        <option key={cls} value={cls}>Lớp {cls}</option>
+                      )) : <option value="">Chọn lớp</option>}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                    <select
+                      value={selectedAcademicYear}
+                      onChange={(e) => setSelectedAcademicYear(e.target.value)}
+                      className="bg-transparent border-none text-[11px] font-bold text-slate-800 outline-none cursor-pointer hover:text-[#337819] transition"
+                    >
+                      {academicYears.map(y => (
+                        <option key={y.id} value={y.yearName}>{y.yearName}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                    {(["hk1", "hk2", "canam"] as const).map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setScoreboardTerm(t)}
+                        className={`px-3 py-1.5 text-[9px] font-black rounded-md transition uppercase tracking-wider ${
+                          scoreboardTerm === t ? "bg-[#337819] text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"
+                        }`}
+                      >
+                        {t === "canam" ? "Cả năm" : t === "hk1" ? "Học kỳ I" : "Học kỳ II"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {isScoreboardLoading ? (
+                <div className="py-24 flex flex-col items-center justify-center gap-4">
+                  <div className="w-12 h-12 border-4 border-[#337819]/20 border-t-[#337819] rounded-full animate-spin"></div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-[11px] font-black text-[#337819] animate-pulse uppercase tracking-[0.2em]">Đang đối soát dữ liệu...</span>
+                    <span className="text-[9px] text-slate-400 font-bold mt-1 italic">Vui lòng đợi trong giây lát</span>
+                  </div>
+                </div>
+              ) : scoreboardStudents.length === 0 ? (
+                <div className="py-24 text-center space-y-4">
+                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto border border-slate-200 shadow-inner">
+                    <Filter className="w-10 h-10 text-slate-200" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-slate-400 uppercase tracking-widest leading-none">CHƯA CÓ DỮ LIỆU ĐIỂM</p>
+                    <p className="text-[10px] text-slate-400 font-medium mt-2">Lớp {scoreboardClass} chưa được cập nhật điểm cho năm học {selectedAcademicYear || "đã chọn"}.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-x-auto -mx-6 px-6 pb-4">
+                  <table className="w-full text-[9px] border-collapse min-w-[900px] bg-white rounded-lg overflow-hidden border border-slate-100">
+                    <thead>
+                      <tr className="bg-slate-800 text-white font-black border-b border-slate-900 uppercase tracking-tighter shadow-sm">
+                        <th className="px-2 py-3.5 text-center w-8 border-r border-slate-700/50">STT</th>
+                        <th className="px-4 py-3.5 text-left min-w-[180px] border-r border-slate-700/50">MÃ & TÊN HỌC SINH</th>
+                        <th className="px-2 py-3.5 text-center border-r border-slate-700/30">Toán học</th>
+                        <th className="px-2 py-3.5 text-center border-r border-slate-700/30">Lịch sử & ĐL</th>
+                        <th className="px-2 py-3.5 text-center border-r border-slate-700/30">KHTN</th>
+                        <th className="px-2 py-3.5 text-center border-r border-slate-700/30">Tin học</th>
+                        <th className="px-2 py-3.5 text-center border-r border-slate-700/30">Ngữ văn</th>
+                        <th className="px-2 py-3.5 text-center border-r border-slate-700/30">Ngoại ngữ</th>
+                        <th className="px-2 py-3.5 text-center border-r border-slate-700/30">GDCD</th>
+                        <th className="px-2 py-3.5 text-center border-r border-slate-700/30">C.Nghệ</th>
+                        <th className="px-2 py-3.5 text-center bg-blue-600/90 text-white border-r border-blue-700/50">KQ Học tập</th>
+                        <th className="px-2 py-3.5 text-center bg-emerald-600/90 text-white border-r border-emerald-700/50">KQ Rèn luyện</th>
+                        <th className="px-3 py-3.5 text-center bg-amber-500/90 text-white">Danh hiệu</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {scoreboardStudents.sort((a,b) => compareVietnameseNames(a.fullName, b.fullName)).map((student, idx) => {
+                        const getScore = (subjId: string) => {
+                          const sub = student.subjects.find(s => s.subjectId === subjId);
+                          if (!sub) return "—";
+                          const val = scoreboardTerm === "hk1" ? sub.semester1 : scoreboardTerm === "hk2" ? sub.semester2 : sub.yearAvg;
+                          return typeof val === "number" ? val.toFixed(1) : (val ?? "—");
+                        };
+
+                        const acad = scoreboardTerm === "hk1" ? student.academicGradeHK1 : scoreboardTerm === "hk2" ? student.academicGradeHK2 : student.academicGrade;
+                        const behav = scoreboardTerm === "hk1" ? student.behaviorGradeHK1 : scoreboardTerm === "hk2" ? student.behaviorGradeHK2 : student.behaviorGrade;
+
+                        return (
+                          <tr key={student.id} className="hover:bg-blue-50/30 transition-colors group divide-x divide-slate-100">
+                            <td className="px-2 py-2.5 text-center text-slate-400 font-mono text-[8px] bg-slate-50 group-hover:bg-blue-50/50">{idx + 1}</td>
+                            <td className="px-4 py-2.5 text-left">
+                              <div className="flex flex-col">
+                                <span className="font-black text-slate-800 uppercase text-[10px] group-hover:text-[#337819] transition-colors leading-tight">
+                                  {student.fullName}
+                                </span>
+                                <span className="text-[7px] font-mono text-slate-400 mt-0.5 tracking-widest font-bold">
+                                  ID: {student.studentCode}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-2 py-2.5 text-center font-bold text-slate-700 text-[10px]">{getScore("toan")}</td>
+                            <td className="px-2 py-2.5 text-center font-bold text-slate-700 text-[10px]">{getScore("ly_dia")}</td>
+                            <td className="px-2 py-2.5 text-center font-bold text-slate-700 text-[10px]">{getScore("khtn")}</td>
+                            <td className="px-2 py-2.5 text-center font-bold text-slate-700 text-[10px]">{getScore("tin")}</td>
+                            <td className="px-2 py-2.5 text-center font-bold text-slate-700 text-[10px]">{getScore("van")}</td>
+                            <td className="px-2 py-2.5 text-center font-bold text-slate-700 text-[10px]">{getScore("anh")}</td>
+                            <td className="px-2 py-2.5 text-center font-bold text-slate-700 text-[10px]">{getScore("gdcd")}</td>
+                            <td className="px-2 py-2.5 text-center font-bold text-slate-700 text-[10px]">{getScore("cong_nghe")}</td>
+                            <td className={`px-2 py-2.5 text-center font-black text-[10px] ${acad === 'Tốt' ? 'text-blue-700 bg-blue-50/30' : acad === 'Khá' ? 'text-indigo-600 bg-indigo-50/10' : 'text-slate-600 bg-slate-50/30'}`}>{acad || "—"}</td>
+                            <td className={`px-2 py-2.5 text-center font-black text-[10px] ${behav === 'Tốt' ? 'text-emerald-700 bg-emerald-50/30' : 'text-slate-600 bg-slate-50/30'}`}>{behav || "—"}</td>
+                            <td className="px-3 py-2.5 text-center">
+                              {student.distinction !== "Không" ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-black text-[8px] uppercase tracking-tighter border border-amber-200 shadow-sm whitespace-nowrap">
+                                  {student.distinction}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300 font-bold">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              
+              <div className="mt-8 flex flex-col md:flex-row items-center gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200/60 shadow-inner">
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-slate-100 shrink-0">
+                  <Info className="w-6 h-6 text-[#337819]" />
+                </div>
+                <div className="space-y-1 text-center md:text-left">
+                  <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-wider">Lưu ý về quyền riêng tư và dữ liệu</h4>
+                  <p className="text-[10px] text-slate-500 font-bold leading-relaxed uppercase tracking-tight">
+                    Bảng điểm trên chỉ hiển thị kết quả tổng hợp công khai. Để bảo mật chi tiết, dữ liệu thành phần (TX, Giữa kì, Cuối kì) và nhận xét của từng môn học chỉ được hiển thị khi sử dụng chức năng <strong className="text-[#E53935] hover:underline cursor-pointer" onClick={() => setViewMode("search")}>TRA CỨU CÁ NHÂN</strong> với thông tin định danh chính xác.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full">
+            {/* LEFT SIDE: LOOKUP TOOL & QUICK CANDIDATES (col-span-5) */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* Core Query Card */}
             <div id="card-query" className="w-full glass-card rounded-xl shadow-xl border border-white/50 overflow-hidden transition-all hover:shadow-2xl relative z-10">
               <div className="h-2 bg-[#337819] shadow-sm" />
               
@@ -488,6 +761,27 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     />
                   </div>
 
+                  {/* Academic Year Selection */}
+                  {academicYears.length > 1 && (
+                    <div>
+                      <label htmlFor="student-year" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
+                      </label>
+                      <select
+                        id="student-year"
+                        value={selectedAcademicYear}
+                        onChange={(e) => setSelectedAcademicYear(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
+                      >
+                        {academicYears.map((year, idx) => (
+                          <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
+                            {year.yearName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   {/* Student Class Input */}
                   <div>
                     <label htmlFor="student-class" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
@@ -500,8 +794,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         onChange={(e) => setSearchClass(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       >
-                        {availableClasses.map((cls) => (
-                          <option key={cls} value={cls}>
+                        {availableClasses.map((cls, idx) => (
+                          <option key={`cls-${cls || idx}`} value={cls}>
                             Lớp {cls}
                           </option>
                         ))}
@@ -584,7 +878,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       <div className="flex flex-col gap-2">
                         {multipleMatches.map((student, idx) => (
                           <button
-                            key={student.studentCode || idx}
+                            key={`match-${student.studentCode || idx}`}
                             type="button"
                             onClick={() => handleSelectMatch(student)}
                             className="bg-white border border-orange-200 hover:border-orange-400 hover:shadow-sm p-3 rounded text-left transition-all cursor-pointer flex justify-between items-center"
@@ -811,7 +1105,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   // Pulse Skeleton Loaders for modern list with images
                   <div className="space-y-4 py-2">
                     {[1, 2, 3].map((n) => (
-                      <div key={n} className="animate-pulse flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                      <div key={`skeleton-${n}`} className="animate-pulse flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                         <div className="w-full sm:w-28 h-20 bg-slate-150 rounded-lg shrink-0"></div>
                         <div className="flex-1 space-y-2">
                           <div className="h-3.5 bg-slate-100 rounded w-5/6"></div>
@@ -825,7 +1119,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     {/* Hero Feature: Primary Latest News (Exactly like the design mockup) */}
                     {newsItems.slice(0, 1).map((item, idx) => (
                       <a
-                        key={item.id || idx}
+                        key={`hero-${item.id || idx}`}
                         href={item.link || "https://suoilu.db.edu.vn"}
                         target="_blank"
                         referrerPolicy="no-referrer"
@@ -883,7 +1177,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {newsItems.slice(1, 5).map((item, idx) => (
                             <a
-                              key={item.id || idx}
+                              key={`news-${item.id || idx}`}
                               href={item.link || "https://suoilu.db.edu.vn"}
                               target="_blank"
                               referrerPolicy="no-referrer"
@@ -969,7 +1263,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   {recentActivities.length > 0 ? (
                     recentActivities.map((activity, idx) => (
                       <motion.div 
-                        key={activity.id} 
+                        key={`recent-${activity.id || idx}`} 
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
@@ -1014,9 +1308,9 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 </AnimatePresence>
               </div>
             </div>
-
           </div>
         </div>
+      )}
       </main>
       
       {/* Floating Contact Buttons */}
