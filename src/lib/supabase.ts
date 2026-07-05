@@ -278,21 +278,22 @@ class DatabaseService {
         .select("class_name")
         .limit(1);
       
-      this.isSnakeCaseClasses = !error;
+      this.isSnakeCaseClasses = !(error && error.code === 'PGRST204');
 
       if (this.isSnakeCaseClasses) {
         const { error: yearError } = await this.supabase
           .from("portal_classes")
           .select("academic_year")
           .limit(1);
-        this.hasAcademicYearClasses = !yearError;
+        this.hasAcademicYearClasses = !(yearError && yearError.code === 'PGRST204');
       } else {
         const { error: yearError } = await this.supabase
           .from("portal_classes")
           .select("academicYear")
           .limit(1);
-        this.hasAcademicYearClasses = !yearError;
+        this.hasAcademicYearClasses = !(yearError && yearError.code === 'PGRST204');
       }
+
 
       this.classesFormatChecked = true;
     } catch {
@@ -310,7 +311,7 @@ class DatabaseService {
         .select("year_name")
         .limit(1);
       
-      this.isSnakeCaseAcademicYears = !error;
+      this.isSnakeCaseAcademicYears = !(error && error.code === 'PGRST204');
       this.academicYearsFormatChecked = true;
     } catch {
       this.isSnakeCaseAcademicYears = true;
@@ -1151,12 +1152,19 @@ class DatabaseService {
   }
 
   // Clear all classes for a specific academic year
-  public async clearClassesByYear(academicYear: string): Promise<boolean> {
+  public async clearClassesByYear(academicYear: string): Promise<{success: boolean, error?: string}> {
     if (this.supabase) {
       try {
         // Find if using snake_case or camelCase schema
         await Promise.race([this.checkClassesSchema(), new Promise(r => setTimeout(r, 2000))]);
         
+        if (this.isSnakeCaseClasses && !this.hasAcademicYearClasses) {
+          return { 
+            success: false, 
+            error: "Bảng portal_classes chưa có cột academic_year. Vui lòng vào tab Supabase -> Cập nhật CSDL để chạy lệnh ALTER TABLE thêm cột này trước khi thao tác theo năm học."
+          };
+        }
+
         let result;
         if (this.isSnakeCaseClasses) {
           result = await Promise.race([
@@ -1172,15 +1180,15 @@ class DatabaseService {
 
         if (result && result.error) {
           console.error("Supabase clear classes by year failed:", result.error.message);
-          return false;
+          return { success: false, error: result.error.message };
         }
-        return true;
-      } catch (err) {
+        return { success: true };
+      } catch (err: any) {
         console.error("Supabase exception on clear classes by year:", err);
-        return false;
+        return { success: false, error: err.message || "Unknown error" };
       }
     }
-    return true;
+    return { success: true };
   }
 
   // Load academic years from Supabase if possible, otherwise fallback locally
