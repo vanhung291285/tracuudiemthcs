@@ -21,7 +21,7 @@ class DatabaseService {
   private isSnakeCaseSchema = false;
   private isModernSchema = false;
   private hasIdColumn = false;
-  private hasAcademicYearColumn = false;
+  public hasAcademicYearColumn = false;
   private classesFormatChecked = false;
   private isSnakeCaseClasses = false;
   private hasAcademicYearClasses = false;
@@ -707,14 +707,33 @@ class DatabaseService {
         );
         await Promise.race([this.checkSchemaCase(), new Promise(r => setTimeout(r, 1000))]);
         
-        let query = this.supabase.from("students").select("*");
-        if (academicYear && this.hasAcademicYearColumn) {
-          const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
-          query = query.eq(yearField, academicYear);
-        }
+        const fetchAllPages = async () => {
+          let allData = [];
+          let from = 0;
+          const pageSize = 1000;
+          let hasMore = true;
+          
+          while (hasMore) {
+            let query = this.supabase.from("students").select("*").range(from, from + pageSize - 1);
+            if (academicYear && this.hasAcademicYearColumn) {
+              const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
+              query = query.eq(yearField, academicYear);
+            }
+            const { data, error } = await query;
+            if (error) throw error;
+            if (data && data.length > 0) {
+              allData = [...allData, ...data];
+              if (data.length < pageSize) hasMore = false;
+              else from += pageSize;
+            } else {
+              hasMore = false;
+            }
+          }
+          return { data: allData, error: null };
+        };
 
         const result = await Promise.race([
-          query,
+          fetchAllPages(),
           timeoutPromise
         ]);
 
@@ -810,9 +829,17 @@ class DatabaseService {
         
         const mapped = this.mapStudentToDb(student);
 
-        const onConflictCols = this.isSnakeCaseSchema 
-          ? (this.hasAcademicYearColumn ? ["student_code", "academic_year"] : ["student_code"]) 
-          : (this.hasAcademicYearColumn ? ["studentCode", "academicYear"] : ["studentCode"]);
+        // Force using 'id' for onConflict if available to prevent silent overwrites of previous academic years.
+        // If the DB has a legacy unique constraint on student_code, this will throw an error,
+        // which is better than silently deleting data. The user will be prompted to upgrade their schema.
+        let onConflictCols = [];
+        if (this.hasIdColumn) {
+          onConflictCols = ["id"];
+        } else {
+          onConflictCols = this.isSnakeCaseSchema 
+            ? (this.hasAcademicYearColumn ? ["student_code", "academic_year"] : ["student_code"]) 
+            : (this.hasAcademicYearColumn ? ["studentCode", "academicYear"] : ["studentCode"]);
+        }
 
         const result = await Promise.race([
           this.supabase

@@ -3104,6 +3104,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   const handleApplyImport = async () => {
     if (importPreview.length === 0) return;
+
+    if (dbService.supabase && !dbService.hasAcademicYearColumn) {
+      alert("⚠️ CẢNH BÁO QUAN TRỌNG: Cấu trúc cơ sở dữ liệu Supabase của bạn đã CŨ (không hỗ trợ nhiều niên khóa).\n\nNếu tiếp tục nhập dữ liệu cho năm học mới, hệ thống sẽ GHI ĐÈ và làm MẤT TOÀN BỘ danh sách học sinh của năm học cũ!\n\n👉 CÁCH KHẮC PHỤC: Bạn hãy vào tab 'Cài đặt' -> 'Supabase & Database' -> copy đoạn mã '1. NÂNG CẤP BẢNG CŨ' và chạy trong mục SQL Editor của Supabase để cập nhật Cấu trúc bảng. Sau đó mới quay lại đây nhập danh sách.");
+      return;
+    }
+
     setAuthIsLoading(true);
     let successfullySaved = 0;
     const errors: string[] = [];
@@ -3127,12 +3133,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       let specificTip = "Đảm bảo bạn đã cấu hình đúng kết nối trong tab Cấu hình hệ thống, và đã thực thi câu lệnh SQL khởi tạo bảng \"students\" trên Supabase Dashboard.";
       
       const errorMsgText = uniqueErrors.join(", ");
-      if (errorMsgText.includes("column") || errorMsgText.includes("schema cache")) {
+      if (errorMsgText.includes("column") || errorMsgText.includes("schema cache") || errorMsgText.includes("duplicate key") || errorMsgText.includes("unique constraint")) {
         let missingCol = "";
         if (errorMsgText.includes("'id'")) missingCol = "(cột 'id')";
         else if (errorMsgText.includes("'academic_grade'")) missingCol = "(cột 'academic_grade')";
         
-        specificTip = `Hệ thống phát hiện Cấu trúc bảng Students của bạn đã CŨ hoặc thiếu cột ${missingCol}. \n\n👉 CÁCH SỬA: Bạn hãy vào tab 'Supabase & Database' trong Cài đặt, COPY đoạn mã ở phần "0. NÂNG CẤP BẢNG CŨ" và CHẠY trên SQL Editor của Supabase để cập nhật các cột còn thiếu, sau đó thử nhập lại.`;
+        specificTip = `Hệ thống phát hiện Cấu trúc bảng Students của bạn đã CŨ (không hỗ trợ nhiều niên khóa hoặc thiếu cột ${missingCol}). \n\n👉 CÁCH SỬA: Bạn hãy vào tab 'Supabase & Database' trong Cài đặt, COPY đoạn mã ở phần "1. NÂNG CẤP BẢNG CŨ" và CHẠY trên SQL Editor của Supabase để cập nhật Cấu trúc bảng, sau đó thử nhập lại.`;
       }
 
       const errorMsg = uniqueErrors.length > 0 ? `\nChi tiết lỗi từ Supabase: ${errorMsgText}` : "";
