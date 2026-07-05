@@ -495,7 +495,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             onClick={() => setViewMode("scoreboard")}
             className={`px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all cursor-pointer ${viewMode === "scoreboard" ? "bg-white text-[#337819] shadow-sm" : "text-white hover:bg-white/10"}`}
           >
-            BẢNG ĐIỂM
+            TRA CỨU THEO NĂM HỌC
           </button>
         </div>
 
@@ -576,7 +576,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     <BarChartHorizontal className="w-6 h-6 text-[#337819]" />
                   </div>
                   <div>
-                    <h2 className="text-base font-black text-[#337819] uppercase tracking-wider">BẢNG ĐIỂM TỔNG HỢP LỚP</h2>
+                    <h2 className="text-base font-black text-[#337819] uppercase tracking-wider">TRA CỨU THEO NĂM HỌC</h2>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Dữ liệu học bạ số công khai</p>
                   </div>
                 </div>
@@ -765,7 +765,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   </div>
 
                   {/* Academic Year Selection */}
-                  {academicYears.length > 1 && (
+                  {academicYears.length > 0 && (
                     <div>
                       <label htmlFor="student-year" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
