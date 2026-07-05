@@ -80,7 +80,14 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [studentCount, setStudentCount] = useState<number>(0);
   const [academicYears, setAcademicYears] = useState<SchoolYear[]>([]);
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>("");
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(() => localStorage.getItem("portal_selected_academic_year") || "");
+
+  // Keep selected academic year persisted
+  useEffect(() => {
+    if (selectedAcademicYear) {
+      localStorage.setItem("portal_selected_academic_year", selectedAcademicYear);
+    }
+  }, [selectedAcademicYear]);
 
   const [viewMode, setViewMode] = useState<"search" | "scoreboard">("search");
   const [scoreboardClass, setScoreboardClass] = useState("");
@@ -912,6 +919,24 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     )}
                   </button>
                 </form>
+
+                {/* Prominent link to Scoreboard mode */}
+                <div className="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-between gap-3 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white">
+                      <BarChartHorizontal className="w-4 h-4" />
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-700 leading-tight">
+                      Bạn muốn xem <span className="text-[#337819]">Bảng điểm toàn trường</span> theo năm học?
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setViewMode("scoreboard")}
+                    className="px-3 py-1.5 bg-[#337819] text-white rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition shadow-sm cursor-pointer"
+                  >
+                    XEM NGAY
+                  </button>
+                </div>
 
                 <div className="mt-6 pt-5 border-t border-slate-200 flex items-start gap-2 text-slate-500 text-xs text-justify">
                   <HelpCircle className="w-4 h-4 text-[#337819] shrink-0 mt-0.5" />
