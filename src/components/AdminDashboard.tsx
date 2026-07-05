@@ -939,8 +939,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     if (confirm(`Bạn có chắc chắn muốn xóa TOÀN BỘ ${classesToDelete.length} lớp học của năm học ${academicYear} không?\n\nLưu ý: Học sinh thuộc các lớp này sẽ không bị xóa mà sẽ chuyển về trạng thái "Chưa xếp lớp".`)) {
       setAuthIsLoading(true);
       try {
-        const success = await dbService.clearClassesByYear(academicYear);
-        if (success) {
+        const result = await dbService.clearClassesByYear(academicYear);
+        if (result.success) {
           const remainingClasses = classes.filter(c => c.academicYear !== academicYear);
           setClasses(remainingClasses);
           
@@ -968,7 +968,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           
           alert(`Đã xóa toàn bộ lớp học của năm ${academicYear} thành công và đưa ${studentsUpdated} học sinh về trạng thái "Chưa xếp lớp".`);
         } else {
-          alert("Lỗi khi thực hiện xóa dữ liệu lớp học: Lỗi không xác định từ Supabase");
+          alert("Lỗi khi thực hiện xóa dữ liệu lớp học: " + (result.error || "Lỗi không xác định từ Supabase"));
         }
       } catch (err: any) {
         alert("Lỗi khi thực hiện xóa dữ liệu: " + err.message);
