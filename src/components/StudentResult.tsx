@@ -73,7 +73,39 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
 
     const currentComments = (student.subjects || []).filter(s => !s.isEvaluatedByScore).map(s => {
         const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
-        return val === "Đạt" || val === "Chưa đạt" ? val : null;
+        if (val === "Đạt" || val === "Chưa đạt") return val;
+        
+        // Dynamic fallback to auto-populated comment based on regular assessment (tx1/tx2)
+        const txVal = term === "hk1" ? s.tx1 : term === "hk2" ? s.tx2 : null;
+        if (term === "canam") {
+          let auto1 = "";
+          if (s.tx1 && s.tx1.trim().length > 0) {
+            auto1 = (s.tx1.trim().toUpperCase().includes("CĐ") || s.tx1.trim().toUpperCase().includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
+          }
+          const h1 = s.semester1 === "Đạt" || s.semester1 === "Chưa đạt" ? (s.semester1 === "Đạt" ? "Đ" : "CĐ") : auto1;
+
+          let auto2 = "";
+          if (s.tx2 && s.tx2.trim().length > 0) {
+            auto2 = (s.tx2.trim().toUpperCase().includes("CĐ") || s.tx2.trim().toUpperCase().includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
+          }
+          const h2 = s.semester2 === "Đạt" || s.semester2 === "Chưa đạt" ? (s.semester2 === "Đạt" ? "Đ" : "CĐ") : auto2;
+
+          if (h1 === "Đ" && h2 === "Đ") return "Đạt";
+          if (h2 === "Đ") return "Đạt";
+          if (h2 === "CĐ" || h1 === "CĐ") return "Chưa đạt";
+          return null;
+        } else {
+          if (txVal && txVal.trim().length > 0) {
+            const cleanTx = txVal.trim().toUpperCase();
+            return (cleanTx.includes("CĐ") || cleanTx.includes("CHƯA ĐẠT")) ? "Chưa đạt" : "Đạt";
+          }
+          // fallback to mid or end comments if any
+          const midVal = term === "hk1" ? s.mid1 : s.mid2;
+          const endVal = term === "hk1" ? s.end1 : s.end2;
+          if (midVal === "Đạt" || midVal === "Đ" || endVal === "Đạt" || endVal === "Đ") return "Đạt";
+          if (midVal === "Chưa đạt" || midVal === "CĐ" || endVal === "Chưa đạt" || endVal === "CĐ") return "Chưa đạt";
+        }
+        return null;
     }).filter(v => v !== null) as string[];
 
     const calculatedGrade = evaluateTT22(currentScores, currentComments);
@@ -252,29 +284,55 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
               
               {/* Subjects */}
               {(student.subjects || []).map((sub, index) => {
-                const mapComment = (v: string | number | undefined) => {
-                  if (v === "Đạt") return "Đ";
-                  if (v === "Chưa đạt") return "CĐ";
-                  return v;
+                const mapComment = (v: string | number | undefined): string => {
+                  if (v === "Đạt" || v === "Đ") return "Đ";
+                  if (v === "Chưa đạt" || v === "CĐ") return "CĐ";
+                  return v !== undefined && v !== null ? v.toString() : "";
                 };
 
                 if (term === "canam") {
-                  const valHk1 = sub.isEvaluatedByScore 
-                    ? (typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : "") 
-                    : mapComment(sub.semester1) || "";
-                  const valHk2 = sub.isEvaluatedByScore 
-                    ? (typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : "") 
-                    : mapComment(sub.semester2) || "";
-                  const valCaNam = sub.isEvaluatedByScore
-                    ? (typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "")
-                    : mapComment(sub.yearAvg) || "";
+                  let valHk1 = "";
+                  let valHk2 = "";
+                  let valCaNam = "";
+
+                  if (sub.isEvaluatedByScore) {
+                    valHk1 = typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : "";
+                    valHk2 = typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : "";
+                    valCaNam = typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "";
+                  } else {
+                    // Remark-based subject auto-population
+                    // HK1
+                    let auto1 = "";
+                    if (sub.tx1 && sub.tx1.trim().length > 0) {
+                      const cleanTx = sub.tx1.trim().toUpperCase();
+                      auto1 = (cleanTx.includes("CĐ") || cleanTx.includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
+                    }
+                    valHk1 = mapComment(sub.semester1) || auto1 || mapComment(sub.mid1) || mapComment(sub.end1) || "";
+
+                    // HK2
+                    let auto2 = "";
+                    if (sub.tx2 && sub.tx2.trim().length > 0) {
+                      const cleanTx = sub.tx2.trim().toUpperCase();
+                      auto2 = (cleanTx.includes("CĐ") || cleanTx.includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
+                    }
+                    valHk2 = mapComment(sub.semester2) || auto2 || mapComment(sub.mid2) || mapComment(sub.end2) || "";
+
+                    // Ca Nam
+                    let autoYear = "";
+                    if (valHk1 === "Đ" && valHk2 === "Đ") {
+                      autoYear = "Đ";
+                    } else if (valHk1 || valHk2) {
+                      autoYear = valHk2 || valHk1;
+                    }
+                    valCaNam = mapComment(sub.yearAvg) || autoYear || "";
+                  }
 
                   return (
                     <tr key={index} className="text-center even:bg-slate-50 hover:bg-sky-50 transition-colors text-[10px] sm:text-[13px]">
                       <td className="p-1 border border-slate-500 font-medium text-slate-600">{index + 1}</td>
                       <td className="p-1 border border-slate-500 text-left px-1 sm:px-3 font-semibold tracking-tight text-[10px] sm:text-[13px]">{sub.subjectName}</td>
-                      <td className="p-1 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{valHk1}</td>
-                      <td className="p-1 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{valHk2}</td>
+                      <td className={`p-1 border border-slate-500 font-bold whitespace-nowrap ${!sub.isEvaluatedByScore ? "text-[#B71C1C]" : "text-slate-800"}`}>{valHk1}</td>
+                      <td className={`p-1 border border-slate-500 font-bold whitespace-nowrap ${!sub.isEvaluatedByScore ? "text-[#B71C1C]" : "text-slate-800"}`}>{valHk2}</td>
                       <td className="p-1 border border-slate-500"></td>
                       <td className="p-1 border border-slate-500 font-black text-[#B71C1C] whitespace-nowrap">{valCaNam}</td>
                       <td className="p-1 border border-slate-500"></td>
@@ -290,15 +348,29 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                   const formattedTx = txVal ? txVal.toString().replace(/\./g, ",") : "";
                   const mappedTx = !sub.isEvaluatedByScore && formattedTx ? formattedTx.replace(/Đạt/g, "Đ").replace(/Chưa đạt/g, "CĐ") : formattedTx;
 
-                  const formattedMid = sub.isEvaluatedByScore 
-                    ? (typeof midVal === "number" ? midVal.toFixed(1).replace(".", ",") : midVal || "")
-                    : mapComment(midVal) || mapComment(avgVal) || "";
-                  const formattedEnd = sub.isEvaluatedByScore 
-                    ? (typeof endVal === "number" ? endVal.toFixed(1).replace(".", ",") : endVal || "")
-                    : mapComment(endVal) || mapComment(avgVal) || "";
-                  const formattedAvg = sub.isEvaluatedByScore
-                    ? (typeof avgVal === "number" ? avgVal.toFixed(1).replace(".", ",") : avgVal || "")
-                    : mapComment(avgVal) || "";
+                  let formattedMid = "";
+                  let formattedEnd = "";
+                  let formattedAvg = "";
+
+                  if (sub.isEvaluatedByScore) {
+                    formattedMid = typeof midVal === "number" ? midVal.toFixed(1).replace(".", ",") : (midVal || "").toString();
+                    formattedEnd = typeof endVal === "number" ? endVal.toFixed(1).replace(".", ",") : (endVal || "").toString();
+                    formattedAvg = typeof avgVal === "number" ? avgVal.toFixed(1).replace(".", ",") : (avgVal || "").toString();
+                  } else {
+                    // Remark-based subject auto-population from txVal
+                    let autoComment = "";
+                    if (txVal && txVal.trim().length > 0) {
+                      const cleanTx = txVal.trim().toUpperCase();
+                      autoComment = (cleanTx.includes("CĐ") || cleanTx.includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
+                    }
+                    const m = mapComment(midVal) || "";
+                    const e = mapComment(endVal) || "";
+                    const a = mapComment(avgVal) || "";
+
+                    formattedMid = m || autoComment || a || "";
+                    formattedEnd = e || autoComment || a || "";
+                    formattedAvg = a || autoComment || "";
+                  }
 
                   return (
                     <tr key={index} className="text-center even:bg-slate-50 hover:bg-sky-50 transition-colors text-[10px] sm:text-[13px]">
@@ -307,9 +379,9 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                       {/* Regular Assessment (space separated scores) */}
                       <td className="p-1 border border-slate-500 font-medium text-slate-700 tracking-wider text-[9px] sm:text-[11px] whitespace-nowrap">{mappedTx || (sub.isEvaluatedByScore ? "" : mapComment(avgVal) || "")}</td>
                       {/* Midterm */}
-                      <td className="p-1 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{formattedMid}</td>
+                      <td className={`p-1 border border-slate-500 font-bold whitespace-nowrap ${!sub.isEvaluatedByScore ? "text-[#B71C1C]" : "text-slate-800"}`}>{formattedMid}</td>
                       {/* Endterm */}
-                      <td className="p-1 border border-slate-500 font-bold text-slate-800 whitespace-nowrap">{formattedEnd}</td>
+                      <td className={`p-1 border border-slate-500 font-bold whitespace-nowrap ${!sub.isEvaluatedByScore ? "text-[#B71C1C]" : "text-slate-800"}`}>{formattedEnd}</td>
                       {/* Semester Average */}
                       <td className="p-1 border border-slate-500 font-black text-[#B71C1C] whitespace-nowrap">{formattedAvg}</td>
                     </tr>
