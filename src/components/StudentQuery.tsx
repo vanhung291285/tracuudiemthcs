@@ -1324,8 +1324,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       )}
       </main>
       
-      {/* Floating Contact Buttons */}
-      <div className="fixed right-4 bottom-24 z-50 flex flex-col gap-3">
+      {/* Floating Contact Buttons - Hidden on mobile and tablets to prevent obstructing the lookup view */}
+      <div className="hidden lg:flex fixed right-4 bottom-24 z-50 flex-col gap-3">
         <motion.a
           href={zaloUrl}
           target="_blank"
