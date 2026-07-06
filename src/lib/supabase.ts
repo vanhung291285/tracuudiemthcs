@@ -1180,20 +1180,18 @@ class DatabaseService {
             roomNumber: row.roomNumber || row.room_number || ""
           }));
           
-          // Merge logic: Supabase data takes priority, but keep local classes that aren't in Supabase yet
-          const supabaseIds = new Set(mapped.map(c => c.id));
-          const supabaseLogicalKeys = new Set(mapped.map(c => `${c.className.trim().toUpperCase()}_${c.academicYear}`));
-          const merged: SchoolClass[] = [...mapped];
-          
-          for (const lc of localClasses) {
-            const logicalKey = `${lc.className.trim().toUpperCase()}_${lc.academicYear}`;
-            if (!supabaseIds.has(lc.id) && !supabaseLogicalKeys.has(logicalKey)) {
-              merged.push(lc);
-            }
+          let resultList: SchoolClass[] = [];
+          if (mapped.length > 0) {
+            // When Supabase is connected and has classes, it is the sole source of truth.
+            // Do NOT merge local cache to avoid reviving deleted classes on client/mobile devices.
+            resultList = mapped;
+          } else {
+            // Fallback to local classes if Supabase is connected but has no classes yet (e.g. initial setup)
+            resultList = localClasses;
           }
           
           // Sort and save back to local storage for offline consistency
-          const sorted = merged.sort((a, b) => a.className.localeCompare(b.className, "vi"));
+          const sorted = resultList.sort((a, b) => a.className.localeCompare(b.className, "vi"));
           localStorage.setItem("portal_classes", JSON.stringify(sorted));
           return sorted;
         }
