@@ -566,7 +566,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       )}
 
       {/* Main Content Area: Side-By-Side Redesigned Portal */}
-      <main className="flex-1 max-w-6xl w-full mx-auto pt-8 pb-4 md:pt-12 md:pb-6 px-4">
+      <main className="flex-1 max-w-6xl w-full mx-auto pt-3 pb-3 md:pt-4 md:pb-4 px-4">
         
         {viewMode === "scoreboard" ? (
           <div className="w-full space-y-6 animate-fadeIn">
@@ -738,27 +738,27 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             <div id="card-query" className="w-full glass-card rounded-xl shadow-xl border border-white/50 overflow-hidden transition-all hover:shadow-2xl relative z-10">
               <div className="h-2 bg-[#337819] shadow-sm" />
               
-              <div className="p-6 md:p-8">
-                <h2 className="text-base font-black text-[#337819] uppercase text-center mb-1.5 tracking-tight">
+              <div className="p-4 md:p-5">
+                <h2 className="text-sm font-black text-[#337819] uppercase text-center mb-1 tracking-tight">
                   TRA CỨU KẾT QUẢ HỌC TẬP
                 </h2>
-                <p className="text-xs text-slate-700 text-center mb-6 font-medium">
-                  Vui lòng điền điền thông tin học sinh bên dưới để truy xuất học bạ điện tử gốc.
+                <p className="text-[11px] text-slate-700 text-center mb-3 font-medium">
+                  Vui lòng điền đầy đủ thông tin học sinh bên dưới để truy xuất học bạ điện tử gốc.
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                   
                   {/* Academic Year Selection */}
                   {academicYears.length > 0 && (
                     <div>
-                      <label htmlFor="student-year" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                      <label htmlFor="student-year" className="block text-[10px] font-bold text-slate-950 uppercase mb-1 tracking-wider flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
                       </label>
                       <select
                         id="student-year"
                         value={selectedAcademicYear}
                         onChange={(e) => setSelectedAcademicYear(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 md:py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       >
                         <option value="">--Chọn năm học--</option>
                         {academicYears.map((year, idx) => (
@@ -772,7 +772,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                   {/* Student Name Input */}
                   <div>
-                    <label htmlFor="student-name" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                    <label htmlFor="student-name" className="block text-[10px] font-bold text-slate-950 uppercase mb-1 tracking-wider flex items-center gap-1">
                       <User className="w-3.5 h-3.5 text-[#337819]" /> Họ và Tên học sinh <span className="text-[#E53935]">*</span>
                     </label>
                     <input
@@ -781,7 +781,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Nhập tên học sinh (Ví dụ: Vũ Văn Hùng)"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-[13px] placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 md:py-2 text-xs font-semibold text-slate-900 placeholder:text-xs placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition"
                       autoComplete="off"
                       required
                     />
@@ -789,14 +789,14 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                   {/* Student Class Input */}
                   <div>
-                    <label htmlFor="student-class" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                    <label htmlFor="student-class" className="block text-[10px] font-bold text-slate-950 uppercase mb-1 tracking-wider flex items-center gap-1">
                       <School className="w-3.5 h-3.5 text-[#337819]" /> Lớp học <span className="text-[#E53935]">*</span>
                     </label>
                     <select
                       id="student-class"
                       value={searchClass}
                       onChange={(e) => setSearchClass(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 md:py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       required
                     >
                       <option value="">-- Chọn lớp học --</option>
@@ -812,51 +812,51 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         <option disabled value="">Chưa có lớp học cho năm này</option>
                       )}
                     </select>
-                    <p className="text-[11px] text-slate-500 mt-1.5 pl-1 font-medium italic">
+                    <p className="text-[10px] text-slate-400 mt-1 pl-1 font-medium italic">
                       Vui lòng chọn đúng lớp của học sinh để tra cứu điểm.
                     </p>
                   </div>
 
                   {/* Academic Term Selector tabs */}
-                  <div className="space-y-2 mt-2">
-                    <label className="block text-[11px] font-semibold text-slate-900 uppercase tracking-widest flex items-center gap-1.5 mt-2 mb-2">
+                  <div className="space-y-1.5 mt-1.5">
+                    <label className="block text-[10px] font-bold text-slate-950 uppercase tracking-widest flex items-center gap-1 mt-1 mb-1">
                       <Clock className="w-3.5 h-3.5 text-[#337819]" /> CHỌN HỌC KÌ CẦN TRA CỨU <span className="text-[#E53935]">*</span>
                     </label>
-                    <div className="grid grid-cols-3 gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200/80 shadow-inner">
+                    <div className="grid grid-cols-3 gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200/80 shadow-inner">
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("hk1")}
-                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+                        className={`py-2 text-[11px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1 ${
                           selectedTerm === "hk1"
-                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-sm ring-1 ring-[#337819]/10"
                             : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
                         }`}
                       >
-                        {selectedTerm === "hk1" && <CheckSquare className="w-3.5 h-3.5" />}
+                        {selectedTerm === "hk1" && <CheckSquare className="w-3 h-3" />}
                         Học kỳ I
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("hk2")}
-                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+                        className={`py-2 text-[11px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1 ${
                           selectedTerm === "hk2"
-                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-sm ring-1 ring-[#337819]/10"
                             : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
                         }`}
                       >
-                        {selectedTerm === "hk2" && <CheckSquare className="w-3.5 h-3.5" />}
+                        {selectedTerm === "hk2" && <CheckSquare className="w-3 h-3" />}
                         Học kỳ II
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("canam")}
-                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+                        className={`py-2 text-[11px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1 ${
                           selectedTerm === "canam"
-                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-sm ring-1 ring-[#337819]/10"
                             : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
                         }`}
                       >
-                        {selectedTerm === "canam" && <CheckSquare className="w-3.5 h-3.5" />}
+                        {selectedTerm === "canam" && <CheckSquare className="w-3 h-3" />}
                         Cả Năm
                       </button>
                     </div>
@@ -901,7 +901,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     type="submit"
                     disabled={isLoading}
                     id="btn-search-student"
-                    className="w-full bg-[#E53935] hover:bg-red-700 text-white font-black py-3 px-6 rounded uppercase text-sm transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#E53935] hover:bg-red-700 text-white font-black py-2.5 px-4 rounded uppercase text-xs md:text-sm transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
@@ -919,7 +919,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
 
 
-                <div className="mt-6 pt-5 border-t border-slate-200 flex items-start gap-2 text-slate-500 text-xs text-justify">
+                <div className="mt-4 pt-3.5 border-t border-slate-200 flex items-start gap-2 text-slate-500 text-[11px] text-justify">
                   <HelpCircle className="w-4 h-4 text-[#337819] shrink-0 mt-0.5" />
                   <div className="leading-normal font-medium">
                     Hệ thống tích hợp Cơ sở dữ liệu quốc gia về học tập bậc THCS. Điểm số được bảo vệ bằng hạ tầng chữ ký số và xác thực QR Code tức thời.
