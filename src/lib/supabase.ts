@@ -392,7 +392,25 @@ class DatabaseService {
         notes: student.notes || "",
         verification_token: student.verificationToken,
         teacher: student.teacher || "",
-        subjects: student.subjects
+        subjects: this.hasAcademicYearColumn ? student.subjects : {
+          subjectsList: student.subjects,
+          school: student.school,
+          academicYear: student.academicYear,
+          academicGrade: student.academicGrade,
+          academicGradeHK1: student.academicGradeHK1,
+          academicGradeHK2: student.academicGradeHK2,
+          behaviorGrade: student.behaviorGrade,
+          behaviorGradeHK1: student.behaviorGradeHK1,
+          behaviorGradeHK2: student.behaviorGradeHK2,
+          behaviorGradeSummer: student.behaviorGradeSummer,
+          daysAbsent: student.daysAbsent,
+          daysAbsentUnexcused: student.daysAbsentUnexcused,
+          skippedPeriods: student.skippedPeriods || 0,
+          distinction: student.distinction,
+          notes: student.notes,
+          verificationToken: student.verificationToken,
+          teacher: student.teacher
+        }
       };
       if (this.hasAcademicYearColumn) {
         result.academic_year = student.academicYear;
@@ -435,6 +453,24 @@ class DatabaseService {
     else {
       result = { ...student };
       if (!this.hasAcademicYearColumn) {
+        result.subjects = {
+          subjectsList: student.subjects,
+          academicYear: student.academicYear,
+          academicGrade: student.academicGrade,
+          academicGradeHK1: student.academicGradeHK1,
+          academicGradeHK2: student.academicGradeHK2,
+          behaviorGrade: student.behaviorGrade,
+          behaviorGradeHK1: student.behaviorGradeHK1,
+          behaviorGradeHK2: student.behaviorGradeHK2,
+          behaviorGradeSummer: student.behaviorGradeSummer,
+          daysAbsent: student.daysAbsent,
+          daysAbsentUnexcused: student.daysAbsentUnexcused,
+          skippedPeriods: student.skippedPeriods || 0,
+          distinction: student.distinction,
+          notes: student.notes,
+          verificationToken: student.verificationToken,
+          teacher: student.teacher
+        };
         delete result.academicYear;
       }
     }
