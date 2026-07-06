@@ -1594,7 +1594,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                studentCode = existing.studentCode;
              } else if (!studentCode) {
                const cleanNameNoSign = removeDiacritics(fullName).replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-               studentCode = `HS-${className.toUpperCase()}-${cleanNameNoSign}`;
+               const yearSuffix = currentImportYear.replace(/[^a-zA-Z0-9]/g, "");
+               studentCode = `HS-${className.toUpperCase()}-${cleanNameNoSign}-${yearSuffix}`;
              }
 
              // 4. Find headers to detect column offsets dynamically
@@ -2142,7 +2143,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
           } else {
             // Auto-generate standard deterministic student code based on name and class
             const cleanNameNoSign = removeDiacritics(fullName).replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-            studentCode = `HS-${rowClass.toUpperCase()}-${cleanNameNoSign}`;
+            const yearSuffix = currentImportYear.replace(/[^a-zA-Z0-9]/g, "");
+            studentCode = `HS-${rowClass.toUpperCase()}-${cleanNameNoSign}-${yearSuffix}`;
           }
 
           let finalDob = dob.trim();
