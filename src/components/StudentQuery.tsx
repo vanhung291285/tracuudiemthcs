@@ -306,18 +306,19 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   }, []);
 
   useEffect(() => {
+    const activeYearName = academicYears.find(y => y.isActive)?.yearName;
+    const yearToFetch = selectedAcademicYear || activeYearName;
+
     if (selectedAcademicYear) {
       fetchClassesList(selectedAcademicYear);
-      // Fetch student count for the selected academic year
-      dbService.getAllStudents(selectedAcademicYear).then(students => {
-        setStudentCount(students.length);
-      }).catch(() => {
-        setStudentCount(0);
-      });
-    } else {
-      setStudentCount(0);
     }
-  }, [selectedAcademicYear]);
+
+    dbService.getAllStudents(yearToFetch).then(students => {
+      setStudentCount(students.length);
+    }).catch(() => {
+      setStudentCount(0);
+    });
+  }, [selectedAcademicYear, academicYears]);
 
   useEffect(() => {
     if (academicYears.length > 0) {
@@ -768,7 +769,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         onChange={(e) => setSelectedAcademicYear(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       >
-                        <option value="">--Chọn năm học--</option>
+                        <option value="">Chọn năm học cần tra cứu</option>
                         {academicYears.map((year, idx) => (
                           <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
                             {year.yearName}
