@@ -88,16 +88,42 @@ export default function Footer() {
                 i % 2 === 1 ? <strong key={i} className="text-white">{part}</strong> : part
               )}
             </p>
-            <div className="flex items-center gap-3 pt-1">
-              <motion.a whileHover={{ scale: 1.1, y: -2 }} href={facebookUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-white/10 hover:bg-[#1877F2] text-white rounded-lg transition-all duration-300 shadow-sm border border-white/5">
-                <Facebook className="w-4.5 h-4.5" />
-              </motion.a>
-              <motion.a whileHover={{ scale: 1.1, y: -2 }} href={zaloUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-white/10 hover:bg-[#0068ff] text-white rounded-lg transition-all duration-300 shadow-sm border border-white/5">
-                <ZaloIcon className="w-4.5 h-4.5" />
-              </motion.a>
-              <motion.a whileHover={{ scale: 1.1, y: -2 }} href={websiteUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-white/10 hover:bg-emerald-500 text-white rounded-lg transition-all duration-300 shadow-sm border border-white/5">
-                <Globe className="w-4.5 h-4.5" />
-              </motion.a>
+            <div className="space-y-2 pt-1">
+              <span className="block text-[10px] font-black text-blue-200 uppercase tracking-widest border-l-2 border-amber-400 pl-2">
+                Liên kết chính thức
+              </span>
+              <div className="flex flex-col gap-1.5">
+                <motion.a 
+                  whileHover={{ scale: 1.02, x: 2 }} 
+                  href={zaloUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-[#0068ff] text-white rounded-lg transition-all duration-300 shadow-sm border border-white/5 text-xs font-bold w-full"
+                >
+                  <ZaloIcon className="w-4 h-4" />
+                  <span>Zalo Nhà Trường</span>
+                </motion.a>
+                <motion.a 
+                  whileHover={{ scale: 1.02, x: 2 }} 
+                  href={facebookUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-[#1877F2] text-white rounded-lg transition-all duration-300 shadow-sm border border-white/5 text-xs font-bold w-full"
+                >
+                  <Facebook className="w-4 h-4 fill-current" />
+                  <span>Fanpage Facebook</span>
+                </motion.a>
+                <motion.a 
+                  whileHover={{ scale: 1.02, x: 2 }} 
+                  href={websiteUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-emerald-600 text-white rounded-lg transition-all duration-300 shadow-sm border border-white/5 text-xs font-bold w-full"
+                >
+                  <Globe className="w-4 h-4" />
+                  <span>Website Suối Lư</span>
+                </motion.a>
+              </div>
             </div>
           </motion.div>
 
