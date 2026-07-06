@@ -505,13 +505,12 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       </div>
       
       {/* Top Banner Navigation Header */}
-      <header className="w-full bg-[#337819] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center">
-        
-
-
-
-
-        
+      <header className="w-full bg-gradient-to-r from-[#0E5482] to-[#0391A4] text-white px-6 py-4 md:py-5 shadow-md shrink-0 relative flex flex-col items-center justify-center text-center overflow-hidden">
+        {/* Soft glowing white bokeh spots to match the original image precisely */}
+        <div className="absolute top-1/4 right-[40%] w-2 h-2 rounded-full bg-white/45 shadow-[0_0_8px_rgba(255,255,255,0.9)] pointer-events-none" />
+        <div className="absolute top-1/3 right-[25%] w-3.5 h-3.5 rounded-full bg-white/30 shadow-[0_0_10px_rgba(255,255,255,0.7)] pointer-events-none" />
+        <div className="absolute top-1/2 right-[8%] w-1.5 h-1.5 rounded-full bg-white/35 shadow-[0_0_6px_rgba(255,255,255,0.8)] pointer-events-none" />
+        <div className="absolute top-2/3 right-[50%] w-2.5 h-2.5 rounded-full bg-white/25 shadow-[0_0_8px_rgba(255,255,255,0.6)] pointer-events-none" />
         
         <div className="max-w-6xl mx-auto space-y-1.5">
           <div className="flex flex-col items-center">
