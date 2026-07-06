@@ -753,6 +753,27 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   
+                  {/* Academic Year Selection */}
+                  {academicYears.length > 0 && (
+                    <div>
+                      <label htmlFor="student-year" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
+                      </label>
+                      <select
+                        id="student-year"
+                        value={selectedAcademicYear}
+                        onChange={(e) => setSelectedAcademicYear(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
+                      >
+                        {academicYears.map((year, idx) => (
+                          <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
+                            {year.yearName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
                   {/* Student Name Input */}
                   <div>
                     <label htmlFor="student-name" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
@@ -797,27 +818,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       Vui lòng chọn đúng lớp của học sinh để tra cứu điểm.
                     </p>
                   </div>
-
-                  {/* Academic Year Selection */}
-                  {academicYears.length > 0 && (
-                    <div>
-                      <label htmlFor="student-year" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
-                      </label>
-                      <select
-                        id="student-year"
-                        value={selectedAcademicYear}
-                        onChange={(e) => setSelectedAcademicYear(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
-                      >
-                        {academicYears.map((year, idx) => (
-                          <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
-                            {year.yearName}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
 
                   {/* Academic Term Selector tabs */}
                   <div className="space-y-2 mt-2">
@@ -945,8 +945,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 <div className="flex items-start gap-4 p-1">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white font-black text-base shadow-sm">1</div>
                   <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">NHẬP HỌ TÊN</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ và tên đầy đủ, chính xác của học sinh cần tra cứu.</p>
+                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN NĂM HỌC</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Chọn năm học tương ứng với kết quả bạn muốn tra cứu.</p>
                   </div>
                 </div>
 
@@ -954,8 +954,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 <div className="flex items-start gap-4 p-1">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white font-black text-base shadow-sm">2</div>
                   <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN LỚP HỌC</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Chọn hoặc nhập đúng lớp của học sinh (Ví dụ: Lớp 9A1).</p>
+                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">NHẬP HỌ TÊN</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ và tên đầy đủ, chính xác của học sinh cần tìm kiếm.</p>
                   </div>
                 </div>
 
@@ -963,8 +963,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 <div className="flex items-start gap-4 p-1">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
                   <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN NĂM HỌC</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Chọn năm học tương ứng với kết quả bạn muốn xem.</p>
+                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN LỚP HỌC</h4>
+                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Chọn đúng lớp học của học sinh trong năm học đã chọn (Ví dụ: Lớp 9A1).</p>
                   </div>
                 </div>
 
