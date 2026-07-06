@@ -110,13 +110,29 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       let hasNew = false;
       let updatedClasses = [...classes];
       
+      // Get explicitly deleted classes from localStorage to prevent auto-recreation
+      let deletedClassesList: string[] = [];
+      try {
+        const cachedDeleted = localStorage.getItem("portal_deleted_classes");
+        if (cachedDeleted) {
+          deletedClassesList = JSON.parse(cachedDeleted) as string[];
+        }
+      } catch (e) {
+        console.error("Failed to parse portal_deleted_classes:", e);
+      }
+      
       // Group students by academic year to sync correctly per year
       const yearsInStudents = Array.from(new Set(students.map(s => s.academicYear).filter(Boolean))) as string[];
       
       for (const year of yearsInStudents) {
         const studentClassNames = Array.from(new Set(students.filter(s => s.academicYear === year).map(s => s.className).filter(Boolean))) as string[];
         const existingClassNames = updatedClasses.filter(c => c.academicYear === year).map(c => c.className);
-        const missingClassNames = studentClassNames.filter(cName => !existingClassNames.includes(cName));
+        
+        // Filter out classes that have been explicitly deleted by the user
+        const missingClassNames = studentClassNames.filter(cName => {
+          const logicalKey = `${cName.trim().toUpperCase()}_${year}`;
+          return !existingClassNames.includes(cName) && !deletedClassesList.includes(logicalKey);
+        });
         
         if (missingClassNames.length > 0) {
           hasNew = true;
@@ -147,7 +163,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
         }
       }
     }
-  }, [students, isAuthenticated]);
+  }, [students, classes, isAuthenticated]);
 
   // Form State for Classes Tab
   const [classFormId, setClassFormId] = useState<string | null>(null);
@@ -638,6 +654,21 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
       // Re-verify schema to ensure columns are detected
       await dbService.recheckSchema();
 
+      // If this class was previously explicitly deleted, restore/remove it from the deleted list
+      const restoreKey = `${cleanClassName.trim().toUpperCase()}_${classFormYear}`;
+      try {
+        const cachedDeleted = localStorage.getItem("portal_deleted_classes");
+        if (cachedDeleted) {
+          let deletedClassesList = JSON.parse(cachedDeleted) as string[];
+          if (deletedClassesList.includes(restoreKey)) {
+            deletedClassesList = deletedClassesList.filter(k => k !== restoreKey);
+            localStorage.setItem("portal_deleted_classes", JSON.stringify(deletedClassesList));
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore class key from deleted list:", e);
+      }
+
       if (classFormId) {
         // Edit mode
         const originClass = classes.find(c => c.id === classFormId);
@@ -890,11 +921,20 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
     if (confirm(confirmMsg)) {
       setAuthIsLoading(true);
       try {
-        const filteredClasses = classes.filter(c => c.id !== classId);
-        setClasses(filteredClasses);
-        await dbService.saveClasses(filteredClasses);
-        await dbService.deleteClass(classId);
+        // Record explicitly deleted class logical key to localStorage to prevent automatic recreation by background sync
+        const deletedKey = `${classToDel.className.trim().toUpperCase()}_${classToDel.academicYear}`;
+        try {
+          const cachedDeleted = localStorage.getItem("portal_deleted_classes");
+          let deletedClassesList = cachedDeleted ? JSON.parse(cachedDeleted) as string[] : [];
+          if (!deletedClassesList.includes(deletedKey)) {
+            deletedClassesList.push(deletedKey);
+            localStorage.setItem("portal_deleted_classes", JSON.stringify(deletedClassesList));
+          }
+        } catch (e) {
+          console.error("Failed to write portal_deleted_classes:", e);
+        }
 
+        // 1. Update students first
         if (rosterCount > 0) {
           const updatedStudents = await Promise.all(students.map(async (s) => {
             if (s.className === classToDel.className && s.academicYear === classToDel.academicYear) {
@@ -905,6 +945,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
             return s;
           }));
           setStudents(updatedStudents);
+        }
+
+        // 2. Now delete the class
+        const filteredClasses = classes.filter(c => c.id !== classId);
+        setClasses(filteredClasses);
+        await dbService.saveClasses(filteredClasses);
+        await dbService.deleteClass(classId);
+
+        if (rosterCount > 0) {
           alert(`Đã xóa lớp học thành công và đồng bộ lên Supabase! ${rosterCount} học sinh liên quan đã được đưa về trạng thái "Chưa xếp lớp".`);
         } else {
           alert("Đã xóa lớp học thành công và đồng bộ lên Supabase!");
