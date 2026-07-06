@@ -3105,11 +3105,11 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const handleApplyImport = async () => {
     if (importPreview.length === 0) return;
 
-    if (dbService.supabase) {
+    if (dbService.getSupabaseClient()) {
       await dbService.recheckSchema();
     }
     
-    if (dbService.supabase && !dbService.hasAcademicYearColumn) {
+    if (dbService.getSupabaseClient() && !dbService.hasAcademicYearColumn) {
       const proceed = window.confirm("⚠️ CẢNH BÁO: Cấu trúc CSDL của bạn có vẻ đã CŨ hoặc Supabase chưa cập nhật bộ nhớ đệm (schema cache).\n\nNếu bạn chưa chạy mã SQL nâng cấp, việc tiếp tục có thể GHI ĐÈ dữ liệu học sinh năm cũ.\n\nNếu bạn VỪA MỚI chạy SQL nâng cấp, hãy bấm OK để tiếp tục thử (nếu lỗi, hệ thống sẽ báo chi tiết).\n\nBấm 'OK' để tiếp tục hoặc 'Cancel' để hủy.");
       if (!proceed) return;
     }
