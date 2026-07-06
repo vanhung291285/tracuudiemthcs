@@ -844,12 +844,27 @@ class DatabaseService {
           ? (this.hasAcademicYearColumn ? ["student_code", "academic_year"] : ["student_code"]) 
           : (this.hasAcademicYearColumn ? ["studentCode", "academicYear"] : ["studentCode"]);
 
-        const result = await Promise.race([
+        let result = await Promise.race([
           this.supabase
             .from("students")
             .upsert(mapped, { onConflict: onConflictCols.join(",") }),
           timeoutPromise
         ]);
+
+        // Automatically resolve 'students_pkey' (Primary Key) unique constraint violation by retrying with a new random ID
+        if (result.error && (result.error.message.includes("students_pkey") || result.error.message.includes("violates unique constraint"))) {
+          console.warn("Detected students_pkey unique constraint violation. Generating a fresh unique ID and retrying...");
+          const newRandomId = `student_${student.studentCode}_${student.academicYear.replace(/\//g, '-')}_retry_${Math.random().toString(36).substring(2, 7)}`;
+          student.id = newRandomId;
+          const reMapped = this.mapStudentToDb(student);
+          
+          result = await Promise.race([
+            this.supabase
+              .from("students")
+              .upsert(reMapped, { onConflict: onConflictCols.join(",") }),
+            timeoutPromise
+          ]);
+        }
 
         if (result.error) {
           console.error("Supabase upsert error:", result.error.message);
