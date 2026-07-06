@@ -4906,6 +4906,12 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
 -- 1. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này)
 ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
+UPDATE students SET id = 'student_' || student_code || '_' || replace(coalesce(academic_year, '2025-2026'), '/', '-') WHERE id IS NULL;
+UPDATE students s SET id = s.id || '_' || substr(md5(random()::text), 1, 4) WHERE (SELECT count(*) FROM students WHERE id = s.id) > 1;
+ALTER TABLE students DROP CONSTRAINT IF EXISTS students_pkey;
+ALTER TABLE students ALTER COLUMN id SET NOT NULL;
+ALTER TABLE students ADD CONSTRAINT students_pkey PRIMARY KEY (id);
+
 ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
 ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
 -- NẾU HỌC SINH NĂM CŨ BỊ ĐỔI THÀNH 2025-2026, CHẠY LỆNH NÀY ĐỂ KHÔI PHỤC:
@@ -5083,6 +5089,12 @@ NOTIFY pgrst, 'reload schema';`}
 
 -- 1. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này)
 ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
+UPDATE students SET id = 'student_' || "studentCode" || '_' || replace(coalesce("academicYear", '2025-2026'), '/', '-') WHERE id IS NULL;
+UPDATE students s SET id = s.id || '_' || substr(md5(random()::text), 1, 4) WHERE (SELECT count(*) FROM students WHERE id = s.id) > 1;
+ALTER TABLE students DROP CONSTRAINT IF EXISTS students_pkey;
+ALTER TABLE students ALTER COLUMN id SET NOT NULL;
+ALTER TABLE students ADD CONSTRAINT students_pkey PRIMARY KEY (id);
+
 ALTER TABLE students ADD COLUMN IF NOT EXISTS school TEXT DEFAULT 'Trường PTDTBT Tiểu Học và THCS Suối Lư';
 ALTER TABLE students ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
 -- NẾU HỌC SINH NĂM CŨ BỊ ĐỔI THÀNH 2025-2026, CHẠY LỆNH NÀY ĐỂ KHÔI PHỤC:
