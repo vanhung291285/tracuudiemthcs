@@ -567,29 +567,57 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       )}
 
       {/* Main Content Area: Side-By-Side Redesigned Portal */}
-      <main className="flex-1 max-w-6xl w-full mx-auto pt-8 pb-4 md:pt-12 md:pb-6 px-4">
+      <main className="flex-1 max-w-6xl w-full mx-auto pt-4 pb-4 md:pt-8 md:pb-6 px-4">
         
+        {/* Portal Switcher (Các cửa tra cứu) */}
+        <div className="max-w-md mx-auto mb-8 no-print px-2">
+          <div className="bg-white/60 backdrop-blur-md p-1 rounded-2xl flex border border-emerald-100/40 shadow-sm relative">
+            <button
+              onClick={() => setViewMode("search")}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                viewMode === "search"
+                  ? "bg-[#337819] text-white shadow-md scale-[1.01]"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50/50"
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              <span>Tra cứu cá nhân</span>
+            </button>
+            <button
+              onClick={() => setViewMode("scoreboard")}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider transition-all duration-300 cursor-pointer ${
+                viewMode === "scoreboard"
+                  ? "bg-[#337819] text-white shadow-md scale-[1.01]"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50/50"
+              }`}
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Bảng điểm lớp học</span>
+            </button>
+          </div>
+        </div>
+
         {viewMode === "scoreboard" ? (
           <div className="w-full space-y-6 animate-fadeIn">
-            <div className="glass-card overflow-hidden rounded-2xl border border-white/50 shadow-2xl relative z-10 p-6">
-              <div className="flex flex-col md:flex-row items-center justify-between mb-6 border-b pb-4 gap-4">
+            <div className="glass-card overflow-hidden rounded-2xl border border-emerald-100/30 shadow-xl relative z-10 p-4 sm:p-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 border-b pb-4 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#337819]/10 flex items-center justify-center border border-[#337819]/20">
+                  <div className="w-10 h-10 rounded-xl bg-[#337819]/10 flex items-center justify-center border border-[#337819]/20 shrink-0">
                     <BarChartHorizontal className="w-6 h-6 text-[#337819]" />
                   </div>
                   <div>
-                    <h2 className="text-base font-black text-[#337819] uppercase tracking-wider">TRA CỨU THEO NĂM HỌC</h2>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Dữ liệu học bạ số công khai</p>
+                    <h2 className="text-base font-black text-[#337819] uppercase tracking-wider">BẢNG ĐIỂM TOÀN TRƯỜNG</h2>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Hệ thống công bố công khai</p>
                   </div>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                    <School className="w-3.5 h-3.5 text-slate-500" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-3 w-full lg:w-auto">
+                  <div className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 transition px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                    <School className="w-4 h-4 text-[#337819]" />
                     <select
                       value={scoreboardClass}
                       onChange={(e) => setScoreboardClass(e.target.value)}
-                      className="bg-transparent border-none text-[11px] font-bold text-slate-800 outline-none cursor-pointer hover:text-[#337819] transition"
+                      className="bg-transparent border-none text-xs font-bold text-slate-800 outline-none cursor-pointer hover:text-[#337819] transition w-full"
                     >
                       <option value="">Hiển thị toàn trường</option>
                       {availableClasses.length > 0 && availableClasses.map(cls => (
@@ -598,12 +626,12 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 transition px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                    <Calendar className="w-4 h-4 text-[#337819]" />
                     <select
                       value={selectedAcademicYear}
                       onChange={(e) => setSelectedAcademicYear(e.target.value)}
-                      className="bg-transparent border-none text-[11px] font-bold text-slate-800 outline-none cursor-pointer hover:text-[#337819] transition"
+                      className="bg-transparent border-none text-xs font-bold text-slate-800 outline-none cursor-pointer hover:text-[#337819] transition w-full"
                     >
                       {academicYears.map(y => (
                         <option key={y.id} value={y.yearName}>{y.yearName}</option>
@@ -611,13 +639,13 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     </select>
                   </div>
                   
-                  <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                  <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-200 shadow-sm sm:col-span-2 lg:col-span-1 justify-between gap-1">
                     {(["hk1", "hk2", "canam"] as const).map((t) => (
                       <button
                         key={t}
                         onClick={() => setScoreboardTerm(t)}
-                        className={`px-3 py-1.5 text-[9px] font-black rounded-md transition uppercase tracking-wider ${
-                          scoreboardTerm === t ? "bg-[#337819] text-white shadow-sm" : "text-slate-500 hover:bg-slate-200"
+                        className={`flex-1 lg:flex-initial px-3 py-1.5 text-[10px] font-black rounded-lg transition uppercase tracking-wider cursor-pointer text-center ${
+                          scoreboardTerm === t ? "bg-[#337819] text-white shadow-sm" : "text-slate-500 hover:text-slate-800 hover:bg-slate-200"
                         }`}
                       >
                         {t === "canam" ? "Cả năm" : t === "hk1" ? "Học kỳ I" : "Học kỳ II"}
@@ -646,8 +674,12 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   </div>
                 </div>
               ) : (
-                <div className="overflow-x-auto -mx-6 px-6 pb-4">
-                  <table className="w-full text-[9px] border-collapse min-w-[900px] bg-white rounded-lg overflow-hidden border border-slate-100">
+                <div className="space-y-2">
+                  <div className="lg:hidden flex items-center gap-1.5 text-[10px] font-bold text-amber-600 animate-pulse bg-amber-50 p-2.5 rounded-lg border border-amber-200/50">
+                    <span>👉 Vuốt ngang sang phải để xem đầy đủ điểm các môn học</span>
+                  </div>
+                  <div className="overflow-x-auto -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 custom-scrollbar">
+                    <table className="w-full text-[9px] border-collapse min-w-[900px] bg-white rounded-xl overflow-hidden border border-slate-100 shadow-sm">
                     <thead>
                       <tr className="bg-slate-800 text-white font-black border-b border-slate-900 uppercase tracking-tighter shadow-sm">
                         <th className="px-2 py-3.5 text-center w-8 border-r border-slate-700/50">STT</th>
@@ -715,6 +747,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     </tbody>
                   </table>
                 </div>
+                </div>
               )}
               
               <div className="mt-8 flex flex-col md:flex-row items-center gap-4 bg-slate-50 p-5 rounded-2xl border border-slate-200/60 shadow-inner">
@@ -736,15 +769,16 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             <div className="lg:col-span-5 space-y-6">
               
               {/* Core Query Card */}
-            <div id="card-query" className="w-full glass-card rounded-xl shadow-xl border border-white/50 overflow-hidden transition-all hover:shadow-2xl relative z-10">
+            <div id="card-query" className="w-full bg-white/95 rounded-2xl shadow-xl border border-emerald-100/40 overflow-hidden transition-all hover:shadow-2xl relative z-10">
               <div className="h-2 bg-[#337819] shadow-sm" />
               
-              <div className="p-6 md:p-8">
-                <h2 className="text-base font-black text-[#337819] uppercase text-center mb-1.5 tracking-tight">
+              <div className="p-5 sm:p-7 md:p-8">
+                <h2 className="text-base sm:text-lg font-black text-[#337819] uppercase text-center mb-1.5 tracking-tight flex items-center justify-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-[#337819] animate-pulse" />
                   TRA CỨU KẾT QUẢ HỌC TẬP
                 </h2>
-                <p className="text-xs text-slate-700 text-center mb-6 font-medium">
-                  Vui lòng điền điền thông tin học sinh bên dưới để truy xuất học bạ điện tử gốc.
+                <p className="text-xs text-slate-600 text-center mb-6 font-medium">
+                  Vui lòng điền thông tin học sinh bên dưới để truy xuất học bạ điện tử gốc.
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -752,16 +786,16 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   {/* Academic Year Selection */}
                   {academicYears.length > 0 && (
                     <div>
-                      <label htmlFor="student-year" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
+                      <label htmlFor="student-year" className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4 text-[#337819]" /> Năm học tra cứu <span className="text-[#E53935]">*</span>
                       </label>
                       <select
                         id="student-year"
                         value={selectedAcademicYear}
                         onChange={(e) => setSelectedAcademicYear(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
+                        className="w-full bg-slate-50 hover:bg-slate-100/50 border border-slate-200 rounded-xl px-3 py-3 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       >
-                        <option value="">--Chọn năm học--</option>
+                        <option value="">-- Chọn năm học --</option>
                         {academicYears.map((year, idx) => (
                           <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
                             {year.yearName}
@@ -773,16 +807,16 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                   {/* Student Name Input */}
                   <div>
-                    <label htmlFor="student-name" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-[#337819]" /> Họ và Tên học sinh <span className="text-[#E53935]">*</span>
+                    <label htmlFor="student-name" className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-[#337819]" /> Họ và Tên học sinh <span className="text-[#E53935]">*</span>
                     </label>
                     <input
                       type="text"
                       id="student-name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Nhập tên học sinh (Ví dụ: Vũ Văn Hùng)"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 placeholder:text-[13px] placeholder:font-normal placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition"
+                      placeholder="Ví dụ: Nguyễn Văn Hùng"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs sm:text-sm font-bold text-slate-800 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition"
                       autoComplete="off"
                       required
                     />
@@ -790,14 +824,14 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
                   {/* Student Class Input */}
                   <div>
-                    <label htmlFor="student-class" className="block text-[11px] font-semibold text-slate-900 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
-                      <School className="w-3.5 h-3.5 text-[#337819]" /> Lớp học <span className="text-[#E53935]">*</span>
+                    <label htmlFor="student-class" className="block text-[11px] font-bold text-slate-700 uppercase mb-1.5 tracking-wider flex items-center gap-1.5">
+                      <School className="w-4 h-4 text-[#337819]" /> Lớp học <span className="text-[#E53935]">*</span>
                     </label>
                     <select
                       id="student-class"
                       value={searchClass}
                       onChange={(e) => setSearchClass(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
+                      className="w-full bg-slate-50 hover:bg-slate-100/50 border border-slate-200 rounded-xl px-3 py-3 text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       required
                     >
                       <option value="">-- Chọn lớp học --</option>
@@ -813,52 +847,49 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         <option disabled value="">Chưa có lớp học cho năm này</option>
                       )}
                     </select>
-                    <p className="text-[11px] text-slate-500 mt-1.5 pl-1 font-medium italic">
-                      Vui lòng chọn đúng lớp của học sinh để tra cứu điểm.
-                    </p>
                   </div>
 
                   {/* Academic Term Selector tabs */}
                   <div className="space-y-2 mt-2">
-                    <label className="block text-[11px] font-semibold text-slate-900 uppercase tracking-widest flex items-center gap-1.5 mt-2 mb-2">
-                      <Clock className="w-3.5 h-3.5 text-[#337819]" /> CHỌN HỌC KÌ CẦN TRA CỨU <span className="text-[#E53935]">*</span>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 mt-2 mb-2">
+                      <Clock className="w-4 h-4 text-[#337819]" /> Chọn học kì tra cứu <span className="text-[#E53935]">*</span>
                     </label>
-                    <div className="grid grid-cols-3 gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200/80 shadow-inner">
+                    <div className="grid grid-cols-3 gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200 shadow-inner">
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("hk1")}
-                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+                        className={`py-2 text-[10px] sm:text-xs font-black rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1 ${
                           selectedTerm === "hk1"
-                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
-                            : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-sm ring-2 ring-[#337819]/10"
+                            : "bg-white text-slate-500 border-slate-250 hover:text-slate-900 hover:border-slate-300 shadow-sm"
                         }`}
                       >
-                        {selectedTerm === "hk1" && <CheckSquare className="w-3.5 h-3.5" />}
-                        Học kỳ I
+                        <span className="xs:hidden">HK I</span>
+                        <span className="hidden xs:inline">Học kỳ I</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("hk2")}
-                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+                        className={`py-2 text-[10px] sm:text-xs font-black rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1 ${
                           selectedTerm === "hk2"
-                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
-                            : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-sm ring-2 ring-[#337819]/10"
+                            : "bg-white text-slate-500 border-slate-250 hover:text-slate-900 hover:border-slate-300 shadow-sm"
                         }`}
                       >
-                        {selectedTerm === "hk2" && <CheckSquare className="w-3.5 h-3.5" />}
-                        Học kỳ II
+                        <span className="xs:hidden">HK II</span>
+                        <span className="hidden xs:inline">Học kỳ II</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedTerm("canam")}
-                        className={`py-2.5 text-[12px] font-bold rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1.5 ${
+                        className={`py-2 text-[10px] sm:text-xs font-black rounded-lg border transition duration-200 cursor-pointer text-center flex items-center justify-center gap-1 ${
                           selectedTerm === "canam"
-                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/20"
-                            : "bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                            ? "bg-[#337819] text-white border-[#337819] shadow-md ring-2 ring-[#337819]/10"
+                            : "bg-white text-slate-500 border-slate-250 hover:text-slate-900 hover:border-slate-300 shadow-sm"
                         }`}
                       >
-                        {selectedTerm === "canam" && <CheckSquare className="w-3.5 h-3.5" />}
-                        Cả Năm
+                        <span className="xs:hidden">Cả năm</span>
+                        <span className="hidden xs:inline">Cả Năm</span>
                       </button>
                     </div>
                   </div>
@@ -931,109 +962,109 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
             </div>
 
             {/* Quick Three-Step Guideline (Moved here for top-down lookup instruction flow) */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
-              <div className="flex items-center gap-1.5 border-b pb-3.5 border-slate-100 mb-5 text-[#337819]">
-                <LayoutDashboard className="w-4.5 h-4.5" />
+            <div className="bg-white/95 p-5 sm:p-6 rounded-2xl border border-slate-100 shadow-lg relative z-10">
+              <div className="flex items-center gap-2 border-b pb-3 border-slate-100 mb-4 text-[#337819]">
+                <LayoutDashboard className="w-5 h-5 text-[#337819]" />
                 <h3 className="text-xs font-black uppercase tracking-wider">
                   HƯỚNG DẪN TRA CỨU KẾT QUẢ
                 </h3>
               </div>
               
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4">
                 {/* Step 1 */}
-                <div className="flex items-start gap-4 p-1">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white font-black text-base shadow-sm">1</div>
-                  <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN NĂM HỌC</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Chọn năm học tương ứng với kết quả bạn muốn tra cứu.</p>
+                <div className="flex items-start gap-3 p-0.5">
+                  <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#337819]/10 text-[#337819] font-black text-sm sm:text-base flex items-center justify-center border border-[#337819]/25 shadow-inner">1</div>
+                  <div className="space-y-0.5">
+                    <h4 className="text-xs sm:text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN NĂM HỌC</h4>
+                    <p className="text-[11px] text-slate-500 font-bold leading-relaxed uppercase tracking-tight">Chọn năm học tương ứng với kết quả muốn tra cứu.</p>
                   </div>
                 </div>
 
                 {/* Step 2 */}
-                <div className="flex items-start gap-4 p-1">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white font-black text-base shadow-sm">2</div>
-                  <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">NHẬP HỌ TÊN</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhập họ và tên đầy đủ, chính xác của học sinh cần tìm kiếm.</p>
+                <div className="flex items-start gap-3 p-0.5">
+                  <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#337819]/10 text-[#337819] font-black text-sm sm:text-base flex items-center justify-center border border-[#337819]/25 shadow-inner">2</div>
+                  <div className="space-y-0.5">
+                    <h4 className="text-xs sm:text-[13px] font-black uppercase text-[#337819] tracking-tight">NHẬP HỌ TÊN</h4>
+                    <p className="text-[11px] text-slate-500 font-bold leading-relaxed uppercase tracking-tight">Nhập đầy đủ, chính xác họ tên của học sinh.</p>
                   </div>
                 </div>
 
                 {/* Step 3 */}
-                <div className="flex items-start gap-4 p-1">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#337819] flex items-center justify-center text-white font-black text-base shadow-sm">3</div>
-                  <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN LỚP HỌC</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Chọn đúng lớp học của học sinh trong năm học đã chọn (Ví dụ: Lớp 9A1).</p>
+                <div className="flex items-start gap-3 p-0.5">
+                  <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#337819]/10 text-[#337819] font-black text-sm sm:text-base flex items-center justify-center border border-[#337819]/25 shadow-inner">3</div>
+                  <div className="space-y-0.5">
+                    <h4 className="text-xs sm:text-[13px] font-black uppercase text-[#337819] tracking-tight">CHỌN LỚP HỌC</h4>
+                    <p className="text-[11px] text-slate-500 font-bold leading-relaxed uppercase tracking-tight">Chọn đúng lớp học của học sinh trong năm học đó.</p>
                   </div>
                 </div>
 
                 {/* Step 4 */}
-                <div className="flex items-start gap-4 p-1">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#E53935] flex items-center justify-center text-white font-black text-base shadow-sm">4</div>
-                  <div className="space-y-1">
-                    <h4 className="text-[13px] font-black uppercase text-[#E53935] tracking-tight">TRA CỨU KẾT QUẢ</h4>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">Nhấn nút tra cứu để xem chi tiết bảng điểm thành phần môn học và kết quả rèn luyện.</p>
+                <div className="flex items-start gap-3 p-0.5">
+                  <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#E53935]/15 text-[#E53935] font-black text-sm sm:text-base flex items-center justify-center border border-[#E53935]/25 shadow-inner">4</div>
+                  <div className="space-y-0.5">
+                    <h4 className="text-xs sm:text-[13px] font-black uppercase text-[#E53935] tracking-tight">XEM KẾT QUẢ</h4>
+                    <p className="text-[11px] text-slate-500 font-bold leading-relaxed uppercase tracking-tight">Nhấn nút Tra cứu để truy xuất học bạ điện tử.</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Realtime Statistics Bento Grid (Moved here for better balance) */}
-            <div className="grid grid-cols-2 gap-4 relative z-10">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 relative z-10">
               
               {/* Stat 1 */}
-              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
+              <div className="bg-white/95 p-3 sm:p-4 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">HỌC SINH SỐ HÓA</span>
-                  <div className="w-7 h-7 rounded-md bg-[#337819]/10 flex items-center justify-center">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">HỌC SINH SỐ HÓA</span>
+                  <div className="w-7 h-7 rounded-lg bg-[#337819]/10 flex items-center justify-center border border-[#337819]/15">
                     <User className="w-4 h-4 text-[#337819]" />
                   </div>
                 </div>
                 <div>
-                  <span className="text-2xl font-black text-[#337819] tracking-tight block">{studentCount.toLocaleString()}</span>
-                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Hồ sơ học bạ điện tử</span>
+                  <span className="text-xl sm:text-2xl font-black text-[#337819] tracking-tight block leading-none mb-1">{studentCount.toLocaleString()}</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 leading-tight">Hồ sơ học bạ</span>
                 </div>
               </div>
 
               {/* Stat 2 */}
-              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
+              <div className="bg-white/95 p-3 sm:p-4 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TRƯỜNG LIÊN KẾT</span>
-                  <div className="w-7 h-7 rounded-md bg-emerald-50 flex items-center justify-center border border-emerald-100">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">TRƯỜNG LIÊN KẾT</span>
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100">
                     <GraduationCap className="w-4 h-4 text-emerald-600" />
                   </div>
                 </div>
                 <div>
-                  <span className="text-2xl font-black text-slate-800 tracking-tight block">48 Trường</span>
-                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Đồng bộ dữ liệu điểm</span>
+                  <span className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight block leading-none mb-1">48 Trường</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 leading-tight">Đồng bộ dữ liệu</span>
                 </div>
               </div>
 
               {/* Stat 3 */}
-              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
+              <div className="bg-white/95 p-3 sm:p-4 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">XÁC MINH SỐ</span>
-                  <div className="w-7 h-7 rounded-md bg-amber-50 flex items-center justify-center border border-amber-100">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">XÁC MINH SỐ</span>
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center border border-amber-100">
                     <ShieldCheck className="w-4 h-4 text-amber-600" />
                   </div>
                 </div>
                 <div>
-                  <span className="text-2xl font-black text-[#E53935] tracking-tight block">100%</span>
-                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Chữ ký số gốc</span>
+                  <span className="text-xl sm:text-2xl font-black text-[#E53935] tracking-tight block leading-none mb-1">100%</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 leading-tight">Chữ ký số gốc</span>
                 </div>
               </div>
 
               {/* Stat 4 */}
-              <div className="glass-card p-4 rounded-xl border border-white/50 flex flex-col justify-between shadow-lg hover:shadow-xl transition">
+              <div className="bg-white/95 p-3 sm:p-4 rounded-2xl border border-slate-100 flex flex-col justify-between shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TỐC ĐỘ</span>
-                  <div className="w-7 h-7 rounded-md bg-purple-50 flex items-center justify-center border border-purple-100">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">TỐC ĐỘ</span>
+                  <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center border border-purple-100">
                     <Clock className="w-4 h-4 text-purple-600" />
                   </div>
                 </div>
                 <div>
-                  <span className="text-2xl font-black text-slate-800 tracking-tight block">&lt; 0.3s</span>
-                  <span className="text-[10px] font-bold text-slate-500 leading-tight">Kết xuất tức thời</span>
+                  <span className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight block leading-none mb-1">&lt; 0.3s</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 leading-tight">Kết xuất tức thời</span>
                 </div>
               </div>
             </div>
@@ -1138,7 +1169,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         className="flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-slate-50/70 p-2 -mx-2 rounded-xl transition duration-200 group cursor-pointer"
                       >
                         {/* Left: Beautiful article illustration image */}
-                        <div className="w-full sm:w-28 h-20 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-150 relative">
+                        <div className="w-full sm:w-28 h-36 sm:h-20 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-150 relative">
                           <img 
                             src={item.image} 
                             alt={item.title}
@@ -1155,8 +1186,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                               (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
                             }}
                           />
-                          <div className="absolute top-1 left-1">
-                            <span className="text-[8px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-1.5 py-0.5 rounded leading-none">
+                          <div className="absolute top-2 left-2 sm:top-1 sm:left-1">
+                            <span className="text-[8px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-1.5 py-0.5 rounded leading-none shadow-sm">
                               Mới nhất
                             </span>
                           </div>
@@ -1326,44 +1357,44 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       </main>
       
       {/* Floating Contact Buttons */}
-      <div className="fixed right-4 bottom-24 z-50 flex flex-col gap-3">
+      <div className="fixed right-3 bottom-12 sm:right-4 sm:bottom-16 z-50 flex flex-col gap-2.5 no-print">
         <motion.a
           href={zaloUrl}
           target="_blank"
           rel="noopener noreferrer"
-          whileHover={{ scale: 1.1, x: -5 }}
-          whileTap={{ scale: 0.9 }}
-          className="group flex items-center gap-3 bg-[#0068ff] text-white p-2.5 rounded-full shadow-lg shadow-blue-200 border border-blue-400"
+          whileHover={{ scale: 1.1, x: -4 }}
+          whileTap={{ scale: 0.95 }}
+          className="group flex items-center gap-2 bg-[#0068ff] text-white p-2 sm:p-2.5 rounded-full shadow-lg shadow-blue-200 border border-blue-400 cursor-pointer"
           title="Liên hệ qua Zalo"
         >
-          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-sm">Zalo Nhà Trường</span>
-          <ZaloIcon className="w-7 h-7" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-xs sm:text-sm pl-0 group-hover:pl-2">Zalo Nhà Trường</span>
+          <ZaloIcon className="w-5 h-5 sm:w-6 sm:h-6" />
         </motion.a>
 
         <motion.a
           href={facebookUrl}
           target="_blank"
           rel="noopener noreferrer"
-          whileHover={{ scale: 1.1, x: -5 }}
-          whileTap={{ scale: 0.9 }}
-          className="group flex items-center gap-3 bg-[#1877F2] text-white p-3 rounded-full shadow-lg shadow-blue-300 border border-blue-600"
+          whileHover={{ scale: 1.1, x: -4 }}
+          whileTap={{ scale: 0.95 }}
+          className="group flex items-center gap-2 bg-[#1877F2] text-white p-2 sm:p-2.5 rounded-full shadow-lg shadow-blue-200 border border-blue-500 cursor-pointer"
           title="Theo dõi trên Facebook"
         >
-          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-sm">Fanpage Facebook</span>
-          <Facebook className="w-6 h-6 fill-current" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-xs sm:text-sm pl-0 group-hover:pl-2">Fanpage Facebook</span>
+          <Facebook className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
         </motion.a>
 
         <motion.a
           href={websiteUrl}
           target="_blank"
           rel="noopener noreferrer"
-          whileHover={{ scale: 1.1, x: -5 }}
-          whileTap={{ scale: 0.9 }}
-          className="group flex items-center gap-3 bg-[#337819] text-white p-3 rounded-full shadow-lg shadow-slate-300 border border-blue-900"
+          whileHover={{ scale: 1.1, x: -4 }}
+          whileTap={{ scale: 0.95 }}
+          className="group flex items-center gap-2 bg-[#337819] text-white p-2 sm:p-2.5 rounded-full shadow-lg shadow-emerald-200 border border-emerald-500 cursor-pointer"
           title="Truy cập Website chính thức"
         >
-          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-sm">Website Suối Lư</span>
-          <Globe className="w-6 h-6" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 font-bold text-xs sm:text-sm pl-0 group-hover:pl-2">Website Suối Lư</span>
+          <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
         </motion.a>
       </div>
     </div>
