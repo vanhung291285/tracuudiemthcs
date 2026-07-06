@@ -752,7 +752,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                   TRA CỨU KẾT QUẢ HỌC TẬP
                 </h2>
                 <p className="text-xs text-slate-700 text-center mb-6 font-medium">
-                  Vui lòng điền thông tin định danh học sinh bên dưới để truy xuất học bạ điện tử gốc.
+                  Vui lòng điền điền thông tin học sinh bên dưới để truy xuất học bạ điện tử gốc.
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
