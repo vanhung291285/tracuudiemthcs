@@ -4906,7 +4906,15 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
 -- 1. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này)
 ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
-UPDATE students SET id = 'student_' || student_code || '_' || replace(coalesce(academic_year, '2025-2026'), '/', '-') WHERE id IS NULL;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='students' AND column_name='student_code') THEN
+    EXECUTE 'UPDATE students SET id = ''student_'' || student_code || ''_'' || replace(coalesce(academic_year, ''2025-2026''), ''/'', ''-'') WHERE id IS NULL';
+  ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='students' AND column_name='studentCode') THEN
+    EXECUTE 'UPDATE students SET id = ''student_'' || "studentCode" || ''_'' || replace(coalesce("academicYear", ''2025-2026''), ''/'', ''-'') WHERE id IS NULL';
+  END IF;
+END $$;
+UPDATE students SET id = 'student_fb_' || substr(md5(random()::text), 1, 8) WHERE id IS NULL;
 UPDATE students s SET id = s.id || '_' || substr(md5(random()::text), 1, 4) WHERE (SELECT count(*) FROM students WHERE id = s.id) > 1;
 ALTER TABLE students DROP CONSTRAINT IF EXISTS students_pkey;
 ALTER TABLE students ALTER COLUMN id SET NOT NULL;
@@ -5089,7 +5097,15 @@ NOTIFY pgrst, 'reload schema';`}
 
 -- 1. NÂNG CẤP BẢNG CŨ (Nếu bạn đã có bảng nhưng thiếu cột, hãy chạy đoạn này)
 ALTER TABLE students ADD COLUMN IF NOT EXISTS id TEXT;
-UPDATE students SET id = 'student_' || "studentCode" || '_' || replace(coalesce("academicYear", '2025-2026'), '/', '-') WHERE id IS NULL;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='students' AND column_name='studentCode') THEN
+    EXECUTE 'UPDATE students SET id = ''student_'' || "studentCode" || ''_'' || replace(coalesce("academicYear", ''2025-2026''), ''/'', ''-'') WHERE id IS NULL';
+  ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='students' AND column_name='student_code') THEN
+    EXECUTE 'UPDATE students SET id = ''student_'' || student_code || ''_'' || replace(coalesce(academic_year, ''2025-2026''), ''/'', ''-'') WHERE id IS NULL';
+  END IF;
+END $$;
+UPDATE students SET id = 'student_fb_' || substr(md5(random()::text), 1, 8) WHERE id IS NULL;
 UPDATE students s SET id = s.id || '_' || substr(md5(random()::text), 1, 4) WHERE (SELECT count(*) FROM students WHERE id = s.id) > 1;
 ALTER TABLE students DROP CONSTRAINT IF EXISTS students_pkey;
 ALTER TABLE students ALTER COLUMN id SET NOT NULL;
