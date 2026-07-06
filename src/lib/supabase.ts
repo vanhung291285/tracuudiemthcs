@@ -656,30 +656,38 @@ class DatabaseService {
     const cleanDob = dob.trim(); // format: YYYY-MM-DD or DD-MM-YY etc depending on input
     const targetYear = academicYear?.trim();
 
+    const codeOptions = [formattedCode];
+    if (formattedCode.startsWith("HS-") && targetYear) {
+      const yearSuffix = targetYear.replace(/[^a-zA-Z0-9]/g, "");
+      if (!formattedCode.endsWith(yearSuffix)) {
+        codeOptions.push(`${formattedCode}-${yearSuffix}`);
+      }
+    }
+
     if (this.supabase) {
       try {
         await this.checkSchemaCase();
         // Query official Supabase DB ('students' table)
         let query = this.supabase.from("students").select("*");
-        if (this.isSnakeCaseSchema) {
-          query = query.eq("student_code", formattedCode);
-          if (targetYear) query = query.eq("academic_year", targetYear);
-        } else {
-          query = query.eq("studentCode", formattedCode);
-          if (targetYear) query = query.eq("academicYear", targetYear);
+        
+        const codeField = this.isSnakeCaseSchema ? "student_code" : "studentCode";
+        query = query.in(codeField, codeOptions);
+        
+        if (targetYear && this.hasAcademicYearColumn) {
+          const yearField = this.isSnakeCaseSchema ? "academic_year" : "academicYear";
+          query = query.eq(yearField, targetYear);
         }
-        const { data, error } = await query.maybeSingle();
+        
+        const { data, error } = await query;
 
         if (error) {
           // Query info status
-        } else if (data) {
-          const mapped = this.mapDbToStudent(data);
-          // Dates in Vietnamese educational portals are stored as YYYY-MM-DD or simple strings.
-          // Let's standardise comparison
-          if (this.compareDates(mapped.dob, cleanDob)) {
-            return mapped;
-          } else {
-            return null;
+        } else if (data && data.length > 0) {
+          for (const row of data) {
+            const mapped = this.mapDbToStudent(row);
+            if (this.compareDates(mapped.dob, cleanDob)) {
+              return mapped;
+            }
           }
         }
       } catch (err) {
@@ -688,10 +696,11 @@ class DatabaseService {
     }
 
     // Fallback: search local database
-    const found = this.localStudentsList.find(s => 
-      s.studentCode.toUpperCase() === formattedCode && 
-      this.compareDates(s.dob, cleanDob)
-    );
+    const found = this.localStudentsList.find(s => {
+      const isCodeMatch = codeOptions.includes((s.studentCode || "").trim().toUpperCase());
+      const isYearMatch = !targetYear || s.academicYear === targetYear;
+      return isCodeMatch && isYearMatch && this.compareDates(s.dob, cleanDob);
+    });
     return found || null;
   }
 
@@ -904,10 +913,13 @@ class DatabaseService {
 
         if (result.error) {
           console.error("Supabase upsert error:", result.error.message);
-          if (result.error.message.includes("no unique or exclusion constraint")) {
+          const errMsg = result.error.message || "";
+          if (errMsg.includes("no unique or exclusion constraint")) {
               this.lastError = "LỖI BỘ NHỚ ĐỆM: Bảng của bạn đã được nâng cấp nhưng Supabase chưa nhận diện được. Hãy vào SQL Editor chạy lệnh: NOTIFY pgrst, 'reload schema'; rồi tải lại trang.";
+          } else if (errMsg.includes("students_pkey") || errMsg.includes("duplicate key value") || errMsg.includes("violates unique constraint")) {
+              this.lastError = "LỖI KHÓA CHÍNH (TRÙNG LẶP NĂM HỌC): Mã học sinh đã tồn tại ở năm học khác và bị trùng Khóa chính (Primary Key). Hãy vào mục 'Cài đặt -> Supabase & Database', sao chép phần mã SQL ở mục '1. NÂNG CẤP BẢNG CŨ' và chạy trên Supabase để chuyển Khóa chính từ cột 'student_code' sang cột 'id'. Việc này giúp bạn nhập danh sách học sinh độc lập giữa các năm học hoàn toàn!";
           } else {
-              this.lastError = result.error.message;
+              this.lastError = errMsg;
           }
           return false;
         }
