@@ -315,8 +315,8 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
 
   const loadStudents = async () => {
     try {
-      const targetYear = (!selectedAcademicYear || selectedAcademicYear === "all") ? undefined : selectedAcademicYear;
-      const list = await dbService.getAllStudents(targetYear);
+      // Load all students regardless of selectedAcademicYear so that other tabs (like Classes roster count, statistics, and template exports) can correctly access students of all years
+      const list = await dbService.getAllStudents();
       setStudents(list);
     } catch (err) {
       console.error("Critical: Failed to sync students list from server:", err);
@@ -2643,7 +2643,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
   const handleDownloadXlsxTemplate = () => {
     try {
       const termLabel = importTerm === "hk1" ? "HocKy1" : importTerm === "hk2" ? "HocKy2" : "CaNam";
-      const enrolled = students.filter(s => s.className === importClass);
+      const enrolled = students.filter(s => s.className === importClass && s.academicYear === importYear);
       
       const listToRender = enrolled.length > 0 ? enrolled : [
         {
@@ -4316,7 +4316,7 @@ export default function AdminDashboard({ onBackToPortal }: AdminDashboardProps) 
                             BƯỚC 1: XUẤT TỆP EXCEL .XLSX CỦA LỚP {importClass}
                           </h4>
                           <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
-                            Kết xuất tệp bảng mẫu có sẵn mã CCCD và Tên của <strong>{students.filter(s => s.className === importClass).length} học sinh</strong> đang thuộc lớp {importClass} hiện tại. Giáo viên chỉ cần mở điền điểm trực tuyến và tải lên lại!
+                            Kết xuất tệp bảng mẫu có sẵn mã CCCD và Tên của <strong>{students.filter(s => s.className === importClass && s.academicYear === importYear).length} học sinh</strong> đang thuộc lớp {importClass} hiện tại. Giáo viên chỉ cần mở điền điểm trực tuyến và tải lên lại!
                           </p>
                           <button
                             type="button"
