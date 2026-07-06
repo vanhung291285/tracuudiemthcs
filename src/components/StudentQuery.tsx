@@ -80,7 +80,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [studentCount, setStudentCount] = useState<number>(0);
   const [academicYears, setAcademicYears] = useState<SchoolYear[]>([]);
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>(() => { const v = localStorage.getItem("portal_selected_academic_year"); return (v && v !== "all") ? v : ""; });
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>("");
 
   // Keep selected academic year persisted
   useEffect(() => {
@@ -292,10 +292,8 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     try {
       const years = await dbService.getAcademicYears();
       setAcademicYears(years);
+      // Keep the years loaded, but don't auto-set selectedAcademicYear so it defaults to empty placeholder
       const activeYear = years.find(y => y.isActive);
-      if (activeYear) {
-        setSelectedAcademicYear(activeYear.yearName);
-      }
     } catch (err) {
       console.warn("Could not load academic years:", err);
     }
@@ -413,6 +411,11 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!selectedAcademicYear) {
+      setError("Vui lòng chọn Năm học tra cứu.");
+      return;
+    }
 
     const cleanName = fullName.trim().normalize("NFC");
     const cleanClass = searchClass.trim().toUpperCase();
@@ -765,6 +768,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         onChange={(e) => setSelectedAcademicYear(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       >
+                        <option value="">--Chọn năm học--</option>
                         {academicYears.map((year, idx) => (
                           <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
                             {year.yearName}
@@ -804,7 +808,9 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       required
                     >
                       <option value="">-- Chọn lớp học --</option>
-                      {availableClasses.length > 0 ? (
+                      {selectedAcademicYear === "" ? (
+                        <option disabled value="">Vui lòng chọn năm học trước</option>
+                      ) : availableClasses.length > 0 ? (
                         availableClasses.map((cls, idx) => (
                           <option key={`cls-${cls || idx}`} value={cls}>
                             Lớp {cls}
