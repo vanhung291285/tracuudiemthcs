@@ -25,6 +25,7 @@ class DatabaseService {
   private classesFormatChecked = false;
   private isSnakeCaseClasses = false;
   private hasAcademicYearClasses = false;
+  private isSnakeCaseYear = false;
   private academicYearsFormatChecked = false;
   private isSnakeCaseAcademicYears = true;
 
@@ -88,6 +89,10 @@ class DatabaseService {
 
   public getSupabaseClient(): SupabaseClient | null {
     return this.supabase;
+  }
+
+  public get isMissingAcademicYearClasses(): boolean {
+    return this.supabase ? !this.hasAcademicYearClasses : false;
   }
 
   public getConfig() {
