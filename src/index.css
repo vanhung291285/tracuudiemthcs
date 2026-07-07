@@ -20,6 +20,9 @@ html, body, #root {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "kern", "liga", "clig", "calt";
 }
 
 body {
@@ -31,6 +34,7 @@ body {
   flex-direction: column;
   max-width: 100%;
   overflow-x: hidden;
+  letter-spacing: -0.01em;
 }
 
 /* Decorative background for homepage */
