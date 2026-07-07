@@ -57,81 +57,68 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
   const activeGpa = scoreCount > 0 ? (scoreSum / scoreCount) : 0.0;
 
   // Academic Classification
-  let activeAcademicGrade = term === "hk1" ? student.academicGradeHK1 : term === "hk2" ? student.academicGradeHK2 : student.academicGrade;
-  
-  if (!activeAcademicGrade && scoreCount > 0) {
-    const currentScores = scoreSubjects.map(s => {
-      if (term === "canam") {
-        if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
-          return roundScore((s.semester2 * 2 + s.semester1) / 3);
-        }
-        return typeof s.yearAvg === "number" ? s.yearAvg : null;
-      }
-      const val = term === "hk1" ? s.semester1 : s.semester2;
-      return typeof val === "number" ? val : null;
-    }).filter(v => v !== null) as number[];
-
-    const currentComments = (student.subjects || []).filter(s => !s.isEvaluatedByScore).map(s => {
-        const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
-        if (val === "Đạt" || val === "Chưa đạt") return val;
-        
-        // Dynamic fallback to auto-populated comment based on regular assessment (tx1/tx2)
-        const txVal = term === "hk1" ? s.tx1 : term === "hk2" ? s.tx2 : null;
-        if (term === "canam") {
-          let auto1 = "";
-          if (s.tx1 && s.tx1.trim().length > 0) {
-            auto1 = (s.tx1.trim().toUpperCase().includes("CĐ") || s.tx1.trim().toUpperCase().includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
-          }
-          const h1 = s.semester1 === "Đạt" || s.semester1 === "Chưa đạt" ? (s.semester1 === "Đạt" ? "Đ" : "CĐ") : auto1;
-
-          let auto2 = "";
-          if (s.tx2 && s.tx2.trim().length > 0) {
-            auto2 = (s.tx2.trim().toUpperCase().includes("CĐ") || s.tx2.trim().toUpperCase().includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
-          }
-          const h2 = s.semester2 === "Đạt" || s.semester2 === "Chưa đạt" ? (s.semester2 === "Đạt" ? "Đ" : "CĐ") : auto2;
-
-          if (h1 === "Đ" && h2 === "Đ") return "Đạt";
-          if (h2 === "Đ") return "Đạt";
-          if (h2 === "CĐ" || h1 === "CĐ") return "Chưa đạt";
-          return null;
-        } else {
-          if (txVal && txVal.trim().length > 0) {
-            const cleanTx = txVal.trim().toUpperCase();
-            return (cleanTx.includes("CĐ") || cleanTx.includes("CHƯA ĐẠT")) ? "Chưa đạt" : "Đạt";
-          }
-          // fallback to mid or end comments if any
-          const midVal = term === "hk1" ? s.mid1 : s.mid2;
-          const endVal = term === "hk1" ? s.end1 : s.end2;
-          if (midVal === "Đạt" || midVal === "Đ" || endVal === "Đạt" || endVal === "Đ") return "Đạt";
-          if (midVal === "Chưa đạt" || midVal === "CĐ" || endVal === "Chưa đạt" || endVal === "CĐ") return "Chưa đạt";
-        }
-        return null;
-    }).filter(v => v !== null) as string[];
-
-    const calculatedGrade = evaluateTT22(currentScores, currentComments);
-    if (calculatedGrade) {
-      activeAcademicGrade = calculatedGrade as any;
-    }
-  }
-
-  const hasDataForTerm = (student.subjects || []).some(s => {
-    const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
-    return val !== undefined && val !== null && val !== "";
+  const hasCompleteHK1 = (student.subjects || []).length > 0 && (student.subjects || []).every(s => {
+    return s.end1 !== undefined && s.end1 !== null && s.end1 !== "";
   });
 
-  if (!activeAcademicGrade) {
-    activeAcademicGrade = hasDataForTerm ? (student.academicGrade || "Đạt") : "";
-  }
+  const hasCompleteHK2 = (student.subjects || []).length > 0 && (student.subjects || []).every(s => {
+    return s.end2 !== undefined && s.end2 !== null && s.end2 !== "";
+  });
 
-  // Behavior Grade
-  let activeBehaviorGrade = term === "hk1" ? student.behaviorGradeHK1 : term === "hk2" ? student.behaviorGradeHK2 : student.behaviorGrade;
-  if (!activeBehaviorGrade) {
-    activeBehaviorGrade = hasDataForTerm ? (student.behaviorGrade || "Tốt") : "";
-  }
+  const isTermComplete = term === "hk1" ? hasCompleteHK1 : term === "hk2" ? hasCompleteHK2 : (hasCompleteHK1 && hasCompleteHK2);
 
-  // If calculating for the whole year (canam), ensure they actually have Semester 2 data
-  const hasSemester2Data = (student.subjects || []).some(s => s.semester2 !== undefined && s.semester2 !== null && s.semester2 !== "");
-  if (term === "canam" && !hasSemester2Data) {
+  let activeAcademicGrade = "";
+  let activeBehaviorGrade = "";
+
+  if (isTermComplete) {
+    const savedAcad = term === "hk1" ? student.academicGradeHK1 : term === "hk2" ? student.academicGradeHK2 : student.academicGrade;
+    const savedBehav = term === "hk1" ? student.behaviorGradeHK1 : term === "hk2" ? student.behaviorGradeHK2 : student.behaviorGrade;
+
+    if (savedAcad) {
+      activeAcademicGrade = savedAcad;
+    } else if (scoreCount > 0) {
+      const currentScores = scoreSubjects.map(s => {
+        if (term === "canam") {
+          if (typeof s.semester1 === "number" && typeof s.semester2 === "number") {
+            return roundScore((s.semester2 * 2 + s.semester1) / 3);
+          }
+          return typeof s.yearAvg === "number" ? s.yearAvg : null;
+        }
+        const val = term === "hk1" ? s.semester1 : s.semester2;
+        return typeof val === "number" ? val : null;
+      }).filter(v => v !== null) as number[];
+
+      const currentComments = (student.subjects || []).filter(s => !s.isEvaluatedByScore).map(s => {
+        const val = term === "hk1" ? s.semester1 : term === "hk2" ? s.semester2 : s.yearAvg;
+        if (val === "Đạt" || val === "Chưa đạt" || val === "Đ" || val === "CĐ") {
+          return (val === "Đạt" || val === "Đ") ? "Đạt" : "Chưa đạt";
+        }
+        
+        // Dynamic fallback based on endterm comments
+        const endVal = term === "hk1" ? s.end1 : s.end2;
+        if (term === "canam") {
+          const h1 = s.semester1 === "Đạt" || s.semester1 === "Đ" ? "Đ" : (s.end1 === "Đạt" || s.end1 === "Đ" ? "Đ" : "CĐ");
+          const h2 = s.semester2 === "Đạt" || s.semester2 === "Đ" ? "Đ" : (s.end2 === "Đạt" || s.end2 === "Đ" ? "Đ" : "CĐ");
+          if (h2 === "Đ") return "Đạt";
+          return "Chưa đạt";
+        } else {
+          if (endVal === "Đạt" || endVal === "Đ") return "Đạt";
+          if (endVal === "Chưa đạt" || endVal === "CĐ") return "Chưa đạt";
+        }
+        return null;
+      }).filter(v => v !== null) as string[];
+
+      const calculatedGrade = evaluateTT22(currentScores, currentComments);
+      if (calculatedGrade) {
+        activeAcademicGrade = calculatedGrade as any;
+      }
+    }
+
+    if (!activeAcademicGrade) {
+      activeAcademicGrade = term === "canam" ? (student.academicGrade || "Đạt") : "Đạt";
+    }
+    activeBehaviorGrade = savedBehav || (term === "canam" ? (student.behaviorGrade || "Tốt") : "Tốt");
+  } else {
     activeAcademicGrade = "";
     activeBehaviorGrade = "";
   }
@@ -172,13 +159,13 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
       // Auto recalculate if it's currently marked as something but we have valid data to recalculate
       if (activeAcademicGrade && activeBehaviorGrade) {
         d = evaluateDistinctionTT22(activeAcademicGrade as string, activeBehaviorGrade as string, currentScores);
-      } else if (!hasDataForTerm || !hasSemester2Data) {
+      } else if (!isTermComplete) {
         d = "Không";
       }
     } else {
       if (activeAcademicGrade && activeBehaviorGrade) {
         d = evaluateDistinctionTT22(activeAcademicGrade as string, activeBehaviorGrade as string, currentScores);
-      } else if (!hasDataForTerm) {
+      } else if (!isTermComplete) {
         d = "Không";
       }
     }
@@ -295,36 +282,32 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                   let valHk2 = "";
                   let valCaNam = "";
 
+                  const hasEnd1 = sub.end1 !== undefined && sub.end1 !== null && sub.end1 !== "";
+                  const hasEnd2 = sub.end2 !== undefined && sub.end2 !== null && sub.end2 !== "";
+
                   if (sub.isEvaluatedByScore) {
-                    valHk1 = typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : "";
-                    valHk2 = typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : "";
-                    valCaNam = typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "";
+                    valHk1 = hasEnd1 && typeof sub.semester1 === "number" ? sub.semester1.toFixed(1).replace(".", ",") : "";
+                    valHk2 = hasEnd2 && typeof sub.semester2 === "number" ? sub.semester2.toFixed(1).replace(".", ",") : "";
+                    valCaNam = hasEnd1 && hasEnd2 && typeof sub.yearAvg === "number" ? sub.yearAvg.toFixed(1).replace(".", ",") : "";
                   } else {
-                    // Remark-based subject auto-population
-                    // HK1
-                    let auto1 = "";
-                    if (sub.tx1 && sub.tx1.trim().length > 0) {
-                      const cleanTx = sub.tx1.trim().toUpperCase();
-                      auto1 = (cleanTx.includes("CĐ") || cleanTx.includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
+                    // Remark-based subject
+                    if (hasEnd1) {
+                      valHk1 = mapComment(sub.semester1) || mapComment(sub.end1) || "";
                     }
-                    valHk1 = mapComment(sub.semester1) || auto1 || mapComment(sub.mid1) || mapComment(sub.end1) || "";
-
-                    // HK2
-                    let auto2 = "";
-                    if (sub.tx2 && sub.tx2.trim().length > 0) {
-                      const cleanTx = sub.tx2.trim().toUpperCase();
-                      auto2 = (cleanTx.includes("CĐ") || cleanTx.includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
+                    if (hasEnd2) {
+                      valHk2 = mapComment(sub.semester2) || mapComment(sub.end2) || "";
                     }
-                    valHk2 = mapComment(sub.semester2) || auto2 || mapComment(sub.mid2) || mapComment(sub.end2) || "";
-
-                    // Ca Nam
-                    let autoYear = "";
-                    if (valHk1 === "Đ" && valHk2 === "Đ") {
-                      autoYear = "Đ";
-                    } else if (valHk1 || valHk2) {
-                      autoYear = valHk2 || valHk1;
+                    if (hasEnd1 && hasEnd2) {
+                      const h1 = valHk1 || "Đ";
+                      const h2 = valHk2 || "Đ";
+                      let autoYear = "";
+                      if (h1 === "Đ" && h2 === "Đ") {
+                        autoYear = "Đ";
+                      } else if (h1 || h2) {
+                        autoYear = h2 || h1;
+                      }
+                      valCaNam = mapComment(sub.yearAvg) || autoYear || "";
                     }
-                    valCaNam = mapComment(sub.yearAvg) || autoYear || "";
                   }
 
                   return (
@@ -352,24 +335,25 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
                   let formattedEnd = "";
                   let formattedAvg = "";
 
-                  if (sub.isEvaluatedByScore) {
-                    formattedMid = typeof midVal === "number" ? midVal.toFixed(1).replace(".", ",") : (midVal || "").toString();
-                    formattedEnd = typeof endVal === "number" ? endVal.toFixed(1).replace(".", ",") : (endVal || "").toString();
-                    formattedAvg = typeof avgVal === "number" ? avgVal.toFixed(1).replace(".", ",") : (avgVal || "").toString();
-                  } else {
-                    // Remark-based subject auto-population from txVal
-                    let autoComment = "";
-                    if (txVal && txVal.trim().length > 0) {
-                      const cleanTx = txVal.trim().toUpperCase();
-                      autoComment = (cleanTx.includes("CĐ") || cleanTx.includes("CHƯA ĐẠT")) ? "CĐ" : "Đ";
-                    }
-                    const m = mapComment(midVal) || "";
-                    const e = mapComment(endVal) || "";
-                    const a = mapComment(avgVal) || "";
+                  const hasEnd = endVal !== undefined && endVal !== null && endVal !== "";
 
-                    formattedMid = m || autoComment || a || "";
-                    formattedEnd = e || autoComment || a || "";
-                    formattedAvg = a || autoComment || "";
+                  if (sub.isEvaluatedByScore) {
+                    formattedMid = midVal !== undefined && midVal !== null && midVal !== "" 
+                      ? (typeof midVal === "number" ? midVal.toFixed(1).replace(".", ",") : midVal.toString()) 
+                      : "";
+                    
+                    if (hasEnd) {
+                      formattedEnd = typeof endVal === "number" ? endVal.toFixed(1).replace(".", ",") : endVal.toString();
+                      formattedAvg = typeof avgVal === "number" ? avgVal.toFixed(1).replace(".", ",") : (avgVal || "").toString();
+                    }
+                  } else {
+                    // Remark-based subject
+                    formattedMid = midVal !== undefined && midVal !== null && midVal !== "" ? mapComment(midVal) : "";
+                    
+                    if (hasEnd) {
+                      formattedEnd = mapComment(endVal);
+                      formattedAvg = mapComment(avgVal) || formattedEnd;
+                    }
                   }
 
                   return (
