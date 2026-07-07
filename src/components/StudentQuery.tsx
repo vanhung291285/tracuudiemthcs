@@ -760,7 +760,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         onChange={(e) => setSelectedAcademicYear(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 md:py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       >
-                        <option value="">--Chọn năm học--</option>
+                        <option value="">--Chọn năm học cần tra cứu--</option>
                         {academicYears.map((year, idx) => (
                           <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
                             {year.yearName}
