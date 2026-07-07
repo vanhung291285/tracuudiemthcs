@@ -534,10 +534,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         <div className="w-full max-w-full bg-white/90 border-b border-slate-200 shadow-sm overflow-hidden py-1.5 flex items-center relative z-20">
           <div className="bg-[#E53935] text-white text-[10px] font-black uppercase px-3 md:px-4 py-1.5 z-10 absolute left-0 top-0 bottom-0 flex items-center shadow-[2px_0_10px_rgba(0,0,0,0.1)] whitespace-nowrap gap-1 md:gap-1.5">
             <Medal className="w-3.5 h-3.5 animate-pulse text-amber-300" />
-            <span className="hidden sm:inline">Bảng Vàng Danh Dự</span>
-            <span className="sm:hidden">Bảng Vàng</span>
+            <span className="hidden sm:inline">Học Sinh Tiêu Biểu Của Nhà Trường</span>
+            <span className="sm:hidden">Học Sinh Tiêu Biểu</span>
           </div>
-          <div className="w-full min-w-0 overflow-hidden flex items-center h-full pl-[110px] sm:pl-[170px] md:pl-[190px]">
+          <div className="w-full min-w-0 overflow-hidden flex items-center h-full pl-[160px] sm:pl-[265px] md:pl-[280px]">
             <div className="animate-marquee-horizontal flex gap-6 md:gap-8 items-center h-full w-max pr-8">
               {/* Double the array for seamless infinite loop */}
               {[...topStudents, ...topStudents].map((student, idx) => {
@@ -760,7 +760,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         onChange={(e) => setSelectedAcademicYear(e.target.value)}
                         className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 md:py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#337819] focus:bg-white transition cursor-pointer"
                       >
-                        <option value="">--Chọn năm học cần tra cứu--</option>
+                        <option value="">--Chọn năm học--</option>
                         {academicYears.map((year, idx) => (
                           <option key={`year-query-${year.id && year.id !== "undefined" ? year.id : `idx-${idx}`}`} value={year.yearName}>
                             {year.yearName}
