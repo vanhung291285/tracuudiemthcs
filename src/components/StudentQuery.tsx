@@ -1274,7 +1274,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
                 <AnimatePresence initial={false}>
                   {recentActivities.length > 0 ? (
                     recentActivities.map((activity, idx) => (
