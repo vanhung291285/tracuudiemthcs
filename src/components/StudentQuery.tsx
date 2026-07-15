@@ -495,7 +495,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       if (results && results.length > 0) {
         if (results.length === 1) {
           const student = results[0];
-          await dbService.logSearchActivity(student.fullName, student.className, student.academicYear);
+          await dbService.logSearchActivity(student.fullName, student.className, selectedAcademicYear);
           const updatedActivities = await dbService.getRecentActivities();
           setRecentActivities(updatedActivities);
           onQueryResult(student, selectedTerm);
@@ -517,7 +517,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const handleSelectMatch = async (student: Student) => {
     setMultipleMatches([]);
-    await dbService.logSearchActivity(student.fullName, student.className, student.academicYear);
+    await dbService.logSearchActivity(student.fullName, student.className, selectedAcademicYear);
     const updatedActivities = await dbService.getRecentActivities();
     setRecentActivities(updatedActivities);
     onQueryResult(student, selectedTerm);
