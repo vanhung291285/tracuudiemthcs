@@ -99,4 +99,5 @@ export interface RecentActivity {
   className: string;
   queriedAt: string;
   count?: number;
+  academicYear?: string;
 }

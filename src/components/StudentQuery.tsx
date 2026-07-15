@@ -100,6 +100,61 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     return str.toLowerCase().split(' ').map(s => s.charAt(0).toUpperCase() + s.substring(1)).join(' ');
   };
 
+  const maskStudentName = (name: string) => {
+    if (!name) return "";
+    const words = toDisplayCase(name).split(' ');
+    if (words.length <= 1) {
+      const word = words[0];
+      return word.charAt(0) + "*".repeat(Math.max(2, word.length - 1));
+    }
+    return words.map((word, idx) => {
+      if (idx === words.length - 1) {
+        if (word.length === 0) return "";
+        return word.charAt(0) + "*".repeat(Math.max(2, word.length - 1));
+      }
+      return word;
+    }).join(" ");
+  };
+
+  const renderColoredName = (maskedName: string) => {
+    if (!maskedName) return null;
+    const words = maskedName.split(' ');
+    const colors = [
+      'text-sky-600 font-extrabold',
+      'text-indigo-600 font-extrabold',
+      'text-emerald-600 font-extrabold',
+      'text-rose-500 font-extrabold',
+      'text-amber-600 font-extrabold',
+      'text-violet-600 font-extrabold',
+      'text-teal-600 font-extrabold',
+      'text-fuchsia-600 font-extrabold'
+    ];
+
+    return (
+      <span className="inline-flex gap-1 flex-wrap select-none">
+        {words.map((word, idx) => {
+          const colorClass = colors[idx % colors.length];
+          return (
+            <span key={idx} className={`${colorClass} tracking-wide hover:scale-105 transition-transform duration-200`}>
+              {word}
+            </span>
+          );
+        })}
+      </span>
+    );
+  };
+
+  const maskClassName = (className: string) => {
+    if (!className) return "";
+    const trimClass = className.trim();
+    const gradeMatch = trimClass.match(/^(\d+)/);
+    if (gradeMatch) {
+      const grade = gradeMatch[1];
+      return grade + "*".repeat(Math.max(1, trimClass.length - grade.length));
+    }
+    return trimClass.charAt(0) + "*".repeat(Math.max(1, trimClass.length - 1));
+  };
+
   const roundScore = (num: number): number => {
     return Math.round(num * 10) / 10;
   };
@@ -440,7 +495,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
       if (results && results.length > 0) {
         if (results.length === 1) {
           const student = results[0];
-          await dbService.logSearchActivity(student.fullName, student.className);
+          await dbService.logSearchActivity(student.fullName, student.className, student.academicYear);
           const updatedActivities = await dbService.getRecentActivities();
           setRecentActivities(updatedActivities);
           onQueryResult(student, selectedTerm);
@@ -462,7 +517,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
 
   const handleSelectMatch = async (student: Student) => {
     setMultipleMatches([]);
-    await dbService.logSearchActivity(student.fullName, student.className);
+    await dbService.logSearchActivity(student.fullName, student.className, student.academicYear);
     const updatedActivities = await dbService.getRecentActivities();
     setRecentActivities(updatedActivities);
     onQueryResult(student, selectedTerm);
@@ -1291,13 +1346,18 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                             <User className="w-5 h-5 text-slate-400" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-[13px] md:text-sm font-bold text-slate-800 truncate mb-1">
-                              {toDisplayCase(activity.studentName)}
+                            <div className="text-[13px] md:text-sm font-bold mb-1">
+                              {renderColoredName(maskStudentName(activity.studentName))}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-[11px] font-medium text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                                Lớp {activity.className}
+                                Lớp {maskClassName(activity.className)}
                               </span>
+                              {activity.academicYear && (
+                                <span className="text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                  Năm học {activity.academicYear}
+                                </span>
+                              )}
                               {activity.count && activity.count > 1 && (
                                 <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-md border border-blue-100">
                                   {activity.count} lần

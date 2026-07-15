@@ -1726,35 +1726,65 @@ class DatabaseService {
   }
 
   // Activity feed: Logging searches with robust persistence
-  public async logSearchActivity(studentName: string, className: string): Promise<void> {
+  public async logSearchActivity(studentName: string, className: string, academicYear?: string): Promise<void> {
     const now = new Date().toISOString();
     
     // 1. Supabase Persistence (Primary)
     if (this.supabase) {
       try {
         // Fetch current count for upsert logic
-        const { data: existing, error: fetchError } = await this.supabase
+        const query = this.supabase
           .from("search_activity")
           .select("id, count")
           .eq("student_name", studentName)
-          .eq("class_name", className)
-          .maybeSingle();
+          .eq("class_name", className);
+
+        const { data: existing, error: fetchError } = await query.maybeSingle();
 
         if (existing) {
-          await this.supabase
+          const updatePayload: any = { 
+            count: (existing.count || 1) + 1,
+            queried_at: now
+          };
+          if (academicYear) {
+            updatePayload.academic_year = academicYear;
+          }
+
+          const { error: updateError } = await this.supabase
             .from("search_activity")
-            .update({ 
-              count: (existing.count || 1) + 1,
-              queried_at: now
-            })
+            .update(updatePayload)
             .eq("id", existing.id);
+
+          if (updateError && (updateError.message.includes("academic_year") || updateError.message.includes("academicYear"))) {
+            // Fallback if academic_year column doesn't exist
+            delete updatePayload.academic_year;
+            await this.supabase
+              .from("search_activity")
+              .update(updatePayload)
+              .eq("id", existing.id);
+          }
         } else {
-          await this.supabase.from("search_activity").insert({
+          const insertPayload: any = {
             student_name: studentName,
             class_name: className,
             queried_at: now,
             count: 1
-          });
+          };
+          if (academicYear) {
+            insertPayload.academic_year = academicYear;
+          }
+
+          const { error: insertError } = await this.supabase
+            .from("search_activity")
+            .insert(insertPayload);
+
+          if (insertError && (insertError.message.includes("academic_year") || insertError.message.includes("academicYear"))) {
+            // Fallback if academic_year column doesn't exist
+            delete insertPayload.academic_year;
+            await this.supabase
+              .from("search_activity")
+              .insert(insertPayload);
+          }
         }
       } catch (err) {
         console.warn("Database sync deferred:", err);
@@ -1767,12 +1797,16 @@ class DatabaseService {
       let activities = JSON.parse(stored) as RecentActivity[];
       const existingIndex = activities.findIndex(a => 
         a.studentName.toLowerCase() === studentName.toLowerCase() && 
-        a.className === className
+        a.className === className &&
+        (!academicYear || !a.academicYear || a.academicYear === academicYear)
       );
 
       if (existingIndex !== -1) {
         activities[existingIndex].count = (activities[existingIndex].count || 1) + 1;
         activities[existingIndex].queriedAt = now;
+        if (academicYear) {
+          activities[existingIndex].academicYear = academicYear;
+        }
         const existing = activities.splice(existingIndex, 1)[0];
         activities.unshift(existing);
       } else {
@@ -1781,7 +1815,8 @@ class DatabaseService {
           studentName,
           className,
           queriedAt: now,
-          count: 1
+          count: 1,
+          academicYear
         });
       }
       localStorage.setItem("thcs_recent_activities", JSON.stringify(activities.slice(0, 20)));
@@ -1805,7 +1840,8 @@ class DatabaseService {
             studentName: d.student_name || d.studentName || "Học sinh",
             className: d.class_name || d.className || "N/A",
             queriedAt: d.queried_at || d.queriedAt || new Date().toISOString(),
-            count: d.count || 1
+            count: d.count || 1,
+            academicYear: d.academic_year || d.academicYear || undefined
           }));
         }
       } catch (err) {
