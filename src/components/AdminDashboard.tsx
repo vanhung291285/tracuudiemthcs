@@ -4991,6 +4991,7 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
 ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS academic_year TEXT DEFAULT '2025-2026';
 ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS advisor_name TEXT;
 ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS room_number TEXT;
+ALTER TABLE search_activity ADD COLUMN IF NOT EXISTS academic_year TEXT;
 ALTER TABLE students DROP CONSTRAINT IF EXISTS students_student_code_key;
 ALTER TABLE students DROP CONSTRAINT IF EXISTS students_student_code_year_unique;
 ALTER TABLE students ADD CONSTRAINT students_student_code_year_unique UNIQUE (student_code, academic_year);
@@ -5067,6 +5068,7 @@ CREATE TABLE IF NOT EXISTS search_activity (
   id BIGSERIAL PRIMARY KEY,
   student_name TEXT NOT NULL,
   class_name TEXT NOT NULL,
+  academic_year TEXT,
   queried_at TIMESTAMPTZ DEFAULT NOW(),
   count INTEGER DEFAULT 1
 );
@@ -5181,6 +5183,7 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS teacher TEXT;
 ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "academicYear" TEXT DEFAULT '2025-2026';
 ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "advisorName" TEXT;
 ALTER TABLE portal_classes ADD COLUMN IF NOT EXISTS "roomNumber" TEXT;
+ALTER TABLE search_activity ADD COLUMN IF NOT EXISTS "academicYear" TEXT;
 ALTER TABLE students DROP CONSTRAINT IF EXISTS students_studentCode_key;
 ALTER TABLE students DROP CONSTRAINT IF EXISTS students_studentCode_year_unique;
 ALTER TABLE students ADD CONSTRAINT students_studentCode_year_unique UNIQUE ("studentCode", "academicYear");
@@ -5256,6 +5259,7 @@ CREATE TABLE IF NOT EXISTS search_activity (
   id BIGSERIAL PRIMARY KEY,
   student_name TEXT NOT NULL,
   class_name TEXT NOT NULL,
+  "academicYear" TEXT,
   queried_at TIMESTAMPTZ DEFAULT NOW(),
   count INTEGER DEFAULT 1
 );
