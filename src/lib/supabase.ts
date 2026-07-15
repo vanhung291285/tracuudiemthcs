@@ -1797,8 +1797,7 @@ class DatabaseService {
       let activities = JSON.parse(stored) as RecentActivity[];
       const existingIndex = activities.findIndex(a => 
         a.studentName.toLowerCase() === studentName.toLowerCase() && 
-        a.className === className &&
-        (!academicYear || !a.academicYear || a.academicYear === academicYear)
+        a.className.toLowerCase() === className.toLowerCase()
       );
 
       if (existingIndex !== -1) {
@@ -1826,6 +1825,14 @@ class DatabaseService {
   }
 
   public async getRecentActivities(): Promise<RecentActivity[]> {
+    let localActivities: RecentActivity[] = [];
+    const stored = localStorage.getItem("thcs_recent_activities") || "[]";
+    try {
+      localActivities = JSON.parse(stored) as RecentActivity[];
+    } catch {
+      // ignore
+    }
+
     if (this.supabase) {
       try {
         const { data, error } = await this.supabase
@@ -1835,27 +1842,32 @@ class DatabaseService {
           .limit(10);
         
         if (!error && data) {
-          return data.map((d: any) => ({
-            id: d.id?.toString() || Math.random().toString(),
-            studentName: d.student_name || d.studentName || "Học sinh",
-            className: d.class_name || d.className || "N/A",
-            queriedAt: d.queried_at || d.queriedAt || new Date().toISOString(),
-            count: d.count || 1,
-            academicYear: d.academic_year || d.academicYear || undefined
-          }));
+          return data.map((d: any) => {
+            const sName = d.student_name || d.studentName || "Học sinh";
+            const cName = d.class_name || d.className || "N/A";
+            
+            // Find if we have a local cached academic year for this student name & class
+            const matchedLocal = localActivities.find(
+              la => la.studentName.toLowerCase() === sName.toLowerCase() && 
+                    la.className.toLowerCase() === cName.toLowerCase()
+            );
+
+            return {
+              id: d.id?.toString() || Math.random().toString(),
+              studentName: sName,
+              className: cName,
+              queriedAt: d.queried_at || d.queriedAt || new Date().toISOString(),
+              count: d.count || 1,
+              academicYear: d.academic_year || d.academicYear || matchedLocal?.academicYear || undefined
+            };
+          });
         }
       } catch (err) {
         console.error("Error fetching activities:", err);
       }
     }
 
-    // Local fallback
-    const stored = localStorage.getItem("thcs_recent_activities") || "[]";
-    try {
-      return JSON.parse(stored) as RecentActivity[];
-    } catch {
-      return [];
-    }
+    return localActivities;
   }
 }
 
