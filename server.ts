@@ -441,6 +441,12 @@ async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
         const href = aTag.attr("href");
         if (!href) return;
         
+        const hrefLower = href.toLowerCase();
+        // Must contain .html to be a valid news article page on Nukeviet/WordPress portals
+        if (!hrefLower.includes(".html")) return;
+        // Skip static documents/laws departments, about, contact pages
+        if (hrefLower.includes("/laws/") || hrefLower.includes("/about/") || hrefLower.includes("/introduce/") || hrefLower.includes("/contact/") || hrefLower.includes("/download/")) return;
+
         let title = aTag.text().trim();
         // Skip tiny text (e.g. "Chi tiết", "Xem thêm") or huge paragraphs
         if (title.length < 18 || title.length > 180) return;
@@ -500,6 +506,12 @@ async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
         const href = aTag.attr("href");
         if (!href) return;
         
+        const hrefLower = href.toLowerCase();
+        // Must contain .html to be a valid news article page on Nukeviet/WordPress portals
+        if (!hrefLower.includes(".html")) return;
+        // Skip static documents/laws departments, about, contact pages
+        if (hrefLower.includes("/laws/") || hrefLower.includes("/about/") || hrefLower.includes("/introduce/") || hrefLower.includes("/contact/") || hrefLower.includes("/download/")) return;
+
         let title = aTag.text().trim();
         if (title.length < 18 || title.length > 180) return;
         
