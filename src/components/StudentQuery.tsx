@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   Search, 
   GraduationCap, 
@@ -232,10 +232,10 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     }
   }, [availableClasses]);
 
-  const fetchNews = async (url?: string) => {
+  const fetchNews = async (url?: string, forceRefresh = false) => {
     try {
       const targetUrl = url || newsSourceUrl;
-      const response = await fetch(`/api/news?source=${encodeURIComponent(targetUrl)}`);
+      const response = await fetch(`/api/news?${forceRefresh ? 'refresh=true&' : ''}source=${encodeURIComponent(targetUrl)}`);
       if (!response.ok) throw new Error("Server error");
       const result = await response.json();
       if (result && result.data && result.data.length > 0) {
@@ -355,7 +355,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
   };
 
   useEffect(() => {
-    fetchNews();
     fetchRecentActivities();
     fetchAcademicYears();
   }, []);
@@ -440,17 +439,25 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
         
         // Pre-populate cached news instantly to prevent empty flash
         const cachedNewsStr = await dbService.getPortalSetting("portal_cached_news", "");
+        let hasPrepopulated = false;
         if (cachedNewsStr) {
           try {
             const cached = JSON.parse(cachedNewsStr);
             if (Array.isArray(cached) && cached.length > 0) {
               setNewsItems(cached);
               setNewsSource(new URL(nUrl).hostname);
+              setNewsLoading(false); // Disable skeleton load if cached news is instantly ready
+              hasPrepopulated = true;
             }
           } catch { }
         }
 
-        fetchNews(nUrl);
+        if (!hasPrepopulated) {
+          setNewsLoading(true);
+        }
+
+        // Silently sync and update the latest articles in the background
+        fetchNews(nUrl, true);
         
         if (!nameEnabled && cccdEnabled) {
           setSearchMode("cccd");
@@ -529,6 +536,40 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
     setDob(date);
     setError("");
   };
+
+  const sortedNewsItems = useMemo(() => {
+    if (!newsItems) return [];
+    return [...newsItems].sort((a, b) => {
+      // Extract Nukeviet article ID from URL for high-fidelity exact sorting
+      const extractId = (url: string) => {
+        if (!url) return 0;
+        const match = url.match(/-(\d+)\.html/);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+
+      const idA = extractId(a.link || a.href || "");
+      const idB = extractId(b.link || b.href || "");
+      if (idA && idB && idA !== idB) {
+        return idB - idA; // Larger ID stands first (latest news)
+      }
+
+      const parseDateToTimestamp = (dateStr: string) => {
+        if (!dateStr) return 0;
+        const parts = dateStr.split(/[-/]/);
+        if (parts.length === 3) {
+          const d = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const y = parseInt(parts[2], 10);
+          return new Date(y, m, d).getTime();
+        }
+        const parsed = Date.parse(dateStr);
+        return isNaN(parsed) ? 0 : parsed;
+      };
+      const tA = a.timestamp || parseDateToTimestamp(a.date);
+      const tB = b.timestamp || parseDateToTimestamp(b.date);
+      return tB - tA;
+    });
+  }, [newsItems]);
 
   return (
     <div className="w-full flex-1 flex flex-col relative" id="student-query-root">
@@ -1185,61 +1226,68 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       </div>
                     ))}
                   </div>
-                ) : newsItems && newsItems.length > 0 ? (
+                ) : sortedNewsItems && sortedNewsItems.length > 0 ? (
                   <div className="space-y-4 py-2.5">
                     {/* Hero Feature: Primary Latest News (Exactly like the design mockup) */}
-                    {newsItems.slice(0, 1).map((item, idx) => (
+                    {sortedNewsItems.slice(0, 1).map((item, idx) => (
                       <a
                         key={`hero-${item.id || idx}`}
                         href={item.link || "https://suoilu.db.edu.vn"}
                         target="_blank"
                         referrerPolicy="no-referrer"
-                        className="flex flex-col gap-4 bg-white hover:bg-slate-50/50 p-3 sm:p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition duration-200 group cursor-pointer"
+                        className="block bg-white hover:bg-slate-50/20 p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition duration-250 group cursor-pointer"
                       >
-                        {/* Top: Beautiful article illustration image (Full-width stacked layout) */}
-                        <div className="w-full aspect-[16/10] sm:aspect-[16/9] bg-slate-50 rounded-lg overflow-hidden border border-slate-150 relative shadow-sm">
+                        {/* Top: Beautiful full-width article image */}
+                        <div className="w-full aspect-[16/9] sm:aspect-[16/8.5] bg-slate-50 rounded-xl overflow-hidden border border-slate-150 relative shadow-sm shrink-0 mb-4 flex items-center justify-center">
+                          {/* Background blurred image for premium immersive feel when contained */}
+                          <div 
+                            className="absolute inset-0 bg-cover bg-center blur-md opacity-25 scale-105"
+                            style={{ backgroundImage: `url(${item.image})` }}
+                          />
                           <img 
                             src={item.image} 
                             alt={item.title}
                             referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                            className="w-full h-full object-cover relative z-10 group-hover:scale-[1.01] transition-transform duration-300"
                             onError={(e) => {
                               const fallbacks = [
                                 "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&auto=format&fit=crop&q=60",
                                 "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=60",
                                 "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800&auto=format&fit=crop&q=60",
-                                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=60",
-                                "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&auto=format&fit=crop&q=60"
+                                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=60"
                               ];
-                              (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
+                              const fb = fallbacks[idx % fallbacks.length];
+                              (e.target as HTMLImageElement).src = fb;
+                              const bg = (e.target as HTMLElement).previousElementSibling as HTMLElement;
+                              if (bg) bg.style.backgroundImage = `url(${fb})`;
                             }}
                           />
-                          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 shadow-md">
-                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-2 py-0.5 sm:py-1 rounded leading-none">
-                              Mới nhất
+                          <div className="absolute top-3 left-3 shadow-md z-20">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-[#E53935] text-white px-2.5 py-1 rounded leading-none">
+                              MỚI NHẤT
                             </span>
                           </div>
                         </div>
 
                         {/* Bottom: metadata, title and description details */}
-                        <div className="space-y-2 sm:space-y-3 min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[9px] text-[#337819] font-extrabold uppercase bg-[#337819]/10 px-1.5 py-0.5 rounded tracking-wide font-sans">
+                        <div className="space-y-3 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] text-[#337819] font-black uppercase bg-[#337819]/10 px-2 py-0.5 rounded tracking-wide font-sans">
                               {item.category}
                             </span>
-                            <span className="text-[9px] font-medium text-slate-300">•</span>
-                            <span className="font-mono text-[9px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded">
-                              {item.date}
+                            <span className="text-slate-300">•</span>
+                            <span className="font-mono text-[10px] text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded">
+                              {item.date || item.dateText || "Hôm nay"}
                             </span>
                           </div>
 
-                          <h3 className="font-black text-[#0E5482] text-sm sm:text-base md:text-lg leading-snug tracking-tight group-hover:text-[#337819] transition-colors flex items-start gap-1 uppercase">
+                          <h3 className="font-black text-[#0E5482] text-base sm:text-lg leading-snug tracking-tight group-hover:text-[#337819] transition-colors flex items-center justify-between gap-1.5 uppercase">
                             <span>{item.title}</span>
-                            <ExternalLink className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-1" />
+                            <ExternalLink className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0" />
                           </h3>
 
                           {item.description && (
-                            <p className="text-slate-600 text-xs sm:text-[13px] leading-relaxed text-justify font-medium border-t border-slate-100 pt-2">
+                            <p className="text-slate-600 text-xs sm:text-[13px] leading-relaxed text-justify font-medium pt-2 border-t border-slate-50">
                               {item.description}
                             </p>
                           )}
@@ -1248,23 +1296,27 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                     ))}
 
                     {/* Secondary News Row: Remaining 4 latest news items in a compact, highly polished list */}
-                    {newsItems.length > 1 && (
-                      <div className="pt-3 border-t border-slate-100/80">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">TIN TỨC LIÊN QUAN KHÁC</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {newsItems.slice(1, 5).map((item, idx) => (
+                    {sortedNewsItems.length > 1 && (
+                      <div className="pt-4 border-t border-slate-100/80">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">TIN TỨC LIÊN QUAN KHÁC</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                          {sortedNewsItems.slice(1, 5).map((item, idx) => (
                             <a
                               key={`news-${item.id || idx}`}
                               href={item.link || "https://suoilu.db.edu.vn"}
                               target="_blank"
                               referrerPolicy="no-referrer"
-                              className="p-2 bg-slate-50/40 hover:bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5 transition duration-150 group cursor-pointer"
+                              className="p-3 bg-slate-50/30 hover:bg-slate-50 rounded-2xl border border-slate-100/70 flex items-center gap-3.5 transition duration-150 group cursor-pointer"
                             >
-                              <div className="w-14 h-11 bg-slate-100 rounded overflow-hidden shrink-0 border border-slate-150 relative">
+                              <div className="w-20 h-14 sm:w-24 sm:h-16 bg-slate-100 rounded-xl overflow-hidden shrink-0 border border-slate-200 relative flex items-center justify-center shadow-sm">
+                                <div 
+                                  className="absolute inset-0 bg-cover bg-center blur-sm opacity-15"
+                                  style={{ backgroundImage: `url(${item.image})` }}
+                                />
                                 <img
                                   src={item.image}
                                   alt={item.title}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                  className="w-full h-full object-cover relative z-10 group-hover:scale-105 transition-transform duration-250"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => {
                                     const fallbacks = [
@@ -1273,18 +1325,21 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                                       "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=200&auto=format&fit=crop&q=60",
                                       "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=200&auto=format&fit=crop&q=60"
                                     ];
-                                    (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
+                                    const fb = fallbacks[idx % fallbacks.length];
+                                    (e.target as HTMLImageElement).src = fb;
+                                    const bg = (e.target as HTMLElement).previousElementSibling as HTMLElement;
+                                    if (bg) bg.style.backgroundImage = `url(${fb})`;
                                   }}
                                 />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-bold text-[10.5px] text-slate-700 leading-tight line-clamp-2 group-hover:text-[#337819] transition-colors">
+                              <div className="flex-1 min-w-0 space-y-1.5">
+                                <p className="font-bold text-[11px] sm:text-xs text-slate-800 leading-snug line-clamp-2 group-hover:text-[#337819] transition-colors uppercase">
                                   {item.title}
                                 </p>
-                                <div className="flex items-center gap-1.5 mt-1">
-                                  <span className="text-[8px] text-slate-400 font-bold font-mono">{item.date}</span>
-                                  <span className="text-[8px] text-slate-300">•</span>
-                                  <span className="text-[8px] text-[#337819] font-extrabold uppercase bg-[#337819]/5 px-1 py-0.2 rounded truncate max-w-[120px]">{item.category}</span>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-[9px] text-slate-400 font-bold font-mono bg-slate-100/80 px-1.5 py-0.5 rounded">{item.date || item.dateText || "Sự kiện"}</span>
+                                  <span className="text-slate-300">•</span>
+                                  <span className="text-[9px] text-[#337819] font-black uppercase bg-[#337819]/5 px-1.5 py-0.5 rounded truncate max-w-[155px]">{item.category}</span>
                                 </div>
                               </div>
                             </a>
