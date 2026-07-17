@@ -863,22 +863,6 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       if (finalItems.length >= 5) break; // Return exactly about 5 news items as requested
     }
 
-    // Reposition any "tổng kết năm học" or "lễ tổng kết" article to the top of finalItems
-    const tongKetIdx = finalItems.findIndex(item => {
-      const titleLower = item.title.toLowerCase();
-      return titleLower.includes("tổng kết") && titleLower.includes("năm học");
-    });
-    if (tongKetIdx > 0) {
-      const [tongKetItem] = finalItems.splice(tongKetIdx, 1);
-      finalItems.unshift(tongKetItem);
-    }
-
-    // Override date of first item if it is a "tổng kết" article to match July 14, 2026
-    const firstItem = finalItems[0];
-    if (firstItem && (firstItem.title.toLowerCase().includes("tổng kết") || firstItem.title.toLowerCase().includes("lễ tổng kết"))) {
-      firstItem.date = "14/07/2026";
-    }
-
     return finalItems;
   };
 
