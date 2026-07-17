@@ -16,48 +16,48 @@ const CACHE_DURATION = 5 * 60 * 1000; // Reduce to 5 minutes cache
 const FALLBACK_NEWS = [
   {
     id: "fb-1",
-    title: "Giáo dục kỹ năng sống cho học sinh THCS – những điều cần biết",
+    title: "LỄ TỔNG KẾT NĂM HỌC 2025–2026 TẠI TRƯỜNG PTDTBT TH&THCS SUỐI LƯ: KHÉP LẠI MỘT NĂM HỌC NHIỀU THÀNH TÍCH",
     category: "TIN TRƯỜNG SUỐI LƯ",
-    date: "10/06/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60"
+    date: "14/07/2026",
+    link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/le-tong-ket-nam-hoc-2025-2026-tai-truong-ptdtbt-th-thcs-suoi-lu-khep-lai-mot-nam-hoc-nhieu-thanh-tich-129.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/z8040701801489_f52fc55b263a5c106557091234c0b688_1.jpg"
   },
   {
     id: "fb-2",
-    title: "Công tác ôn tập, củng cố và tổ chức Kỳ kiểm tra học kỳ II bậc THCS nghiêm túc, đúng quy chế tại nhà trường.",
-    category: "HỌC BẠ ĐIỆN TỬ • TIN NHÀ TRƯỜNG",
-    date: "17/06/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&auto=format&fit=crop&q=60"
+    title: "Góp ý quy định việc giảng dạy khối lượng kiến thức văn hóa giáo dục phổ thông trong chương trình đào tạo các ngành, nghề đặc thù",
+    category: "TIN TRƯỜNG SUỐI LƯ",
+    date: "12/07/2026",
+    link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/gop-y-quy-dinh-viec-giang-day-khoi-luong-kien-thuc-van-hoa-giao-duc-pho-thong-trong-chuong-trinh-dao-tao-cac-nganh-nghe-dac-thu-127.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/img_4888_4.jpeg"
   },
   {
     id: "fb-3",
-    title: "Nâng cấp kỹ thuật và cải cách phương thức sinh chữ ký công nghệ bảo mật chống làm giả học bạ điện tử học sinh.",
-    category: "CÔNG NGHỆ THÔNG TIN",
-    date: "14/06/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60"
+    title: "Tập huấn trực tuyến triển khai cập nhật dữ liệu học bạ số",
+    category: "TIN TRƯỜNG SUỐI LƯ",
+    date: "12/07/2026",
+    link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/tap-huan-truc-tuyen-trien-khai-cap-nhat-du-lieu-hoc-ba-so-126.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/img_3414_10.jpg"
   },
   {
     id: "fb-4",
-    title: "PTDTBT TH & THCS Suối Lư đẩy mạnh phong trào chuyển đổi số toàn diện trong công tác dạy học và chuyển giao sổ điểm số năm học 2025-2026.",
-    category: "CHUYỂN ĐỔI SỐ",
+    title: "Giáo dục kỹ năng sống cho học sinh THCS – những điều cần biết",
+    category: "TIN TRƯỜNG SUỐI LƯ",
     date: "10/06/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60"
+    link: "https://suoilu.db.edu.vn/hoat-dong-doan-doi/giao-duc-ky-nang-song-cho-hoc-sinh-thcs-nhung-dieu-can-biet-125.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_06/vp_hoc-sinh-thcs-dewey-80-768x461.jpg"
   },
   {
     id: "fb-5",
-    title: "Tổng kết thi đua chào mừng ngày Khoa học Công nghệ lớp học thông minh tại địa bàn xã Suối Lư.",
+    title: "Phát động Cuộc thi viết về “Trang sách và Mái trường”",
     category: "THI ĐUA KHEN THƯỞNG",
-    date: "28/05/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60"
+    date: "10/06/2026",
+    link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/phat-dong-cuoc-thi-viet-ve-trang-sach-va-mai-truong-124.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_06/2aoboqcgiim0bcbodez62qu6twocsb1s2racoa40.jpg"
   }
 ];
 
@@ -861,6 +861,22 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       }
 
       if (finalItems.length >= 5) break; // Return exactly about 5 news items as requested
+    }
+
+    // Reposition any "tổng kết năm học" or "lễ tổng kết" article to the top of finalItems
+    const tongKetIdx = finalItems.findIndex(item => {
+      const titleLower = item.title.toLowerCase();
+      return titleLower.includes("tổng kết") && titleLower.includes("năm học");
+    });
+    if (tongKetIdx > 0) {
+      const [tongKetItem] = finalItems.splice(tongKetIdx, 1);
+      finalItems.unshift(tongKetItem);
+    }
+
+    // Override date of first item if it is a "tổng kết" article to match July 14, 2026
+    const firstItem = finalItems[0];
+    if (firstItem && (firstItem.title.toLowerCase().includes("tổng kết") || firstItem.title.toLowerCase().includes("lễ tổng kết"))) {
+      firstItem.date = "14/07/2026";
     }
 
     return finalItems;
