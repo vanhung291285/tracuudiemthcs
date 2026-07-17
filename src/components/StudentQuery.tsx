@@ -1103,7 +1103,7 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
           <div className="lg:col-span-7 space-y-6">
             
             {/* Official Bulletin / Notifications */}
-            <div className="glass-card p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
+            <div className="glass-card p-4 sm:p-6 rounded-xl border border-white/50 shadow-lg relative z-10">
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b pb-3 border-slate-100 gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5">
@@ -1194,49 +1194,55 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         href={item.link || "https://suoilu.db.edu.vn"}
                         target="_blank"
                         referrerPolicy="no-referrer"
-                        className="flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-slate-50/70 p-2 -mx-2 rounded-xl transition duration-200 group cursor-pointer"
+                        className="flex flex-col gap-4 bg-white hover:bg-slate-50/50 p-3 sm:p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition duration-200 group cursor-pointer"
                       >
-                        {/* Left: Beautiful article illustration image */}
-                        <div className="w-full sm:w-28 h-20 bg-slate-50 rounded-lg overflow-hidden shrink-0 border border-slate-150 relative">
+                        {/* Top: Beautiful article illustration image (Full-width stacked layout) */}
+                        <div className="w-full aspect-[16/10] sm:aspect-[16/9] bg-slate-50 rounded-lg overflow-hidden border border-slate-150 relative shadow-sm">
                           <img 
                             src={item.image} 
                             alt={item.title}
                             referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
                             onError={(e) => {
                               const fallbacks = [
-                                "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=500&auto=format&fit=crop&q=60",
-                                "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60",
-                                "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60",
-                                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60",
-                                "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500&auto=format&fit=crop&q=60"
+                                "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&auto=format&fit=crop&q=60",
+                                "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=60",
+                                "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800&auto=format&fit=crop&q=60",
+                                "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&auto=format&fit=crop&q=60",
+                                "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&auto=format&fit=crop&q=60"
                               ];
                               (e.target as HTMLImageElement).src = fallbacks[idx % fallbacks.length];
                             }}
                           />
-                          <div className="absolute top-1 left-1">
-                            <span className="text-[8px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-1.5 py-0.5 rounded leading-none">
+                          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 shadow-md">
+                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[#E53935]/95 text-white px-2 py-0.5 sm:py-1 rounded leading-none">
                               Mới nhất
                             </span>
                           </div>
                         </div>
 
-                        {/* Right: metadata & title details */}
-                        <div className="flex-1 space-y-1.5">
-                          <div className="flex items-center gap-1.5">
+                        {/* Bottom: metadata, title and description details */}
+                        <div className="space-y-2 sm:space-y-3 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[9px] text-[#337819] font-extrabold uppercase bg-[#337819]/10 px-1.5 py-0.5 rounded tracking-wide font-sans">
                               {item.category}
                             </span>
                             <span className="text-[9px] font-medium text-slate-300">•</span>
-                            <span className="font-mono text-[9px] text-slate-400 font-bold">
+                            <span className="font-mono text-[9px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded">
                               {item.date}
                             </span>
                           </div>
 
-                          <p className="font-extrabold text-slate-800 text-sm sm:text-base leading-snug group-hover:text-[#337819] transition-colors flex items-start gap-1">
+                          <h3 className="font-black text-[#0E5482] text-sm sm:text-base md:text-lg leading-snug tracking-tight group-hover:text-[#337819] transition-colors flex items-start gap-1 uppercase">
                             <span>{item.title}</span>
-                            <ExternalLink className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-1" />
-                          </p>
+                            <ExternalLink className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-1" />
+                          </h3>
+
+                          {item.description && (
+                            <p className="text-slate-600 text-xs sm:text-[13px] leading-relaxed text-justify font-medium border-t border-slate-100 pt-2">
+                              {item.description}
+                            </p>
+                          )}
                         </div>
                       </a>
                     ))}
