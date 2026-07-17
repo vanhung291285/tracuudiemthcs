@@ -27,6 +27,36 @@ function extractArticleId(href: string): number {
   return 0;
 }
 
+// Helper to dynamically map Nukeviet path segments to pretty human categories
+function getCategoryFromUrl(href: string, title: string): string {
+  if (!href) return "TIN TRƯỜNG SUỐI LƯ";
+  const hLower = href.toLowerCase();
+  if (hLower.includes("/hoat-dong-cua-nghanh/")) return "HOẠT ĐỘNG CỦA NGÀNH";
+  if (hLower.includes("/tin-tuc-su-kien/")) return "TIN TỨC • SỰ KIỆN";
+  if (hLower.includes("/hoat-dong-doan-doi/")) return "HOẠT ĐỘNG ĐOÀN ĐỘI";
+  if (hLower.includes("/khoa-hoc/")) return "KHOA HỌC • TRI ÂN";
+  if (hLower.includes("/hoat-dong-chuyen-mon/")) return "HOẠT ĐỘNG CHUYÊN MÔN";
+  if (hLower.includes("/hoat-dong-cong-nghe-thong-tin/")) return "CHUYỂN ĐỔI SỐ • CNTT";
+  if (hLower.includes("/hoat-dong-cong-doan-10/")) return "HOẠT ĐỘNG BÁN TRÚ";
+  
+  // Fallback to title keywords if URL doesn't match
+  const tLower = title.toLowerCase();
+  if (tLower.includes("hội nghị") || tLower.includes("đại hội")) {
+    return "SỰ KIỆN • ĐẠI HỘI CHI BỘ";
+  } else if (tLower.includes("phát động") || tLower.includes("thi đua") || tLower.includes("học sinh giỏi") || tLower.includes("khen thưởng")) {
+    return "THI ĐUA KHEN THƯỞNG";
+  } else if (tLower.includes("tuyển sinh") || tLower.includes("lớp 10") || tLower.includes("lớp 6") || tLower.includes("xét tốt nghiệp")) {
+    return "TUYỂN SINH • HỌC BẠ";
+  } else if (tLower.includes("chuyên đề") || tLower.includes("ngoại khóa") || tLower.includes("hoạt động") || tLower.includes("trải nghiệm")) {
+    return "CHUYÊN ĐỀ DẠY HỌC";
+  } else if (tLower.includes("ôn tập") || tLower.includes("kiểm tra") || tLower.includes("thi") || tLower.includes("học tập")) {
+    return "DẠY VÀ HỌC";
+  } else if (tLower.includes("chuyên đổi số") || tLower.includes("công nghệ") || tLower.includes("học bạ điện tử") || tLower.includes("chuyển đổi số")) {
+    return "CHUYỂN ĐỔI SỐ";
+  }
+  return "TIN TRƯỜNG SUỐI LƯ";
+}
+
 // Multi-portal cache map to prevent cross-site cache pollution and ensure high fidelity per-school news
 let newsCacheMap: { [sourceUrl: string]: { data: any[]; timestamp: number } } = {};
 const CACHE_DURATION = 1 * 60 * 1000; // Reduce cache to 1 minute to ensure automatic sync for new updates
@@ -425,24 +455,16 @@ async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
 function parseDirectHTML(htmlContent: string): any[] {
   try {
     const $ = cheerio.load(htmlContent);
-    const candidates: any[] = [];
+    const articleMap = new Map<string, {
+      title: string;
+      href: string;
+      image: string;
+      dateText: string;
+      timestamp: number;
+      description: string;
+    }>();
 
-    // Smart heuristic: detect if the page contains .html news links.
-    // If it does (Nukeviet, etc.), we enforce .html for precision.
-    // If it doesn't (WordPress, modern SPA portals), we don't require .html!
-    let hasHtmlLinksOnPage = false;
-    $("a").each((_, el) => {
-      const h = $(el).attr("href");
-      if (h) {
-        const hLower = h.toLowerCase();
-        if (hLower.includes(".html") && !hLower.includes("/laws/") && !hLower.includes("/download/")) {
-          hasHtmlLinksOnPage = true;
-          return false; // break
-        }
-      }
-    });
-
-    const isArticleHref = (href: string, isGenericSnoop: boolean): boolean => {
+    const isArticleHref = (href: string): boolean => {
       if (!href) return false;
       const hrefLower = href.toLowerCase();
       
@@ -458,304 +480,174 @@ function parseDirectHTML(htmlContent: string): any[] {
       ];
       if (ignoreWords.some(word => hrefLower.includes(word))) return false;
       
-      // Check if it's a typical article link pattern:
-      // 1. Ends in .html
-      // 2. Contains common article categories in path
-      // 3. Or contains several hyphens (slug)
+      // We enforce .html for Nukeviet pages, or if the URL has common article categories in path, or contains several hyphens (slug)
       const hasHtml = hrefLower.includes(".html");
       const hasArticleCategory = [
         "/tin-tuc", "/su-kien", "/hoat-dong", "/giao-duc", "/thong-bao", 
-        "/tin-truong", "/doan-doi", "/chuyen-de", "/giao-an", "/bai-viet"
+        "/tin-truong", "/doan-doi", "/chuyen-de", "/giao-an", "/bai-viet",
+        "/khoa-hoc/", "/hoat-dong-cua-nghanh/", "/hoat-dong-chuyen-mon/",
+        "/hoat-dong-doan-doi/", "/hoat-dong-cong-nghe-thong-tin/", "/hoat-dong-cong-doan-10/"
       ].some(cat => hrefLower.includes(cat));
       
-      // Count hyphens in slug path
       const urlPath = hrefLower.replace(/^https?:\/\/[^/]+/, "");
       const hyphensCount = (urlPath.split('/').pop() || "").split('-').length - 1;
-      const isSlug = hyphensCount >= 3; // e.g. "le-tong-ket-nam-hoc" has 4 hyphens
+      const isSlug = hyphensCount >= 2; 
       
-      if (hasHtml || hasArticleCategory || isSlug) {
-        return true;
-      }
-      
-      if (isGenericSnoop) {
-        if (urlPath.length < 15 || urlPath === "/" || !urlPath.includes("/")) return false;
-        return hyphensCount >= 2;
-      }
-      
-      return false;
+      return hasHtml || hasArticleCategory || isSlug;
     };
 
-    const itemSelector = [
-      "article", 
-      ".news_column", 
-      ".news-item", 
-      ".post-item", 
-      ".tin-tuc-item", 
-      ".news-box", 
-      ".post-block", 
-      ".item-news", 
-      ".views-row", 
-      ".wp-block-post", 
-      ".grid-item", 
-      ".entry-item", 
-      ".td-block-span4", 
-      ".td-block-span6", 
-      ".td-block-span12", 
-      ".post-column", 
-      ".panel-body", 
-      ".content-box", 
-      ".main-show"
-    ].join(", ");
+    $("a").each((_, aElem) => {
+      const aTag = $(aElem);
+      const href = aTag.attr("href");
+      if (!href || !isArticleHref(href)) return;
 
-    $(itemSelector).each((_, elem) => {
-      const aTags = $(elem).find("a");
-      aTags.each((_, aElem) => {
-        const aTag = $(aElem);
-        const href = aTag.attr("href");
-        if (!href || !isArticleHref(href, false)) return;
+      // Normalize href
+      let normHref = href.trim();
+      normHref = normHref.replace(/^https?:\/\/(www\.)?suoilu\.db\.edu\.vn/i, "");
+      if (!normHref.startsWith("/") && !normHref.startsWith("http")) {
+        normHref = "/" + normHref;
+      }
 
-        let title = aTag.text().replace(/\s+/g, " ").trim();
-        if (title.length < 12 || title.length > 220) return;
-        
-        const lowerText = title.toLowerCase();
-        const skipPatterns = [
-          "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
-          "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
-          "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
-          "cơ cấu tổ chức", "ban giám hiệu", "kết quả tìm kiếm", "chọn năm học",
-          "tra cứu điểm", "đăng ký", "phân hiệu", "lớp học", "trực tuyến", "video",
-          "album ảnh", "thư viện ảnh", "lịch thi", "thời khóa biểu", "thực đơn",
-          "hỏi đáp", "đăng ký", "bản quyền", "hướng dẫn sử dụng", "chi tiết", "xem chi tiết",
-          "công khai", "ba công khai", "chất lượng giáo dục", "văn bản pháp quy", "thủ tục hành chính",
-          "kế hoạch chiến lược", "quy chế", "định mức", "thu chi", "tài chính", "danh mục",
-          "thống kê", "phòng giáo dục", "bộ giáo dục", "sở giáo dục"
-        ];
-        if (skipPatterns.some(p => lowerText.includes(p))) return;
-        
-        let dateText = "";
-        let timestamp = 0;
-        const containerText = $(elem).text() || "";
+      let existing = articleMap.get(normHref);
+      if (!existing) {
+        existing = {
+          title: "",
+          href: normHref,
+          image: "",
+          dateText: "",
+          timestamp: 0,
+          description: ""
+        };
+        articleMap.set(normHref, existing);
+      }
 
-        const articleId = extractArticleId(href);
-        if (articleId && SUOILU_DATES[articleId]) {
-          dateText = SUOILU_DATES[articleId];
-          timestamp = parseVietnameseDate(dateText).getTime();
+      // 1. Try to get title (if tag contains non-empty text)
+      const text = aTag.text().replace(/\s+/g, " ").trim();
+      if (text.length >= 10 && text.length <= 250) {
+        const skip = ["trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ", "video", "album", "góp ý", "thư viện", "chọn năm học"];
+        if (!skip.some(s => text.toLowerCase().includes(s))) {
+          // Keep the longest title found or prefer the one that is currently not empty
+          if (!existing.title || text.length > existing.title.length) {
+            existing.title = text;
+          }
+        }
+      }
+
+      // 2. Try to get image from inside the a tag
+      const imgInside = aTag.find("img").first();
+      if (imgInside.length > 0) {
+        const src = imgInside.attr("data-src") || imgInside.attr("src") || imgInside.attr("data-original") || "";
+        if (src && isValidImage(src)) {
+          existing.image = src;
+        }
+      }
+
+      // Find the parent container for more context (image, date, description)
+      const parent = aTag.closest("div, li, p, td, tr, article, .block_news, .tms_bg_news");
+      if (parent.length > 0) {
+        // If image not found inside, search the parent
+        if (!existing.image) {
+          const imgNear = parent.find("img").first();
+          if (imgNear.length > 0) {
+            const src = imgNear.attr("data-src") || imgNear.attr("src") || imgNear.attr("data-original") || "";
+            if (src && isValidImage(src)) {
+              existing.image = src;
+            }
+          }
         }
 
-        if (!dateText) {
-          // Search for time like hh:mm nearby
-          let hour = 0;
-          let minute = 0;
-          const timeMatch = containerText.match(/(\d{1,2}):(\d{2})/);
-          if (timeMatch) {
-            hour = parseInt(timeMatch[1], 10);
-            minute = parseInt(timeMatch[2], 10);
+        // Try to parse description if not present
+        if (!existing.description) {
+          let description = "";
+          const descSelectors = [".intro", ".summary", ".description", ".excerpt", ".post-excerpt", ".lead", "p"];
+          for (const ds of descSelectors) {
+            const descElem = parent.find(ds).first();
+            if (descElem.length > 0) {
+              const txt = descElem.text().trim();
+              if (txt.length > 30 && txt.length < 400 && !txt.includes(existing.title)) {
+                description = txt;
+                break;
+              }
+            }
           }
+          if (!description) {
+            parent.find("p, span").each((_, sibling) => {
+              const txt = $(sibling).text().trim();
+              if (txt.length > 30 && txt.length < 400 && !txt.includes(existing.title)) {
+                description = txt;
+                return false; // break
+              }
+            });
+          }
+          if (description) {
+            existing.description = description;
+          }
+        }
 
-          const dateMatch = containerText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-          const dateMatchWord = containerText.match(/ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})/i);
+        // Try to parse date
+        if (!existing.dateText) {
+          const articleId = extractArticleId(normHref);
+          if (articleId && SUOILU_DATES[articleId]) {
+            existing.dateText = SUOILU_DATES[articleId];
+            existing.timestamp = parseVietnameseDate(existing.dateText).getTime();
+          } else {
+            // Search up to 4 parents deep for date
+            let containerText = "";
+            let current = aTag;
+            for (let i = 0; i < 4; i++) {
+              const p = current.parent();
+              if (p.length === 0) break;
+              const pText = p.text() || "";
+              const hasDate = pText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/) || pText.match(/ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})/i);
+              if (hasDate) {
+                containerText = pText;
+                break;
+              }
+              current = p;
+            }
+            if (!containerText) {
+              containerText = parent.text() || "";
+            }
 
-          if (dateMatch) {
-            dateText = dateMatch[0];
-            const baseDate = parseVietnameseDate(dateText);
+            let hour = 0;
+            let minute = 0;
+            const timeMatch = containerText.match(/(\d{1,2}):(\d{2})/);
             if (timeMatch) {
-              baseDate.setHours(hour, minute, 0, 0);
+              hour = parseInt(timeMatch[1], 10);
+              minute = parseInt(timeMatch[2], 10);
             }
-            timestamp = baseDate.getTime();
-          } else if (dateMatchWord) {
-            const d = dateMatchWord[1];
-            const m = dateMatchWord[2];
-            const y = dateMatchWord[3];
-            dateText = `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
-            const baseDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
-            if (timeMatch) {
-              baseDate.setHours(hour, minute, 0, 0);
-            }
-            timestamp = baseDate.getTime();
-          }
-        }
 
-        const parent = aTag.closest("div, li, p, td, tr, article");
-        
-        let imageSrc = "";
-        const imgSelectors = [
-          "img.img-thumbnail",
-          "img.img-responsive",
-          "img.wp-post-image",
-          "img.attachment-post-thumbnail",
-          "img"
-        ];
-        let imgElem = parent.find(imgSelectors.join(", ")).first();
-        if (imgElem.length === 0) {
-          imgElem = aTag.parent().find("img").first();
-        }
-        if (imgElem.length === 0) {
-          imgElem = parent.prev().find("img").first();
-        }
-        if (imgElem.length > 0) {
-          imageSrc = imgElem.attr("data-orig-file") || 
-                     imgElem.attr("data-large-file") ||
-                     imgElem.attr("data-src") || 
-                     imgElem.attr("src") || "";
-        }
+            const dateMatch = containerText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+            const dateMatchWord = containerText.match(/ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})/i);
 
-        // Extract a description from the surrounding card
-        let description = "";
-        const descSelectors = [".intro", ".summary", ".description", ".excerpt", ".post-excerpt", ".lead", "p"];
-        for (const ds of descSelectors) {
-          const descElem = parent.find(ds).first();
-          if (descElem.length > 0) {
-            const txt = descElem.text().trim();
-            if (txt.length > 30 && txt.length < 400 && !txt.includes(title)) {
-              description = txt;
-              break;
+            if (dateMatch) {
+              existing.dateText = dateMatch[0];
+              const baseDate = parseVietnameseDate(existing.dateText);
+              if (timeMatch) {
+                baseDate.setHours(hour, minute, 0, 0);
+              }
+              existing.timestamp = baseDate.getTime();
+            } else if (dateMatchWord) {
+              const d = dateMatchWord[1];
+              const m = dateMatchWord[2];
+              const y = dateMatchWord[3];
+              existing.dateText = `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+              const baseDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+              if (timeMatch) {
+                baseDate.setHours(hour, minute, 0, 0);
+              }
+              existing.timestamp = baseDate.getTime();
             }
           }
         }
-        if (!description) {
-          parent.find("p, span").each((_, sibling) => {
-            const txt = $(sibling).text().trim();
-            if (txt.length > 30 && txt.length < 400 && !txt.includes(title)) {
-              description = txt;
-              return false; // break
-            }
-          });
-        }
-        
-        candidates.push({ title, href, dateText, timestamp, image: imageSrc, description });
-      });
+      }
     });
 
-    if (candidates.length === 0) {
-      $("a").each((_, aElem) => {
-        const aTag = $(aElem);
-        const href = aTag.attr("href");
-        if (!href || !isArticleHref(href, true)) return;
-
-        let title = aTag.text().replace(/\s+/g, " ").trim();
-        if (title.length < 12 || title.length > 220) return;
-        
-        const lowerText = title.toLowerCase();
-        const skipPatterns = [
-          "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
-          "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
-          "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
-          "cơ cấu tổ chức", "ban giám hiệu", "kết quả tìm kiếm", "chọn năm học",
-          "tra cứu điểm", "đăng ký", "phân hiệu", "lớp học", "trực tuyến", "video",
-          "album ảnh", "thư viện ảnh", "lịch thi", "thời khóa biểu", "thực đơn",
-          "hỏi đáp", "đăng ký", "bản quyền", "hướng dẫn sử dụng", "chi tiết", "xem chi tiết",
-          "công khai", "ba công khai", "chất lượng giáo dục", "văn bản pháp quy", "thủ tục hành chính",
-          "kế hoạch chiến lược", "quy chế", "định mức", "thu chi", "tài chính", "danh mục",
-          "thống kê", "phòng giáo dục", "bộ giáo dục", "sở giáo dục"
-        ];
-        if (skipPatterns.some(p => lowerText.includes(p))) return;
-        
-        // Check local container up to 4 parents deep for date text
-        let containerText = "";
-        let current = aTag;
-        for (let i = 0; i < 4; i++) {
-          const p = current.parent();
-          if (p.length === 0) break;
-          const pText = p.text() || "";
-          const hasDate = pText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/) || pText.match(/ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})/i);
-          if (hasDate) {
-            containerText = pText;
-            break;
-          }
-          current = p;
-        }
-        if (!containerText) {
-          containerText = aTag.closest("div, li, p, td, tr, article").text() || "";
-        }
-
-        let dateText = "";
-        let timestamp = 0;
-
-        const articleId = extractArticleId(href);
-        if (articleId && SUOILU_DATES[articleId]) {
-          dateText = SUOILU_DATES[articleId];
-          timestamp = parseVietnameseDate(dateText).getTime();
-        }
-
-        if (!dateText) {
-          let hour = 0;
-          let minute = 0;
-          const timeMatch = containerText.match(/(\d{1,2}):(\d{2})/);
-          if (timeMatch) {
-            hour = parseInt(timeMatch[1], 10);
-            minute = parseInt(timeMatch[2], 10);
-          }
-
-          const dateMatch = containerText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-          const dateMatchWord = containerText.match(/ngày\s+(\d{1,2})\s+tháng\s+(\d{1,2})\s+năm\s+(\d{4})/i);
-
-          if (dateMatch) {
-            dateText = dateMatch[0];
-            const baseDate = parseVietnameseDate(dateText);
-            if (timeMatch) {
-              baseDate.setHours(hour, minute, 0, 0);
-            }
-            timestamp = baseDate.getTime();
-          } else if (dateMatchWord) {
-            const d = dateMatchWord[1];
-            const m = dateMatchWord[2];
-            const y = dateMatchWord[3];
-            dateText = `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
-            const baseDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
-            if (timeMatch) {
-              baseDate.setHours(hour, minute, 0, 0);
-            }
-            timestamp = baseDate.getTime();
-          }
-        }
-
-        const parent = aTag.closest("div, li, p, td, tr, article");
-        
-        let imageSrc = "";
-        const imgSelectors = [
-          "img.img-thumbnail",
-          "img.img-responsive",
-          "img.wp-post-image",
-          "img.attachment-post-thumbnail",
-          "img"
-        ];
-        let imgElem = parent.find(imgSelectors.join(", ")).first();
-        if (imgElem.length === 0) {
-          imgElem = aTag.parent().find("img").first();
-        }
-        if (imgElem.length === 0) {
-          imgElem = parent.prev().find("img").first();
-        }
-        if (imgElem.length > 0) {
-          imageSrc = imgElem.attr("data-orig-file") || 
-                     imgElem.attr("data-large-file") ||
-                     imgElem.attr("data-src") || 
-                     imgElem.attr("data-lazy-src") || 
-                     imgElem.attr("lazy-src") || 
-                     imgElem.attr("data-original") || 
-                     imgElem.attr("data-thumb") || 
-                     imgElem.attr("src") || "";
-        }
-
-        let description = "";
-        const descSelectors = [".intro", ".summary", ".description", ".excerpt", ".post-excerpt", ".lead", "p"];
-        for (const ds of descSelectors) {
-          const descElem = parent.find(ds).first();
-          if (descElem.length > 0) {
-            const txt = descElem.text().trim();
-            if (txt.length > 30 && txt.length < 400 && !txt.includes(title)) {
-              description = txt;
-              break;
-            }
-          }
-        }
-        
-        candidates.push({ title, href, dateText, timestamp, image: imageSrc, description });
-      });
-    }
-
-    return candidates;
-  } catch {
+    const results = Array.from(articleMap.values()).filter(item => item.title && item.href);
+    console.log(`[parseDirectHTML] Extracted and merged ${results.length} valid articles from homepage.`);
+    return results;
+  } catch (err: any) {
+    console.error("[parseDirectHTML] Error parsing HTML content:", err);
     return [];
   }
 }
@@ -856,6 +748,20 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
 
     const discoveredRssUrls = await discoverSuoiluRSSUrls(customUrl || targetHostUrl);
     console.log("Discovered RSS endpoints for fallback sequence:", discoveredRssUrls);
+
+    // --- SPECIAL HIGH-PRIORITY CHANNEL FOR SUOILU.DB.EDU.VN: Direct HTML Scraping ---
+    if (baseOrigin.includes("suoilu")) {
+      try {
+        console.log("Suối Lư detected! Running high-priority direct HTML cheerio scraper.");
+        const scraped = await scrapeDirectHTML(customUrl || targetHostUrl);
+        if (scraped && scraped.length > 0) {
+          candidates = scraped;
+          successfulMethod = "Direct HTML cheerio Scraper (Suối Lư Priority)";
+        }
+      } catch (err: any) {
+        console.log("Priority Direct HTML scrape failed, falling back to other channels:", getSafeErrorMessage(err));
+      }
+    }
 
     // --- CHANNEL 1: WordPress REST API ---
     if (!baseOrigin.includes("nukeviet")) {
@@ -1053,7 +959,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
     });
 
     for (const item of candidates) {
-      let resolvedLink = item.href;
+      let resolvedLink = item.href || item.link;
       if (!resolvedLink) continue;
       
       if (!absoluteCheck.test(resolvedLink)) {
@@ -1070,21 +976,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       if (cleanTitle.length > 18 && !seenTitles.has(cleanTitle)) {
         seenTitles.add(cleanTitle);
 
-        let category = "TIN TRƯỜNG SUỐI LƯ";
-        const titleLower = cleanTitle.toLowerCase();
-        if (titleLower.includes("hội nghị") || titleLower.includes("đại hội")) {
-          category = "SỰ KIỆN • ĐẠI HỘI CHI BỘ";
-        } else if (titleLower.includes("phát động") || titleLower.includes("thi đua") || titleLower.includes("học sinh giỏi") || titleLower.includes("khen thưởng")) {
-          category = "THI ĐUA KHEN THƯỞNG";
-        } else if (titleLower.includes("tuyển sinh") || titleLower.includes("lớp 10") || titleLower.includes("lớp 6") || titleLower.includes("xét tốt nghiệp")) {
-          category = "TUYỂN SINH • HỌC BẠ";
-        } else if (titleLower.includes("chuyên đề") || titleLower.includes("ngoại khóa") || titleLower.includes("hoạt động") || titleLower.includes("trải nghiệm")) {
-          category = "CHUYÊN ĐỀ DẠY HỌC";
-        } else if (titleLower.includes("ôn tập") || titleLower.includes("kiểm tra") || titleLower.includes("thi") || titleLower.includes("học tập")) {
-          category = "DẠY VÀ HỌC";
-        } else if (titleLower.includes("chuyên đổi số") || titleLower.includes("công nghệ") || titleLower.includes("học bạ điện tử") || titleLower.includes("chuyển đổi số")) {
-          category = "CHUYỂN ĐỔI SỐ";
-        }
+        const category = getCategoryFromUrl(resolvedLink || item.href || item.link || "", cleanTitle);
 
         let finalDate = item.dateText;
         if (!finalDate) {
@@ -1139,7 +1031,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
         });
       }
 
-      if (finalItems.length >= 5) break;
+      if (finalItems.length >= 12) break;
     }
 
     return finalItems;
