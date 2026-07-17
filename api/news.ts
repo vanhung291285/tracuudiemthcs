@@ -3,59 +3,77 @@ import * as cheerio from "cheerio";
 // Bypass SSL certificate validation for self-signed or invalid certs common on local school/gov portals
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-// Cache is difficult to persist globally across serverless instances, but we can do a simple in-memory cache per lambda instance
+// Cache for news to reduce requests and speed up response times in lambda instances
 let newsCache: any[] = [];
 let lastCacheTime = 0;
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 
 // Robust mock/fallback articles for PTDTBT TH & THCS Suối Lư with premium educational illustrations
 const FALLBACK_NEWS = [
   {
     id: "fb-1",
-    title: "Công tác ôn tập, củng cố và tổ chức Kỳ kiểm tra học kỳ II bậc THCS nghiêm túc, đúng quy chế tại nhà trường.",
-    category: "HỌC BẠ ĐIỆN TỬ • TIN NHÀ TRƯỜNG",
-    date: "17/06/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&auto=format&fit=crop&q=60"
+    title: "LỄ TỔNG KẾT NĂM HỌC 2025–2026 TẠI TRƯỜNG PTDTBT TH&THCS SUỐI LƯ: KHÉP LẠI MỘT NĂM HỌC NHIỀU THÀNH TÍCH",
+    category: "TIN TRƯỜNG SUỐI LƯ",
+    date: "14/07/2026",
+    link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/le-tong-ket-nam-hoc-2025-2026-tai-truong-ptdtbt-th-thcs-suoi-lu-khep-lai-mot-nam-hoc-nhieu-thanh-tich-129.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/z8040701801489_f52fc55b263a5c106557091234c0b688_1.jpg"
   },
   {
     id: "fb-2",
-    title: "Nâng cấp kỹ thuật và cải cách phương thức sinh chữ ký công nghệ bảo mật chống làm giả học bạ điện tử học sinh.",
-    category: "CÔNG NGHỆ THÔNG TIN",
-    date: "14/06/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60"
+    title: "Góp ý quy định việc giảng dạy khối lượng kiến thức văn hóa giáo dục phổ thông trong chương trình đào tạo các ngành, nghề đặc thù",
+    category: "TIN TRƯỜNG SUỐI LƯ",
+    date: "12/07/2026",
+    link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/gop-y-quy-dinh-viec-giang-day-khoi-luong-kien-thuc-van-hoa-giao-duc-pho-thong-trong-chuong-trinh-dao-tao-cac-nganh-nghe-dac-thu-127.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/img_4888_4.jpeg"
   },
   {
     id: "fb-3",
-    title: "PTDTBT TH & THCS Suối Lư đẩy mạnh phong trào chuyển đổi số toàn diện trong công tác dạy học và chuyển giao sổ điểm số năm học 2025-2026.",
-    category: "CHUYỂN ĐỔI SỐ",
-    date: "10/06/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60"
+    title: "Tập huấn trực tuyến triển khai cập nhật dữ liệu học bạ số",
+    category: "TIN TRƯỜNG SUỐI LƯ",
+    date: "12/07/2026",
+    link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/tap-huan-truc-tuyen-trien-khai-cap-nhat-du-lieu-hoc-ba-so-126.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/img_3414_10.jpg"
   },
   {
     id: "fb-4",
-    title: "Tổng kết thi đua chào mừng ngày Khoa học Công nghệ lớp học thông minh tại địa bàn xã Suối Lư.",
-    category: "THI ĐUA KHEN THƯỞNG",
-    date: "28/05/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&auto=format&fit=crop&q=60"
+    title: "Giáo dục kỹ năng sống cho học sinh THCS – những điều cần biết",
+    category: "TIN TRƯỜNG SUỐI LƯ",
+    date: "10/06/2026",
+    link: "https://suoilu.db.edu.vn/hoat-dong-doan-doi/giao-duc-ky-nang-song-cho-hoc-sinh-thcs-nhung-dieu-can-biet-125.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_06/vp_hoc-sinh-thcs-dewey-80-768x461.jpg"
   },
   {
     id: "fb-5",
-    title: "PTDTBT TH & THCS Suối Lư phối hợp tổ chức chuyên đề Giáo dục địa phương và Hoạt động trải nghiệm sáng tạo.",
-    category: "CHƯƠNG TRÌNH GDPT 2018",
-    date: "15/05/2026",
-    link: "https://suoilu.db.edu.vn/",
-    source: "Hệ thống",
-    image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=500&auto=format&fit=crop&q=60"
+    title: "Phát động Cuộc thi viết về “Trang sách và Mái trường”",
+    category: "THI ĐUA KHEN THƯỞNG",
+    date: "10/06/2026",
+    link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/phat-dong-cuoc-thi-viet-ve-trang-sach-va-mai-truong-124.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_06/2aoboqcgiim0bcbodez62qu6twocsb1s2racoa40.jpg"
   }
 ];
+
+function isValidImage(src: string): boolean {
+  if (!src) return false;
+  const s = src.toLowerCase();
+  // Filter out tracking pixels and tiny spacers, but be less aggressive with "icon" or "logo" if they are in the path
+  if (s.includes("spacer") || s.includes("pixel") || s.includes("statscounter") || s.includes("1x1") || s.includes("transparent")) return false;
+  if (s.includes("data:image")) return false;
+  if (s.endsWith(".gif")) return false;
+  return true;
+}
+
+function getSafeErrorMessage(err: any): string {
+  const msg = (err?.message || String(err || "")).trim();
+  if (msg.toLowerCase().includes("fetch failed") || msg.toLowerCase().includes("failed to fetch")) {
+    return "destination offline";
+  }
+  return msg;
+}
 
 // Fallback thematic image resolution helper based on article keywords
 function getThematicImage(title: string, index: number): string {
@@ -66,7 +84,7 @@ function getThematicImage(title: string, index: number): string {
   if (t.includes("bảo mật") || t.includes("chữ ký") || t.includes("mã vạch") || t.includes("công nghệ") || t.includes("kỹ thuật")) {
     return "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=500&auto=format&fit=crop&q=60";
   }
-  if (t.includes("chuyen doi so") || t.includes("chuyển đổi số") || t.includes("lớp học") || t.includes("học tập") || t.includes("liên thông") || t.includes("tin học")) {
+  if (t.includes("chuyển đổi số") || t.includes("lớp học") || t.includes("học tập") || t.includes("liên thông") || t.includes("tin học")) {
     return "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=500&auto=format&fit=crop&q=60";
   }
   if (t.includes("thi đua") || t.includes("khoa học") || t.includes("tổng kết") || t.includes("khen thưởng") || t.includes("hội thảo") || t.includes("đại hội")) {
@@ -86,90 +104,273 @@ function getThematicImage(title: string, index: number): string {
   return defaults[index % defaults.length];
 }
 
-// Helper to scrape RSS/XML news feed as a robust fallback
-async function fetchSuoiluRSS(): Promise<any[]> {
-  const targetUrl = "https://suoilu.db.edu.vn/feed/";
+// Helper to parse DD/MM/YYYY to Date
+function parseVietnameseDate(dateStr: string): Date {
+  if (!dateStr) return new Date(0);
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    const d = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const y = parseInt(parts[2], 10);
+    return new Date(y, m, d);
+  }
+  return new Date(dateStr);
+}
+
+// Decode HTML entities commonly returned by WordPress or RSS feeds
+function decodeHtml(html: string): string {
+  if (!html) return "";
+  return html
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#8211;/g, "-")
+    .replace(/&#8230;/g, "...")
+    .replace(/&#8220;/g, "“")
+    .replace(/&#8221;/g, "”")
+    .replace(/&#8216;/g, "‘")
+    .replace(/&#8217;/g, "’")
+    .replace(/&nbsp;/g, " ");
+}
+
+// Helper to parse XML string using cheerio (used by direct RSS and proxy RSS)
+function parseRSSXml(xmlText: string): any[] {
+  if (!xmlText) return [];
   try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 5000); // 5s timeout
-
-    const response = await fetch(targetUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
-        "Accept": "text/xml,application/xml,application/rss+xml,application/atom+xml;q=0.9"
-      },
-      signal: controller.signal
-    });
-    
-    clearTimeout(id);
-
-    if (!response.ok) {
-      console.warn(`RSS Scraper received status ${response.status} from /feed/`);
-      return [];
-    }
-
-    const xmlText = await response.text();
     const $ = cheerio.load(xmlText, { xmlMode: true });
     const items: any[] = [];
     
-    $("item").each((_, elem) => {
-      const title = $(elem).find("title").first().text().trim();
+    $("item, entry").each((_, elem) => {
+      const title = decodeHtml($(elem).find("title").first().text().trim());
+      
       let link = $(elem).find("link").first().text().trim();
       if (!link) {
-        // try regex fallback for link tags inside XML
+        link = $(elem).find("link").attr("href") || "";
+      }
+      if (!link) {
         const htmlContent = $(elem).html() || "";
         const match = htmlContent.match(/<link>(.*?)<\/link>/);
         if (match) link = match[1].trim();
       }
+      link = link.trim();
       
-      let pubDate = $(elem).find("pubDate").first().text().trim() || $(elem).find("pubdate").first().text().trim() || "";
+      let pubDate = $(elem).find("pubDate, pubdate, updated, published").first().text().trim() || "";
+      let timestamp = 0;
       let dateText = "";
       if (pubDate) {
         try {
           const d = new Date(pubDate);
           if (!isNaN(d.getTime())) {
+            timestamp = d.getTime();
             const dd = String(d.getDate()).padStart(2, '0');
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const yyyy = d.getFullYear();
             dateText = `${dd}/${mm}/${yyyy}`;
           }
-        } catch {
-          // ignore date parse err
-        }
+        } catch { }
       }
       
       if (title && link) {
-        // Try to draw a preview image out of desc or content:encoded
         let imageSrc = "";
-        const desc = $(elem).find("description").first().text();
-        const content = $(elem).find("content\\:encoded, encoded").first().text();
+        const mediaContent = $(elem).find("media\\:content, content").attr("url");
+        const enclosure = $(elem).find("enclosure").attr("url");
+        const featuredImg = $(elem).find("wp\\:featured_item, featured_item").text();
         
-        const combined = desc + " " + content;
-        const imgMatch = combined.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (imgMatch) {
-          imageSrc = imgMatch[1];
+        if (mediaContent && isValidImage(mediaContent)) {
+          imageSrc = mediaContent;
+        } else if (enclosure && isValidImage(enclosure)) {
+          imageSrc = enclosure;
+        } else if (featuredImg && isValidImage(featuredImg)) {
+          imageSrc = featuredImg;
+        } else {
+          const desc = $(elem).find("description, summary").first().text();
+          const content = $(elem).find("content\\:encoded, encoded, content").first().text();
+          const combined = desc + " " + content;
+          const imgMatches = [...combined.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)];
+          for (const match of imgMatches) {
+            const src = match[1];
+            if (isValidImage(src) && !src.includes("s.w.org") && !src.includes("emoji")) {
+              imageSrc = src;
+              break;
+            }
+          }
         }
         
-        items.push({ title, href: link, dateText, image: imageSrc });
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
       }
     });
-    
-    console.log(`Successfully scraped ${items.length} articles via RSS feed (/feed/)`);
     return items;
   } catch (err) {
-    console.warn("RSS feed parsing fallback failed:", err);
+    console.warn("Error parsing RSS XML:", err);
     return [];
   }
 }
 
-// Helper to scrape https://suoilu.db.edu.vn/ using cheerio (Dual-source: HTML + RSS XML feed)
-async function fetchSuoiluNews(): Promise<any[]> {
-  const targetUrl = "https://suoilu.db.edu.vn/";
-  let candidates: any[] = [];
+// Helper to parse WordPress WP-JSON REST API posts
+function parseWordPressPosts(postsJson: any): any[] {
+  if (!postsJson || !Array.isArray(postsJson)) return [];
+  const items: any[] = [];
+  for (const post of postsJson) {
+    try {
+      const rawTitle = post.title?.rendered || post.title || "";
+      const title = decodeHtml(rawTitle);
+      const link = post.link || "";
+      
+      let dateText = "";
+      let timestamp = 0;
+      if (post.date) {
+        try {
+          const d = new Date(post.date);
+          if (!isNaN(d.getTime())) {
+            timestamp = d.getTime();
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            dateText = `${dd}/${mm}/${yyyy}`;
+          }
+        } catch { }
+      }
+      
+      let imageSrc = "";
+      const featuredMedia = post._embedded?.['wp:featuredmedia']?.[0];
+      if (featuredMedia && featuredMedia.source_url && isValidImage(featuredMedia.source_url)) {
+        imageSrc = featuredMedia.source_url;
+      }
+      
+      if (!imageSrc && featuredMedia?.media_details?.sizes) {
+        const sizes = featuredMedia.media_details.sizes;
+        const bestSize = sizes.large || sizes.medium_large || sizes.full || sizes.medium;
+        if (bestSize?.source_url && isValidImage(bestSize.source_url)) {
+          imageSrc = bestSize.source_url;
+        }
+      }
 
+      if (!imageSrc && post.content?.rendered) {
+        const contentStr = post.content.rendered;
+        const match = contentStr.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (match && isValidImage(match[1])) {
+          imageSrc = match[1];
+        }
+      }
+
+      if (title && link) {
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
+      }
+    } catch { }
+  }
+  return items;
+}
+
+// Helper to parse rss2json API output
+function parseRss2Json(data: any): any[] {
+  if (!data || data.status !== "ok" || !Array.isArray(data.items)) return [];
+  const items: any[] = [];
+  for (const item of data.items) {
+    try {
+      const title = decodeHtml(item.title || "");
+      const link = item.link || "";
+      
+      let dateText = "";
+      let timestamp = 0;
+      if (item.pubDate) {
+        try {
+          const d = new Date(item.pubDate);
+          if (!isNaN(d.getTime())) {
+            timestamp = d.getTime();
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            dateText = `${dd}/${mm}/${yyyy}`;
+          }
+        } catch { }
+      }
+      
+      let imageSrc = item.thumbnail || "";
+      if (item.enclosure?.link && isValidImage(item.enclosure.link)) {
+        imageSrc = item.enclosure.link;
+      }
+      if (!imageSrc || !isValidImage(imageSrc)) {
+        const content = (item.description || "") + " " + (item.content || "");
+        const match = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (match && isValidImage(match[1])) {
+          imageSrc = match[1];
+        }
+      }
+      
+      if (title && link) {
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
+      }
+    } catch { }
+  }
+  return items;
+}
+
+// Helper to dynamically auto-discover RSS feed URLs from a homepage
+async function discoverSuoiluRSSUrls(customUrl?: string): Promise<string[]> {
+  const targetUrl = customUrl || "https://suoilu.db.edu.vn/";
+  const urls: string[] = [];
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 6000); // 6s timeout
+    const id = setTimeout(() => controller.abort(), 8000);
+    const response = await fetch(targetUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+      },
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    
+    if (response.ok) {
+      const html = await response.text();
+      const $ = cheerio.load(html);
+      
+      $('link[type="application/rss+xml"], link[type="application/atom+xml"]').each((_, elem) => {
+        const href = $(elem).attr("href");
+        if (href) {
+          try {
+            const absoluteUrl = new URL(href, targetUrl).toString();
+            if (!urls.includes(absoluteUrl)) {
+              urls.push(absoluteUrl);
+            }
+          } catch { }
+        }
+      });
+    }
+  } catch (err) {
+    // ignore or handle timeout
+  }
+
+  try {
+    const urlObj = new URL(targetUrl);
+    const origin = urlObj.origin;
+    const fallbacks = [
+      `${origin}/news/rss/`,
+      `${origin}/vi/news/rss/`,
+      `${origin}/index.php?language=vi&nv=news&op=rss`,
+      `${origin}/index.php?nv=news&op=rss`,
+      `${origin}/feed/`
+    ];
+
+    for (const fb of fallbacks) {
+      if (!urls.includes(fb)) {
+        urls.push(fb);
+      }
+    }
+  } catch {
+    urls.push("https://suoilu.db.edu.vn/news/rss/");
+  }
+
+  return urls;
+}
+
+// Direct scraping method using cheerio as a fallback option
+async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 12000);
 
     const response = await fetch(targetUrl, {
       headers: {
@@ -181,152 +382,438 @@ async function fetchSuoiluNews(): Promise<any[]> {
     
     clearTimeout(id);
 
-    if (response.ok) {
-      const html = await response.text();
-      const $ = cheerio.load(html);
+    if (!response.ok) return [];
+    
+    const html = await response.text();
+    const $ = cheerio.load(html);
+    const candidates: any[] = [];
 
-      // A. Look for standard layout nodes with text links and image elements
-      $("article, .news-item, .post-item, .tin-tuc-item, .news-box, .post-block, .item-news, .views-row, .wp-block-post, .grid-item").each((_, elem) => {
-        const aTag = $(elem).find("a").first();
+    const itemSelector = [
+      "article", 
+      ".news_column", 
+      ".news-item", 
+      ".post-item", 
+      ".tin-tuc-item", 
+      ".news-box", 
+      ".post-block", 
+      ".item-news", 
+      ".views-row", 
+      ".wp-block-post", 
+      ".grid-item", 
+      ".entry-item", 
+      ".td-block-span4", 
+      ".td-block-span6", 
+      ".td-block-span12", 
+      ".post-column", 
+      ".panel-body", 
+      ".content-box", 
+      ".main-show"
+    ].join(", ");
+
+    $(itemSelector).each((_, elem) => {
+      const aTags = $(elem).find("a");
+      aTags.each((_, aElem) => {
+        const aTag = $(aElem);
         const href = aTag.attr("href");
-        let title = aTag.text().trim() || $(elem).find(".title, .news-title, .post-title, h2, h3, h4").first().text().trim();
-        let imageSrc = $(elem).find("img").first().attr("src");
+        if (!href) return;
         
-        if (href && title && title.length > 15) {
-          let dateText = "";
-          const dateMatch = $(elem).text().match(/(\d{2})[-/](\d{2})[-/](\d{4})/);
-          if (dateMatch) {
-            dateText = dateMatch[0];
-          }
-          candidates.push({ title, href, dateText, image: imageSrc });
+        const hrefLower = href.toLowerCase();
+        // Must contain .html to be a valid news article page on Nukeviet/WordPress portals
+        if (!hrefLower.includes(".html")) return;
+        // Skip static documents/laws departments, about, contact pages
+        if (hrefLower.includes("/laws/") || hrefLower.includes("/about/") || hrefLower.includes("/introduce/") || hrefLower.includes("/contact/") || hrefLower.includes("/download/")) return;
+
+        let title = aTag.text().trim();
+        if (title.length < 18 || title.length > 180) return;
+        
+        const lowerText = title.toLowerCase();
+        const skipPatterns = [
+          "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
+          "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
+          "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
+          "cơ cấu tổ chức", "ban giám hiệu", "kết quả tìm kiếm", "chọn năm học",
+          "tra cứu điểm", "đăng ký", "phân hiệu", "lớp học", "trực tuyến", "video",
+          "album ảnh", "thư viện ảnh", "lịch thi", "thời khóa biểu", "thực đơn",
+          "hỏi đáp", "đăng ký", "bản quyền", "hướng dẫn sử dụng", "chi tiết", "xem chi tiết"
+        ];
+        if (skipPatterns.some(p => lowerText.includes(p))) return;
+        
+        const parent = aTag.closest("div, li, p, td, tr, article");
+        let dateText = "";
+        let timestamp = 0;
+        const parentText = parent.text() || "";
+        const dateMatch = parentText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+        if (dateMatch) {
+          dateText = dateMatch[0];
+          timestamp = parseVietnameseDate(dateText).getTime();
         }
+        
+        let imageSrc = "";
+        const imgSelectors = [
+          "img.img-thumbnail",
+          "img.img-responsive",
+          "img.wp-post-image",
+          "img.attachment-post-thumbnail",
+          "img"
+        ];
+        let imgElem = parent.find(imgSelectors.join(", ")).first();
+        if (imgElem.length === 0) {
+          imgElem = aTag.parent().find("img").first();
+        }
+        if (imgElem.length === 0) {
+          imgElem = parent.prev().find("img").first();
+        }
+        if (imgElem.length > 0) {
+          imageSrc = imgElem.attr("data-orig-file") || 
+                     imgElem.attr("data-large-file") ||
+                     imgElem.attr("data-src") || 
+                     imgElem.attr("src") || "";
+        }
+        
+        candidates.push({ title, href, dateText, timestamp, image: imageSrc });
       });
+    });
 
-      // B. If nothing is found under standard CSS layouts, scan all links that are longer than 18 chars
-      if (candidates.length === 0) {
-        $("a").each((_, elem) => {
-          const href = $(elem).attr("href");
-          const title = $(elem).text().trim();
-          
-          if (href && title && title.length > 20 && title.length < 160) {
-            const lowerText = title.toLowerCase();
-            const skipPatterns = [
-              "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
-              "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
-              "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
-              "click", "bấm vào", "tải về", "đọc thêm", "chọn lớp", "tìm kiếm"
-            ];
-            
-            if (!skipPatterns.some(p => lowerText.includes(p))) {
-              let dateText = "";
-              const parentContainer = $(elem).closest("div, li, p, td, tr");
-              const parentText = parentContainer.text() || "";
-              const dateMatch = parentText.match(/(\d{2})[-/](\d{2})[-/](\d{4})/);
-              if (dateMatch) {
-                dateText = dateMatch[0];
-              }
-              
-              let imageSrc = parentContainer.find("img").first().attr("src");
-              if (!imageSrc) {
-                imageSrc = $(elem).siblings("img").first().attr("src") || $(elem).find("img").first().attr("src");
-              }
+    if (candidates.length === 0) {
+      $("a").each((_, aElem) => {
+        const aTag = $(aElem);
+        const href = aTag.attr("href");
+        if (!href) return;
+        
+        const hrefLower = href.toLowerCase();
+        if (!hrefLower.includes(".html")) return;
+        if (hrefLower.includes("/laws/") || hrefLower.includes("/about/") || hrefLower.includes("/introduce/") || hrefLower.includes("/contact/") || hrefLower.includes("/download/")) return;
 
-              candidates.push({ title, href, dateText, image: imageSrc });
+        let title = aTag.text().trim();
+        if (title.length < 18 || title.length > 180) return;
+        
+        const lowerText = title.toLowerCase();
+        const skipPatterns = [
+          "trang chủ", "giới thiệu", "liên hệ", "đăng nhập", "xem thêm", "bản đồ",
+          "sơ đồ", "thư viện", "góp ý", "điều khoản", "chính sách", "lịch công tác",
+          "tài khoản", "quên mật khẩu", "hướng dẫn", "thông báo chung", "văn bản",
+          "cơ cấu tổ chức", "ban giám hiệu", "kết quả tìm kiếm", "chọn năm học",
+          "tra cứu điểm", "đăng ký", "phân hiệu", "lớp học", "trực tuyến", "video",
+          "album ảnh", "thư viện ảnh", "lịch thi", "thời khóa biểu", "thực đơn",
+          "hỏi đáp", "đăng ký", "bản quyền", "hướng dẫn sử dụng", "chi tiết", "xem chi tiết"
+        ];
+        if (skipPatterns.some(p => lowerText.includes(p))) return;
+        
+        const parent = aTag.closest("div, li, p, td, tr, article");
+        let dateText = "";
+        let timestamp = 0;
+        const parentText = parent.text() || "";
+        const dateMatch = parentText.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+        if (dateMatch) {
+          dateText = dateMatch[0];
+          timestamp = parseVietnameseDate(dateText).getTime();
+        }
+        
+        let imageSrc = "";
+        const imgSelectors = [
+          "img.img-thumbnail",
+          "img.img-responsive",
+          "img.wp-post-image",
+          "img.attachment-post-thumbnail",
+          "img"
+        ];
+        let imgElem = parent.find(imgSelectors.join(", ")).first();
+        if (imgElem.length === 0) {
+          imgElem = aTag.parent().find("img").first();
+        }
+        if (imgElem.length === 0) {
+          imgElem = parent.prev().find("img").first();
+        }
+        if (imgElem.length > 0) {
+          imageSrc = imgElem.attr("data-orig-file") || 
+                     imgElem.attr("data-large-file") ||
+                     imgElem.attr("data-src") || 
+                     imgElem.attr("src") || "";
+        }
+        
+        candidates.push({ title, href, dateText, timestamp, image: imageSrc });
+      });
+    }
+
+    return candidates;
+  } catch {
+    return [];
+  }
+}
+
+// Primary controller to fetch and organize news using high-availability, multi-origin fallback system
+async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
+  const timeoutPromise = new Promise<any[]>((resolve) => {
+    setTimeout(() => {
+      console.log("Global timeout of 12s reached in fetchSuoiluNews. Resolving with empty list.");
+      resolve([]);
+    }, 12000);
+  });
+
+  const fetchPromise = async (): Promise<any[]> => {
+    const targetHostUrl = "https://suoilu.db.edu.vn";
+    const urlObj = new URL(customUrl || targetHostUrl);
+    const baseOrigin = urlObj.origin;
+    
+    let candidates: any[] = [];
+    let successfulMethod = "";
+
+    console.log("Starting high-resilience news fetch for", baseOrigin);
+
+    const discoveredRssUrls = await discoverSuoiluRSSUrls(customUrl || targetHostUrl);
+    console.log("Discovered RSS endpoints for fallback sequence:", discoveredRssUrls);
+
+    // --- CHANNEL 1: WordPress REST API ---
+    if (baseOrigin.includes("suoilu") && !baseOrigin.includes("nukeviet")) {
+      try {
+        const wpApiUrl = "https://suoilu.db.edu.vn/wp-json/wp/v2/posts?_embed&per_page=12";
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch(wpApiUrl, {
+          headers: { "User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 6.1; vi-VN) AppleWebKit/534.31" },
+          signal: controller.signal
+        });
+        clearTimeout(id);
+        if (res.ok) {
+          const posts = await res.json();
+          const parsed = parseWordPressPosts(posts);
+          if (parsed.length > 0) {
+            candidates = parsed;
+            successfulMethod = "WordPress REST API (Direct)";
+          }
+        }
+      } catch (err: any) {
+        console.log("Channel 1 WP REST API direct deferred:", getSafeErrorMessage(err));
+      }
+    }
+
+    // --- CHANNEL 2: Public RSS to JSON Proxy ---
+    if (candidates.length === 0) {
+      for (const rssUrl of discoveredRssUrls.slice(0, 2)) {
+        try {
+          const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(rss2JsonUrl, { signal: controller.signal });
+          clearTimeout(id);
+          if (res.ok) {
+            const json = await res.json();
+            const parsed = parseRss2Json(json);
+            if (parsed.length > 0) {
+              candidates = parsed;
+              successfulMethod = `RSS-to-JSON API Proxy (${rssUrl})`;
+              break;
             }
           }
+        } catch (err: any) {
+          console.log(`Channel 2 RSS-to-JSON Proxy deferred for ${rssUrl}:`, getSafeErrorMessage(err));
+        }
+      }
+    }
+
+    // --- CHANNEL 2.5: corsproxy.io ---
+    if (candidates.length === 0) {
+      for (const rssUrl of discoveredRssUrls.slice(0, 2)) {
+        try {
+          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rssUrl)}`;
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(proxyUrl, { signal: controller.signal });
+          clearTimeout(id);
+          if (res.ok) {
+            const xmlText = await res.text();
+            const parsed = parseRSSXml(xmlText);
+            if (parsed.length > 0) {
+              candidates = parsed;
+              successfulMethod = `corsproxy.io RSS Proxy (${rssUrl})`;
+              break;
+            }
+          }
+        } catch (err: any) {
+          console.log(`Channel 2.5 corsproxy.io RSS Proxy deferred for ${rssUrl}:`, getSafeErrorMessage(err));
+        }
+      }
+    }
+
+    // --- CHANNEL 3: AllOrigins CORS Proxy ---
+    if (candidates.length === 0) {
+      for (const rssUrl of discoveredRssUrls.slice(0, 2)) {
+        try {
+          const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(rssUrl);
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(proxyUrl, { signal: controller.signal });
+          clearTimeout(id);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.contents) {
+              const parsed = parseRSSXml(data.contents);
+              if (parsed.length > 0) {
+                candidates = parsed;
+                successfulMethod = `AllOrigins RSS Proxy (${rssUrl})`;
+                break;
+              }
+            }
+          }
+        } catch (err: any) {
+          console.log(`Channel 3 AllOrigins RSS Proxy deferred for ${rssUrl}:`, getSafeErrorMessage(err));
+        }
+      }
+    }
+
+    // --- CHANNEL 4: AllOrigins CORS Proxy for WP REST API ---
+    if (candidates.length === 0 && !baseOrigin.includes("nukeviet")) {
+      try {
+        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://suoilu.db.edu.vn/wp-json/wp/v2/posts?_embed&per_page=12");
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 4000);
+        const res = await fetch(proxyUrl, { signal: controller.signal });
+        clearTimeout(id);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.contents) {
+            const posts = JSON.parse(data.contents);
+            const parsed = parseWordPressPosts(posts);
+            if (parsed.length > 0) {
+              candidates = parsed;
+              successfulMethod = "AllOrigins WP-JSON Proxy";
+            }
+          }
+        }
+      } catch (err: any) {
+        console.log("Channel 4 AllOrigins WP-JSON Proxy deferred:", getSafeErrorMessage(err));
+      }
+    }
+
+    // --- CHANNEL 5: Direct RSS Parser ---
+    if (candidates.length === 0) {
+      for (const rssUrl of discoveredRssUrls.slice(0, 2)) {
+        try {
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(rssUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/437.36",
+              "Accept": "text/xml,application/xml,application/rss+xml,application/atom+xml;q=0.9"
+            },
+            signal: controller.signal
+          });
+          clearTimeout(id);
+          if (res.ok) {
+            const xmlText = await res.text();
+            const parsed = parseRSSXml(xmlText);
+            if (parsed.length > 0) {
+              candidates = parsed;
+              successfulMethod = `Direct RSS Feed Parser (${rssUrl})`;
+              break;
+            }
+          }
+        } catch (err: any) {
+          const msg = getSafeErrorMessage(err);
+          if (msg !== "destination offline") {
+            console.log(`Channel 5 Direct RSS Parser deferred for ${rssUrl}:`, msg);
+          }
+        }
+      }
+    }
+
+    // --- CHANNEL 6: Direct cheerio scraping ---
+    if (candidates.length === 0) {
+      const scraped = await scrapeDirectHTML(customUrl || "https://suoilu.db.edu.vn/");
+      if (scraped.length > 0) {
+        candidates = scraped;
+        successfulMethod = "Direct HTML cheerio Scraper";
+      }
+    }
+
+    console.log(`News fetch completed. Method used: [${successfulMethod || "NONE - FALLBACK RETRIEVED"}], Articles found: ${candidates.length}`);
+
+    const finalItems: any[] = [];
+    const absoluteCheck = /^https?:\/\//i;
+    const seenTitles = new Set<string>();
+
+    // Sort by timestamp descending
+    candidates.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+    for (const item of candidates) {
+      let resolvedLink = item.href;
+      if (!resolvedLink) continue;
+      
+      if (!absoluteCheck.test(resolvedLink)) {
+        resolvedLink = resolvedLink.startsWith("/") 
+          ? `${baseOrigin}${resolvedLink}` 
+          : `${baseOrigin}/${resolvedLink}`;
+      }
+
+      const cleanTitle = item.title
+        .replace(/\s+/g, " ")
+        .replace(/^(●|►|»|-|\*)\s*/, "")
+        .trim();
+
+      if (cleanTitle.length > 18 && !seenTitles.has(cleanTitle)) {
+        seenTitles.add(cleanTitle);
+
+        let category = "TIN TRƯỜNG SUỐI LƯ";
+        const titleLower = cleanTitle.toLowerCase();
+        if (titleLower.includes("hội nghị") || titleLower.includes("đại hội")) {
+          category = "SỰ KIỆN • ĐẠI HỘI CHI BỘ";
+        } else if (titleLower.includes("phát động") || titleLower.includes("thi đua") || titleLower.includes("học sinh giỏi") || titleLower.includes("khen thưởng")) {
+          category = "THI ĐUA KHEN THƯỞNG";
+        } else if (titleLower.includes("tuyển sinh") || titleLower.includes("lớp 10") || titleLower.includes("lớp 6") || titleLower.includes("xét tốt nghiệp")) {
+          category = "TUYỂN SINH • HỌC BẠ";
+        } else if (titleLower.includes("chuyên đề") || titleLower.includes("ngoại khóa") || titleLower.includes("hoạt động") || titleLower.includes("trải nghiệm")) {
+          category = "CHUYÊN ĐỀ DẠY HỌC";
+        } else if (titleLower.includes("ôn tập") || titleLower.includes("kiểm tra") || titleLower.includes("thi") || titleLower.includes("học tập")) {
+          category = "DẠY VÀ HỌC";
+        } else if (titleLower.includes("chuyên đổi số") || titleLower.includes("công nghệ") || titleLower.includes("học bạ điện tử") || titleLower.includes("chuyển đổi số")) {
+          category = "CHUYỂN ĐỔI SỐ";
+        }
+
+        let finalDate = item.dateText;
+        if (!finalDate) {
+          const d = new Date();
+          finalDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        }
+
+        let finalImage = item.image;
+        if (finalImage && isValidImage(finalImage)) {
+          finalImage = finalImage.trim();
+          if (finalImage.startsWith("http://")) {
+            finalImage = finalImage.replace("http://", "https://");
+          } else if (finalImage.startsWith("//")) {
+            finalImage = `https:${finalImage}`;
+          } else if (!absoluteCheck.test(finalImage)) {
+            finalImage = finalImage.startsWith("/")
+              ? `${baseOrigin}${finalImage}`
+              : `${baseOrigin}/${finalImage}`;
+          }
+        } else {
+          finalImage = getThematicImage(cleanTitle, finalItems.length);
+        }
+
+        finalItems.push({
+          id: `sl-${finalItems.length + 1}`,
+          title: cleanTitle,
+          category,
+          date: finalDate,
+          link: resolvedLink,
+          source: urlObj.hostname,
+          image: finalImage,
+          timestamp: item.timestamp
         });
       }
-    } else {
-      console.warn(`Scraper received bad HTTP status from home page: ${response.status}`);
-    }
-  } catch (error) {
-    console.warn("Direct HTML scraper failed, switching to RSS fallback:", error);
-  }
 
-  // C. Fallback to RSS/XML feed if direct HTML scraping returned 0 results
-  if (candidates.length === 0) {
-    console.log("No news candidates scraped from direct HTML. Invoking RSS fallback parser...");
-    candidates = await fetchSuoiluRSS();
-  }
-
-  // Final validation, relative link resolving, categorisation and deduplication
-  const finalItems: any[] = [];
-  const absoluteCheck = /^https?:\/\//i;
-  const seenTitles = new Set<string>();
-
-  for (const item of candidates) {
-    let resolvedLink = item.href;
-    if (!resolvedLink) continue;
-    
-    if (!absoluteCheck.test(resolvedLink)) {
-      resolvedLink = resolvedLink.startsWith("/") 
-        ? `https://suoilu.db.edu.vn${resolvedLink}` 
-        : `https://suoilu.db.edu.vn/${resolvedLink}`;
+      if (finalItems.length >= 5) break;
     }
 
-    const cleanTitle = item.title
-      .replace(/\s+/g, " ")
-      .replace(/^(●|►|»|-|\*)\s*/, "")
-      .trim();
+    return finalItems;
+  };
 
-    if (cleanTitle.length > 18 && !seenTitles.has(cleanTitle)) {
-      seenTitles.add(cleanTitle);
-
-      // Category formatting
-      let category = "TIN TRƯỜNG SUỐI LƯ";
-      const titleLower = cleanTitle.toLowerCase();
-      if (titleLower.includes("hội nghị") || titleLower.includes("đại hội")) {
-        category = "SỰ KIỆN • ĐẠI HỘI CHI BỘ";
-      } else if (titleLower.includes("phát động") || titleLower.includes("thi đua") || titleLower.includes("học sinh giỏi")) {
-        category = "THI ĐUA KHEN THƯỞNG";
-      } else if (titleLower.includes("tuyển sinh") || titleLower.includes("lớp 10") || titleLower.includes("lớp 6") || titleLower.includes("xét tốt nghiệp")) {
-        category = "TUYỂN SINH • HỌC BẠ";
-      } else if (titleLower.includes("chuyên đề") || titleLower.includes("ngoại khóa") || titleLower.includes("hoạt động")) {
-        category = "CHUYÊN ĐỀ DẠY HỌC";
-      } else if (titleLower.includes("thông báo") || titleLower.includes("kế hoạch")) {
-        category = "THÔNG BÁO CHUNG";
-      }
-
-      // Date formatting
-      let finalDate = item.dateText;
-      if (!finalDate) {
-        const mockDates = ["18/06/2026", "17/06/2026", "14/06/2026", "10/06/2026", "28/05/2026"];
-        finalDate = mockDates[finalItems.length % mockDates.length];
-      }
-
-      // Image src resolving
-      let finalImage = item.image;
-      if (finalImage) {
-        finalImage = finalImage.trim();
-        if (!absoluteCheck.test(finalImage)) {
-          finalImage = finalImage.startsWith("/")
-            ? `https://suoilu.db.edu.vn${finalImage}`
-            : `https://suoilu.db.edu.vn/${finalImage}`;
-        }
-      } else {
-        finalImage = getThematicImage(cleanTitle, finalItems.length);
-      }
-
-      finalItems.push({
-        id: `sl-${finalItems.length + 1}`,
-        title: cleanTitle,
-        category,
-        date: finalDate,
-        link: resolvedLink,
-        source: "suoilu.db.edu.vn",
-        image: finalImage
-      });
-    }
-
-    if (finalItems.length >= 5) break;
-  }
-
-  return finalItems;
+  return Promise.race([fetchPromise(), timeoutPromise]);
 }
 
 // Vercel Serverless Function Handler
 export default async function handler(req: any, res: any) {
-  // CORS Headers support
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -337,18 +824,26 @@ export default async function handler(req: any, res: any) {
 
   try {
     const now = Date.now();
-    if (newsCache.length > 0 && (now - lastCacheTime < CACHE_DURATION)) {
+    const bypassCache = req.query.refresh === "true";
+    const sourceUrl = req.query.source as string;
+    
+    const isDifferentSource = sourceUrl && newsCache.length > 0 && !newsCache[0].link.startsWith(sourceUrl.split('?')[0]);
+
+    if (!bypassCache && !isDifferentSource && newsCache.length > 0 && (now - lastCacheTime < CACHE_DURATION)) {
       return res.status(200).json({ status: "success", source: "cache", data: newsCache });
     }
 
-    const liveNews = await fetchSuoiluNews();
+    const liveNews = await fetchSuoiluNews(sourceUrl);
     if (liveNews && liveNews.length > 0) {
       newsCache = liveNews;
       lastCacheTime = now;
       return res.status(200).json({ status: "success", source: "scraped", data: newsCache });
     }
 
-    // fallback gracefully
+    if (newsCache.length > 0) {
+      return res.status(200).json({ status: "success", source: "cache_stale", data: newsCache });
+    }
+
     return res.status(200).json({ 
       status: "fallback", 
       source: "fallback_static", 
