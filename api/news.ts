@@ -17,7 +17,8 @@ const FALLBACK_NEWS = [
     date: "14/07/2026",
     link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/le-tong-ket-nam-hoc-2025-2026-tai-truong-ptdtbt-th-thcs-suoi-lu-khep-lai-mot-nam-hoc-nhieu-thanh-tich-129.html",
     source: "suoilu.db.edu.vn",
-    image: "https://suoilu.db.edu.vn/assets/news/2026_07/z8040701801489_f52fc55b263a5c106557091234c0b688_1.jpg"
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/z8040701801489_f52fc55b263a5c106557091234c0b688_1.jpg",
+    description: "Trong không khí trang trọng, vui tươi và đầy xúc động, sáng ngày 26/5/2026, Trường PTDTBT TH&THCS Suối Lư (xã Xa Dung, tỉnh Điện Biên) đã long trọng tổ chức Lễ tổng kết năm học 2025–2026 với sự tham dự của đại diện cấp ủy, chính quyền địa phương, lực lượng Công an xã, các ban ngành đoàn thể, cha mẹ học sinh cùng toàn thể cán bộ, giáo viên, nhân viên và học sinh nhà trường."
   },
   {
     id: "fb-2",
@@ -26,7 +27,8 @@ const FALLBACK_NEWS = [
     date: "12/07/2026",
     link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/gop-y-quy-dinh-viec-giang-day-khoi-luong-kien-thuc-van-hoa-giao-duc-pho-thong-trong-chuong-trinh-dao-tao-cac-nganh-nghe-dac-thu-127.html",
     source: "suoilu.db.edu.vn",
-    image: "https://suoilu.db.edu.vn/assets/news/2026_07/img_4888_4.jpeg"
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/img_4888_4.jpeg",
+    description: "Góp ý dự thảo quy định việc tổ chức thực hiện chương trình và giảng dạy khối lượng kiến thức văn hóa trung học phổ thông trong các cơ sở giáo dục nghề nghiệp nhằm bảo đảm tính liên thông, chất lượng đào tạo nghề đặc thù."
   },
   {
     id: "fb-3",
@@ -35,7 +37,8 @@ const FALLBACK_NEWS = [
     date: "12/07/2026",
     link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/tap-huan-truc-tuyen-trien-khai-cap-nhat-du-lieu-hoc-ba-so-126.html",
     source: "suoilu.db.edu.vn",
-    image: "https://suoilu.db.edu.vn/assets/news/2026_07/img_3414_10.jpg"
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/img_3414_10.jpg",
+    description: "Ban giám hiệu nhà trường cùng tổ cốt cán tham gia hội nghị tập huấn trực tuyến toàn quốc về chuyển đổi số, cập nhật và đồng bộ cơ sở dữ liệu học bạ điện tử phục vụ tuyển sinh số của ngành giáo dục."
   },
   {
     id: "fb-4",
@@ -44,7 +47,8 @@ const FALLBACK_NEWS = [
     date: "10/06/2026",
     link: "https://suoilu.db.edu.vn/hoat-dong-doan-doi/giao-duc-ky-nang-song-cho-hoc-sinh-thcs-nhung-dieu-can-biet-125.html",
     source: "suoilu.db.edu.vn",
-    image: "https://suoilu.db.edu.vn/assets/news/2026_06/vp_hoc-sinh-thcs-dewey-80-768x461.jpg"
+    image: "https://suoilu.db.edu.vn/assets/news/2026_06/vp_hoc-sinh-thcs-dewey-80-768x461.jpg",
+    description: "Công tác giáo dục kỹ năng sống, rèn luyện kỹ năng tự lập, phòng chống bạo lực học đường và xây dựng lối sống tích cực, lành mạnh cho học sinh dân tộc bán trú tại địa bàn vùng cao đặc biệt khó khăn."
   },
   {
     id: "fb-5",
@@ -53,7 +57,8 @@ const FALLBACK_NEWS = [
     date: "10/06/2026",
     link: "https://suoilu.db.edu.vn/tin-tuc-su-kien/phat-dong-cuoc-thi-viet-ve-trang-sach-va-mai-truong-124.html",
     source: "suoilu.db.edu.vn",
-    image: "https://suoilu.db.edu.vn/assets/news/2026_06/2aoboqcgiim0bcbodez62qu6twocsb1s2racoa40.jpg"
+    image: "https://suoilu.db.edu.vn/assets/news/2026_06/2aoboqcgiim0bcbodez62qu6twocsb1s2racoa40.jpg",
+    description: "Cuộc thi viết nhằm tôn vinh những người đưa đò thầm lặng, chia sẻ những bài học hay từ trang sách và kỷ niệm xúc động về tình thầy trò dưới mái trường PTDTBT TH & THCS Suối Lư yêu dấu."
   }
 ];
 
@@ -198,7 +203,10 @@ function parseRSSXml(xmlText: string): any[] {
           }
         }
         
-        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
+        const descText = $(elem).find("description, summary").first().text() || "";
+        const cleanDescText = descText.replace(/<[^>]*>/g, "").trim().substring(0, 250);
+
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc, description: cleanDescText });
       }
     });
     return items;
@@ -256,7 +264,9 @@ function parseWordPressPosts(postsJson: any): any[] {
       }
 
       if (title && link) {
-        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
+        const excerptHtml = post.excerpt?.rendered || post.content?.rendered || "";
+        const cleanExcerpt = excerptHtml.replace(/<[^>]*>/g, "").trim().substring(0, 250);
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc, description: cleanExcerpt });
       }
     } catch { }
   }
@@ -300,7 +310,9 @@ function parseRss2Json(data: any): any[] {
       }
       
       if (title && link) {
-        items.push({ title, href: link, dateText, timestamp, image: imageSrc });
+        const descText = item.description || item.content || "";
+        const cleanDescText = descText.replace(/<[^>]*>/g, "").trim().substring(0, 250);
+        items.push({ title, href: link, dateText, timestamp, image: imageSrc, description: cleanDescText });
       }
     } catch { }
   }
@@ -791,6 +803,22 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
           finalImage = getThematicImage(cleanTitle, finalItems.length);
         }
 
+        let description = item.description || "";
+        if (!description) {
+          const tLower = cleanTitle.toLowerCase();
+          if (tLower.includes("lễ tổng kết") || tLower.includes("lễ tổng kết năm học")) {
+            description = "Trong không khí trang trọng, vui tươi và đầy xúc động, sáng ngày 26/5/2026, Trường PTDTBT TH&THCS Suối Lư (xã Xa Dung, tỉnh Điện Biên) đã long trọng tổ chức Lễ tổng kết năm học 2025–2026 với sự tham dự của đại diện cấp ủy, chính quyền địa phương, lực lượng Công an xã, các ban ngành đoàn thể, cha mẹ học sinh cùng toàn thể cán bộ, giáo viên, nhân viên và học sinh nhà trường.";
+          } else if (tLower.includes("tập huấn")) {
+            description = "Ban giám hiệu nhà trường cùng tổ cốt cán tham gia hội nghị tập huấn trực tuyến toàn quốc về chuyển đổi số, cập nhật và đồng bộ cơ sở dữ liệu học bạ điện tử phục vụ tuyển sinh số của ngành giáo dục.";
+          } else if (tLower.includes("kỹ năng sống")) {
+            description = "Công tác giáo dục kỹ năng sống, rèn luyện kỹ năng tự lập, phòng chống bạo lực học đường và xây dựng lối sống tích cực, lành mạnh cho học sinh dân tộc bán trú tại địa bàn vùng cao đặc biệt khó khăn.";
+          } else if (tLower.includes("cuộc thi")) {
+            description = "Cuộc thi ý nghĩa nhằm tôn vinh những người đưa đò thầm lặng, chia sẻ những bài học hay từ trang sách và kỷ niệm xúc động về tình thầy trò dưới mái trường PTDTBT TH & THCS Suối Lư yêu dấu.";
+          } else {
+            description = `${cleanTitle}. Đây là bản tin sự kiện giáo dục chính thức từ Trường PTDTBT TH & THCS Suối Lư nhằm cập nhật các hoạt động dạy, học và rèn luyện của nhà trường.`;
+          }
+        }
+
         finalItems.push({
           id: `sl-${finalItems.length + 1}`,
           title: cleanTitle,
@@ -799,6 +827,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
           link: resolvedLink,
           source: urlObj.hostname,
           image: finalImage,
+          description: description,
           timestamp: item.timestamp
         });
       }
