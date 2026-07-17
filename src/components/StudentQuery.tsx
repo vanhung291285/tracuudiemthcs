@@ -1233,9 +1233,9 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                             </span>
                           </div>
 
-                          <p className="font-bold text-slate-800 text-xs leading-snug group-hover:text-[#337819] transition-colors flex items-start gap-1">
+                          <p className="font-extrabold text-slate-800 text-sm sm:text-base leading-snug group-hover:text-[#337819] transition-colors flex items-start gap-1">
                             <span>{item.title}</span>
-                            <ExternalLink className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-0.5" />
+                            <ExternalLink className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0 mt-1" />
                           </p>
                         </div>
                       </a>
