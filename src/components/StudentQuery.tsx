@@ -1295,12 +1295,12 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                       </a>
                     ))}
 
-                    {/* Secondary News Row: Remaining 4 latest news items in a compact, highly polished list */}
+                    {/* Secondary News Row: Remaining latest news items in a compact, highly polished list */}
                     {sortedNewsItems.length > 1 && (
                       <div className="pt-4 border-t border-slate-100/80">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">TIN TỨC LIÊN QUAN KHÁC</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                          {sortedNewsItems.slice(1, 5).map((item, idx) => (
+                          {sortedNewsItems.slice(1, 9).map((item, idx) => (
                             <a
                               key={`news-${item.id || idx}`}
                               href={item.link || "https://suoilu.db.edu.vn"}
