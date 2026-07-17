@@ -84,6 +84,16 @@ const CACHE_BYPASS_HEADERS = {
 // Robust mock/fallback articles for PTDTBT TH & THCS Suối Lư with premium educational illustrations
 const FALLBACK_NEWS = [
   {
+    id: "fb-0",
+    title: "Trường PTDTBT TH&THCS Suối Lư chủ động chuẩn bị nâng cao chất lượng dạy học năm học 2026 – 2027",
+    category: "HOẠT ĐỘNG CỦA NGÀNH",
+    date: "17/07/2026",
+    link: "https://suoilu.db.edu.vn/hoat-dong-cua-nghanh/truong-ptdtbt-th-thcs-suoi-lu-chu-dong-chuan-bi-nang-cao-chat-luong-day-hoc-nam-hoc-2026-2027-130.html",
+    source: "suoilu.db.edu.vn",
+    image: "https://suoilu.db.edu.vn/assets/news/2026_07/3_1.jpg",
+    description: "Kỳ nghỉ hè không chỉ là khoảng thời gian để học sinh nghỉ ngơi sau một năm học nhiều cố gắng mà còn là thời điểm Trường PTDTBT TH&THCS Suối Lư tích cực chuẩn bị các điều kiện cần thiết cho năm học mới 2026 – 2027. Với tinh thần chủ động, trách nhiệm và quyết tâm đổi mới, tập thể cán bộ, giáo viên, nhân viên nhà trường đang khẩn trương triển khai nhiều nhiệm vụ nhằm nâng cao chất lượng giáo dục ngay từ những ngày đầu năm học."
+  },
+  {
     id: "fb-1",
     title: "LỄ TỔNG KẾT NĂM HỌC 2025–2026 TẠI TRƯỜNG PTDTBT TH&THCS SUỐI LƯ: KHÉP LẠI MỘT NĂM HỌC NHIỀU THÀNH TÍCH",
     category: "TIN TRƯỜNG SUỐI LƯ",
@@ -493,6 +503,10 @@ function parseDirectHTML(htmlContent: string): any[] {
       const hyphensCount = (urlPath.split('/').pop() || "").split('-').length - 1;
       const isSlug = hyphensCount >= 2; 
       
+      if (hrefLower.includes("suoilu.db.edu.vn") || !hrefLower.startsWith("http")) {
+        // Enforce .html ending for Nukeviet-based Suối Lư portal to filter out menu lists and categories
+        return hasHtml && (hasArticleCategory || isSlug);
+      }
       return hasHtml || hasArticleCategory || isSlug;
     };
 
