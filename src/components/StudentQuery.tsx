@@ -1238,17 +1238,12 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                         className="block bg-white hover:bg-slate-50/20 p-4 sm:p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition duration-250 group cursor-pointer"
                       >
                         {/* Top: Beautiful full-width article image */}
-                        <div className="w-full aspect-[16/9] sm:aspect-[16/8.5] bg-slate-50 rounded-xl overflow-hidden border border-slate-150 relative shadow-sm shrink-0 mb-4 flex items-center justify-center">
-                          {/* Background blurred image for premium immersive feel when contained */}
-                          <div 
-                            className="absolute inset-0 bg-cover bg-center blur-md opacity-25 scale-105"
-                            style={{ backgroundImage: `url(${item.image})` }}
-                          />
+                        <div className="w-full bg-slate-50 rounded-xl overflow-hidden border border-slate-150 relative shadow-sm shrink-0 mb-4 flex items-center justify-center">
                           <img 
                             src={item.image} 
                             alt={item.title}
                             referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover relative z-10 group-hover:scale-[1.01] transition-transform duration-300"
+                            className="w-full h-auto max-h-[550px] object-cover relative z-10 group-hover:scale-[1.005] transition-transform duration-300 rounded-xl"
                             onError={(e) => {
                               const fallbacks = [
                                 "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&auto=format&fit=crop&q=60",
@@ -1258,8 +1253,6 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                               ];
                               const fb = fallbacks[idx % fallbacks.length];
                               (e.target as HTMLImageElement).src = fb;
-                              const bg = (e.target as HTMLElement).previousElementSibling as HTMLElement;
-                              if (bg) bg.style.backgroundImage = `url(${fb})`;
                             }}
                           />
                           <div className="absolute top-3 left-3 shadow-md z-20">
@@ -1281,16 +1274,22 @@ export default function StudentQuery({ onQueryResult, onNavigateToAdmin }: Stude
                             </span>
                           </div>
 
-                          <h3 className="font-black text-[#0E5482] text-base sm:text-lg leading-snug tracking-tight group-hover:text-[#337819] transition-colors flex items-center justify-between gap-1.5 uppercase">
+                          <h3 className="font-bold text-[#0E5482] text-base sm:text-lg md:text-xl leading-snug tracking-tight group-hover:text-[#337819] transition-colors flex items-center justify-between gap-1.5">
                             <span>{item.title}</span>
                             <ExternalLink className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 shrink-0" />
                           </h3>
 
                           {item.description && (
-                            <p className="text-slate-600 text-xs sm:text-[13px] leading-relaxed text-justify font-medium pt-2 border-t border-slate-50">
+                            <p className="text-slate-600 text-sm leading-relaxed text-justify font-normal pt-2 border-t border-slate-100">
                               {item.description}
                             </p>
                           )}
+
+                          <div className="flex justify-end pt-1">
+                            <span className="text-[11px] sm:text-xs font-bold text-[#0E5482] group-hover:text-[#337819] transition-colors flex items-center gap-0.5">
+                              ➜ Xem tiếp...
+                            </span>
+                          </div>
                         </div>
                       </a>
                     ))}
