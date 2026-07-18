@@ -755,9 +755,9 @@ async function scrapeDirectHTML(targetUrl: string): Promise<any[]> {
 async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
   const timeoutPromise = new Promise<any[]>((resolve) => {
     setTimeout(() => {
-      console.log("Global timeout of 12s reached in fetchSuoiluNews. Resolving with empty list.");
+      console.log("Global timeout of 25s reached in fetchSuoiluNews. Resolving with empty list.");
       resolve([]);
-    }, 12000);
+    }, 25000);
   });
 
   const fetchPromise = async (): Promise<any[]> => {
@@ -1052,14 +1052,16 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
     }
 
     // Parallel scraper for detailed page descriptions (SEO meta tag fallback)
-    console.log(`[fetchSuoiluNews] Enriching ${finalItems.length} articles with detailed descriptions from their URLs...`);
+    // ONLY fetch the first 4 articles to drastically reduce server load, response latency, and rate-limiting blocks.
+    const itemsToEnrich = finalItems.slice(0, 4);
+    console.log(`[fetchSuoiluNews] Enriching top ${itemsToEnrich.length} articles with detailed descriptions from their URLs...`);
     await Promise.all(
-      finalItems.map(async (item) => {
+      itemsToEnrich.map(async (item) => {
         try {
           if (!item.link || !item.link.startsWith("http")) return;
 
           const controller = new AbortController();
-          const id = setTimeout(() => controller.abort(), 2500); // 2.5s timeout per article detail page
+          const id = setTimeout(() => controller.abort(), 6000); // 6s generous timeout per article detail page
 
           let res = await fetch(addCacheBuster(item.link), {
             headers: CACHE_BYPASS_HEADERS,
@@ -1070,7 +1072,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
           if (!res.ok) {
             const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(addCacheBuster(item.link))}`;
             const proxyController = new AbortController();
-            const proxyId = setTimeout(() => proxyController.abort(), 2500);
+            const proxyId = setTimeout(() => proxyController.abort(), 6000);
             res = await fetch(proxyUrl, {
               headers: CACHE_BYPASS_HEADERS,
               signal: proxyController.signal
@@ -1093,7 +1095,7 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
             }
           }
         } catch (err: any) {
-          console.log(`[fetchSuoiluNews] Individual detail scrape failed for ${item.link}:`, err?.message || err);
+          console.log(`[fetchSuoiluNews] Individual detail scrape failed/aborted for ${item.link}:`, err?.message || err);
         }
       })
     );
