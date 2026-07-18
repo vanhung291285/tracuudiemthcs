@@ -1048,6 +1048,53 @@ async function fetchSuoiluNews(customUrl?: string): Promise<any[]> {
       if (finalItems.length >= 12) break;
     }
 
+    // Parallel scraper for detailed page descriptions (SEO meta tag fallback)
+    console.log(`[fetchSuoiluNews] Enriching ${finalItems.length} articles with detailed descriptions from their URLs...`);
+    await Promise.all(
+      finalItems.map(async (item) => {
+        try {
+          if (!item.link || !item.link.startsWith("http")) return;
+
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 2500); // 2.5s timeout per article detail page
+
+          let res = await fetch(addCacheBuster(item.link), {
+            headers: CACHE_BYPASS_HEADERS,
+            signal: controller.signal
+          });
+          clearTimeout(id);
+
+          if (!res.ok) {
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(addCacheBuster(item.link))}`;
+            const proxyController = new AbortController();
+            const proxyId = setTimeout(() => proxyController.abort(), 2500);
+            res = await fetch(proxyUrl, {
+              headers: CACHE_BYPASS_HEADERS,
+              signal: proxyController.signal
+            });
+            clearTimeout(proxyId);
+          }
+
+          if (res.ok) {
+            const html = await res.text();
+            const $ = cheerio.load(html);
+            
+            let metaDesc = $("meta[name='description']").attr("content") || 
+                           $("meta[property='og:description']").attr("content") || 
+                           $("meta[name='Description']").attr("content") || "";
+            
+            metaDesc = metaDesc.trim();
+            if (metaDesc.length > 20) {
+              item.description = metaDesc.replace(/\s+/g, " ");
+              console.log(`[fetchSuoiluNews] Successfully scraped detail description for ID ${item.id}:`, item.description.substring(0, 60) + "...");
+            }
+          }
+        } catch (err: any) {
+          console.log(`[fetchSuoiluNews] Individual detail scrape failed for ${item.link}:`, err?.message || err);
+        }
+      })
+    );
+
     return finalItems;
   };
 
