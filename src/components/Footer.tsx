@@ -34,8 +34,8 @@ export default function Footer() {
         const contact = await dbService.getPortalSetting("portal_footer_contact", "Suối Lư, Huyện Điện Biên Đông, Tỉnh Điện Biên");
         const copy = await dbService.getPortalSetting("portal_footer_copy", "© 2026 PTDTBT TH & THCS Suối Lư");
         const zalo = await dbService.getPortalSetting("portal_zalo_url", "https://zalo.me/0333333333");
-        const fb = await dbService.getPortalSetting("portal_facebook_url", "https://facebook.com/suoilu");
-        const web = await dbService.getPortalSetting("portal_website_url", "https://suoilu.db.edu.vn");
+        const fb = await dbService.getPortalSetting("portal_facebook_url", "https://facebook.com/thcsxadung.db.edu.vn");
+        const web = await dbService.getPortalSetting("portal_website_url", "https://thcsxadung.db.edu.vn");
 
         setFooterTitle(title);
         setFooterDesc(desc);
