@@ -39,7 +39,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
     return () => { active = false; };
   }, [student.className, student.teacher, student.academicYear]);
   
-  const headerTop = localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT TIỂU HỌC VÀ THCS SUỐI LƯ";
+  const headerTop = localStorage.getItem("portal_header_top") || "ỦY BAN NHÂN DÂN XÃ XA DUNG • TRƯỜNG PTDTBT THCS XA DUNG - PHÂN HIỆU SUỐI LƯ";
   const schoolYearRaw = student.academicYear || localStorage.getItem("portal_school_year") || "Năm học 2025-2026";
   const schoolYear = schoolYearRaw.replace(/năm học/i, "").trim();
 
@@ -201,7 +201,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         {/* Document Header */}
         <div className="mb-2 text-[#003366]">
           <div className="uppercase font-bold text-[9px] sm:text-[11px] leading-none whitespace-nowrap">ỦY BAN NHÂN DÂN XÃ XA DUNG</div>
-          <div className="uppercase font-bold text-[11px] sm:text-[13px] leading-tight whitespace-nowrap border-b-2 border-[#003366] inline-block">TRƯỜNG PTDTBT THCS XA DUNG - PHÂN HIỆU SUỐI LƯ</div>
+          <div className="uppercase font-bold text-[11px] sm:text-[13px] leading-tight whitespace-normal border-b-2 border-[#003366] inline-block">TRƯỜNG PTDTBT THCS XA DUNG - PHÂN HIỆU SUỐI LƯ</div>
         </div>
 
         {/* Title */}
@@ -447,7 +447,7 @@ export default function StudentResult({ student, initialTerm = "canam", onBack }
         </div>
 
         <div className="text-center mt-3 sm:mt-4 pt-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium no-print">
-          Mã xác thực học bạ điện tử: <span className="font-mono text-slate-700">{student.id}</span>. Bản quyền kết quả thuộc về trường PTDTBT Tiểu học và THCS Suối Lư.
+          Mã xác thực học bạ điện tử: <span className="font-mono text-slate-700">{student.id}</span>. Bản quyền kết quả thuộc về TRƯỜNG PTDTBT THCS XA DUNG - PHÂN HIỆU SUỐI LƯ.
         </div>
       </div>
       
